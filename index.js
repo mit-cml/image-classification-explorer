@@ -21,10 +21,6 @@ import {ControllerDataset} from './controller_dataset';
 import * as ui from './ui';
 import {Webcam} from './webcam';
 
-// The number of classes we want to predict. In this example, we will be
-// predicting 4 classes for up, down, left, and right.
-const NUM_CLASSES = 4;
-
 // We pick these values for the users of our interface.
 const LEARNING_RATE = 0.0001;
 const BATCH_SIZE_FRACTION = 0.4;
@@ -51,24 +47,31 @@ async function loadMobilenet() {
   return tf.model({inputs: mobilenet.inputs, outputs: layer.output});
 }
 
-// When the UI buttons are pressed, read a frame from the webcam and associate
-// it with the class label given by the button. up, down, left, right are
-// labels 0, 1, 2, 3 respectively.
-ui.setExampleHandler(label => {
+// When a label's add example button is clicked, read a frame from the 
+// webcam and associate it with the corresponding label
+ui.setAddExampleHandler(labelId => {
   tf.tidy(() => {
     const img = webcam.capture();
-    controllerDataset.addExample(mobilenet.predict(img), label);
+    controllerDataset.addExample(img, mobilenet.predict(img), labelId);
 
     // Draw the preview thumbnail.
-    ui.drawThumb(img, label);
+    ui.drawThumb(img, labelId);
   });
+});
+
+// Functions to update the state of the controller dataset
+ui.setAddLabelHandler(labelName => {
+  return controllerDataset.addLabel(labelName);
+});
+ui.setRemoveLabelHandler(labelId => {
+  controllerDataset.removeLabel(labelId);
 });
 
 /**
  * Sets up and trains the classifier.
  */
 async function train() {
-  if (controllerDataset.xs == null) {
+  if (controllerDataset.labelXs == {}) {
     throw new Error('Add some examples before training!');
   }
 
@@ -107,18 +110,21 @@ async function train() {
   // class), versus the label (100% probability in the true class)>
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
+  // Get xs and ys
+  const xsAndYs = controllerDataset.getXsAndYs();
+
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends on how many examples the user
   // collects. This allows us to have a flexible batch size.
   const batchSize =
-      Math.floor(controllerDataset.xs.shape[0] * BATCH_SIZE_FRACTION);
+      Math.floor(xsAndYs.xs.shape[0] * BATCH_SIZE_FRACTION);
   if (!(batchSize > 0)) {
     throw new Error(
         `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
   }
 
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
-  model.fit(controllerDataset.xs, controllerDataset.ys, {
+  model.fit(xsAndYs.xs, xsAndYs.ys, {
     batchSize,
     epochs: EPOCHS,
     callbacks: {
@@ -160,17 +166,17 @@ async function predict() {
   ui.donePredicting();
 }
 
-document.getElementById('train').addEventListener('click', async () => {
-  ui.trainStatus('Training...');
-  await tf.nextFrame();
-  await tf.nextFrame();
-  isPredicting = false;
-  train();
-});
-document.getElementById('predict').addEventListener('click', () => {
-  isPredicting = true;
-  predict();
-});
+// document.getElementById('train').addEventListener('click', async () => {
+//   ui.trainStatus('Training...');
+//   await tf.nextFrame();
+//   await tf.nextFrame();
+//   isPredicting = false;
+//   train();
+// });
+// document.getElementById('predict').addEventListener('click', () => {
+//   isPredicting = true;
+//   predict();
+// });
 
 async function init() {
   try {

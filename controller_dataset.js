@@ -24,6 +24,12 @@ export class ControllerDataset {
   constructor() {
     this.numLabels = 0;
 
+    // Keeps track of unique label ids for every label
+    this.totalNumLabelsAdded = 0;
+
+    // Keeps track of all active labels and maps their ids to their names
+    this.activeLabels = {};
+
     // A mapping from class labels to lists of images users uploaded for that class (imgs as in those returned by webcam.capture())
     this.labelImgs = {};
 
@@ -41,56 +47,53 @@ export class ControllerDataset {
    * @param {Tensor} activation A tensor of an activation of image
    * @param {number} label The label of the example. Should be a number.
    */
-  addExample(image, activation, label) {
-    if (!(label in this.labelImgs)) {
+  addExample(image, activation, labelId) {
+    if (!(labelId in this.labelImgs)) {
       // For the first example that gets added for each label, keep the image 
       // and its activation so that the ControllerDataset owns the memory of 
       // the inputs. This makes sure that if addExample() is called in a tf.tidy(),
       // these Tensors will not get disposed.
-      this.labelImgs[label] = tf.keep(image);
-      this.labelXs[label] = tf.keep(activation);
+      this.labelImgs[labelId] = tf.keep(image);
+      this.labelXs[labelId] = tf.keep(activation);
     } else {
-      const oldImgs = this.labelImgs[label];
-      this.labelImgs[label] = this.keep(oldImgs.concat(image, 0));
+      const oldImgs = this.labelImgs[labelId];
+      this.labelImgs[labelId] = tf.keep(oldImgs.concat(image, 0));
 
-      const oldXs = this.labelImgs[label];
-      this.labelXs[label] = tf.keep(oldXs.concat(activation, 0));
+      const oldXs = this.labelXs[labelId];
+      this.labelXs[labelId] = tf.keep(oldXs.concat(activation, 0));
 
       oldImgs.dispose();
       oldXs.dispose();
     }
   }
 
-  addLabel() {
+  addLabel(labelName) {
+    this.activeLabels[this.totalNumLabelsAdded] = labelName;
     this.numLabels += 1;
+    this.totalNumLabelsAdded += 1;
+
+    return this.totalNumLabelsAdded - 1;
   }
 
-  removeLabel(label) {
-    if (label in this.labelImgs) {
-      this.labelImgs[label].dispose();
-      this.labelXs[label].dispose();
-
-      delete this.labelImgs[label];
-      delete this.labelXs[label];
-    }
-    
+  removeLabel(labelId) {
+    delete this.activeLabels[labelId];
     this.numLabels -= 1;
   }
 
-  getImages(label) {
-    return this.labelImgs[label];
+  getImages(labelId) {
+    return this.labelImgs[labelId];
   }
 
   getXsAndYs() {
-    const allLabels = this.labelXs.keys();
+    const activeLabelIds = this.activeLabels.keys();
 
     // Initialize the xs and ys
     let labelXs = tf.tensor([]);
     let labelYs = tf.tensor([]);
 
     // Adding the labels' xs and ys
-    for (let i = 0; i < allLabels.length; i++) {
-      const currentLabelXs = this.labelXs[allLabels[i]];
+    for (let i = 0; i < activeLabelIds.length; i++) {
+      const currentLabelXs = this.labelXs[activeLabelIds[i]];
       labelXs = labelXs.concat(currentLabelXs, 0);
 
       const currentY = tf.oneHot(tf.tensor1d([i]).toInt(), this.numLabels);

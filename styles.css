@@ -24,3 +24,51 @@
   line-height: 30px;
 }
 
+/*.webcam-box-outer {
+  background: black;
+  border: 1px solid #585858;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 9px;
+}*/
+
+.webcam-box-inner {
+  border: 1px solid #585858;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  width: 160px;
+}
+#webcam {
+  height: 160px;
+  transform: scaleX(-1);
+}
+
+/*.label-images-outer {
+  background: black;
+  border: 1px solid #585858;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 9px;
+  position: relative;
+  transition: box-shadow 0.3s;
+}*/
+
+.label-images-inner {
+  border: 1px solid #585858;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  width: 66px;
+}
+
+.label-images-canvas {
+  height: 66px;
+  transform: scaleX(-1);
+}

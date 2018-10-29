@@ -17,16 +17,19 @@
 import * as tf from '@tensorflow/tfjs';
 
 export function init() {
-  document.getElementById('controller').style.display = '';
+  // document.getElementById('controller').style.display = '';
   statusElement.style.display = 'none';
 }
 
 const trainStatusElement = document.getElementById('train-status');
 
-const numClassesElement = document.getElementById('num-classes');
-export const getNumClasses = () => +numClassesElement.value;
-
 const statusElement = document.getElementById('status');
+
+// Elements dealing with label display
+const labelsOuter = document.getElementsByClassName("labels-outer")[0];
+
+const addLabelsInput = document.getElementById('label-name');
+const addLabelsButton = document.getElementById('add-labels-button');
 
 export function isPredicting() {
   statusElement.style.visibility = 'visible';
@@ -39,50 +42,134 @@ export function trainStatus(status) {
 }
 
 export let addExampleHandler;
-export function setExampleHandler(handler) {
+export function setAddExampleHandler(handler) {
   addExampleHandler = handler;
 }
-let mouseDown = false;
-const totals = [0, 0, 0, 0];
 
-const upButton = document.getElementById('up');
-const downButton = document.getElementById('down');
-const leftButton = document.getElementById('left');
-const rightButton = document.getElementById('right');
-
-const thumbDisplayed = {};
-
-async function handler(label) {
-  mouseDown = true;
-  const className = CONTROLS[label];
-  const button = document.getElementById(className);
-  const total = document.getElementById(className + '-total');
-  while (mouseDown) {
-    addExampleHandler(label);
-    document.body.setAttribute('data-active', CONTROLS[label]);
-    total.innerText = totals[label]++;
-    await tf.nextFrame();
-  }
-  document.body.removeAttribute('data-active');
+export let addLabelHandler;
+export function setAddLabelHandler(handler) {
+  addLabelHandler = handler;
 }
 
-upButton.addEventListener('mousedown', () => handler(0));
-upButton.addEventListener('mouseup', () => mouseDown = false);
+export let removeLabelHandler;
+export function setRemoveLabelHandler(handler) {
+  removeLabelHandler = handler;
+}
 
-downButton.addEventListener('mousedown', () => handler(1));
-downButton.addEventListener('mouseup', () => mouseDown = false);
+/*
+<div class="label-box" id="0">
+  <div class="label-name">
+    <span>Cat</span>
+  </div>
+  <div
+  <div class="label-images">
 
-leftButton.addEventListener('mousedown', () => handler(2));
-leftButton.addEventListener('mouseup', () => mouseDown = false);
+  </div>
+  <button class="label-remove"><span>Remove this label</span></button>
+  <button class="label-add-example"><span>Add example</span></button>
+</div>
+*/
 
-rightButton.addEventListener('mousedown', () => handler(3));
-rightButton.addEventListener('mouseup', () => mouseDown = false);
+// Handlers for adding a new label
+function addLabel() {
+  const newLabelName = addLabelsInput.value;
+  const newLabelId = addLabelHandler(newLabelName);
+  addLabelsInput.value = "";
 
-export function drawThumb(img, label) {
-  if (thumbDisplayed[label] == null) {
-    const thumbCanvas = document.getElementById(CONTROLS[label] + '-thumb');
-    draw(img, thumbCanvas);
-  }
+  const removeLabelButtonText = "Remove this label";
+  const addLabelExampleButtonText = "Add example";
+
+  // Overarching div for a label
+  const labelBox = document.createElement("div");
+  labelBox.setAttribute("class", "label-box");
+  labelBox.setAttribute("id", newLabelId.toString());
+
+  // Div for counting number of examples for this label
+  const labelCount = document.createElement("div");
+  labelCount.setAttribute("class", "label-count-outer");
+  const labelCountText = document.createElement("span");
+  labelCountText.textContent = "Num examples: ";
+  const labelCountSpan = document.createElement("span");
+  labelCountSpan.textContent = 0;
+  labelCount.appendChild(labelCountText);
+  labelCount.appendChild(labelCountSpan);
+
+  // Div for placing the label name
+  const labelName = document.createElement("div");
+  labelName.setAttribute("class", "label-name-outer");
+  const labelNameSpan = document.createElement("span");
+  labelNameSpan.textContent = "Label: " + newLabelName;
+  labelName.appendChild(labelNameSpan);
+
+  // Div where we will put a thumbnail/previews of images users have added
+  const labelImagesOuter = document.createElement("div");
+  labelImagesOuter.setAttribute("class", "label-images-outer");
+  const labelImagesInner = document.createElement("div");
+  labelImagesInner.setAttribute("class", "label-images-inner");
+  const labelImagesCanvas = document.createElement("canvas");
+  labelImagesCanvas.setAttribute("class", "label-images-canvas");
+  labelImagesCanvas.setAttribute("width", 224);
+  labelImagesCanvas.setAttribute("height", 224);
+  labelImagesCanvas.setAttribute("id", "label-images-canvas-" + newLabelId);
+  labelImagesInner.appendChild(labelImagesCanvas);
+  labelImagesOuter.appendChild(labelImagesInner);
+
+  // Button for removing this label
+  const labelRemove = document.createElement("button");
+  labelRemove.setAttribute("class", "label-remove");
+  const labelRemoveSpan = document.createElement("span");
+  labelRemoveSpan.textContent = removeLabelButtonText;
+  labelRemove.appendChild(labelRemoveSpan);
+
+  labelRemove.addEventListener("click", () => {
+    removeLabelHandler(newLabelId);
+    labelBox.parentNode.removeChild(labelBox);
+  });
+
+  // Button for adding an example to this label
+  const labelAddExample = document.createElement("button");
+  labelAddExample.setAttribute("class", "label-add-example");
+  const labelAddExampleSpan = document.createElement("span");
+  labelAddExampleSpan.textContent = addLabelExampleButtonText;
+  labelAddExample.appendChild(labelAddExampleSpan);
+
+  labelAddExample.addEventListener("click", function() {
+    labelCountSpan.textContent = parseInt(labelCountSpan.textContent) + 1;
+    addExampleHandler(newLabelId);
+  });
+
+  // Add all elements we just created to the label box and append to
+  // the container on the page
+  labelBox.appendChild(labelName);
+  labelBox.appendChild(labelCount);
+  labelBox.appendChild(labelImagesOuter);
+  labelBox.appendChild(labelRemove);
+  labelBox.appendChild(labelAddExample);
+
+  labelsOuter.appendChild(labelBox);
+}
+
+addLabelsButton.addEventListener('click', () => addLabel());
+
+// let mouseDown = false;
+
+// async function handler(label) {
+//   mouseDown = true;
+//   const className = CONTROLS[label];
+//   const button = document.getElementById(className);
+//   const total = document.getElementById(className + '-total');
+//   while (mouseDown) {
+//     addExampleHandler(label);
+//     document.body.setAttribute('data-active', CONTROLS[label]);
+//     total.innerText = totals[label]++;
+//     await tf.nextFrame();
+//   }
+//   document.body.removeAttribute('data-active');
+// }
+
+export function drawThumb(img, labelId) {
+  const thumbCanvas = document.getElementById("label-images-canvas-" + labelId);
+  draw(img, thumbCanvas);
 }
 
 export function draw(image, canvas) {
