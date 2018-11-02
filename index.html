@@ -25,10 +25,6 @@ limitations under the License.
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header>
-    Train your own model to recognize images!
-  </header>
-
   <div id="no-webcam">
       No webcam found. <br/>
       To use this interface, use a device with a webcam.
@@ -36,28 +32,54 @@ limitations under the License.
   <!-- Top -->
   <div id="status">Loading mobilenet...</div>
 
-  <div class="labels-container">
-    Make sure your labels are all named differently!
-    
-    <div class="labels-outer">
-    </div>
+  <div id="content" style="display:none">
 
-    <div class="add-labels-container">
-      <div class="add-labels-name">
-        Add a label: <input type="text" name="label-name" id="label-name">
+    <div class="labels-container">
+      Make sure your labels are all named differently!
+      
+      <div class="labels-outer">
       </div>
-      <button id="add-labels-button"><span>Add a class</span></button>
+
+      <div class="add-labels-container">
+        <div class="add-labels-name">
+          Add a label: <input type="text" name="label-name" id="label-name">
+        </div>
+        <button id="add-labels-button"><span>Add a class</span></button>
+      </div>
     </div>
-  </div>
 
-  <div class="webcam-box-outer">
-    <div class="webcam-box-inner">
-      <video autoplay playsinline muted id="webcam" width="224" height="224"></video>
+    <div class="run-model-container">
+      <button id="train">
+        <span id="train-status">TRAIN MODEL</span>
+      </button>
+      <button id="predict">
+        <span>PREDICT</span>
+      </button>
+      <div class="predict-result-container">
+        <span id="predict-result"></span>
+      </div>
     </div>
+
+    <div class="webcam-box-outer">
+      <div class="webcam-box-inner">
+        <video autoplay playsinline muted id="webcam" width="224" height="224"></video>
+      </div>
+    </div>
+
+    <div class="download-upload-container">
+      <button id="download-button"><span>Download Model</span></button>
+      <!-- <a href="path_to_file" id="download-button" download="proposed_file_name">Download Model</a> -->
+
+      <div class="upload-container">
+        <label for="json-upload">Model JSON:</label>
+        <input name="json-upload" id="json-upload" type="file"/>
+        <label for="weights-upload">Model Weights:</label>
+        <input name="weights-upload" id="weights-upload" type="file"/>
+        <button id="upload-button"><span>Upload Model</span></button>
+      </div>
+    </div>
+
   </div>
-
-
-
 
   <script src="index.js"></script>
 </body>

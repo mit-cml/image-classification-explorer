@@ -72,3 +72,17 @@
   height: 66px;
   transform: scaleX(-1);
 }
+
+label {
+    margin-top: 1rem;
+    display: block;
+}
+
+#download-button {
+  margin-top: 1rem;
+}
+
+#upload-button {
+  margin-top: 1rem;
+  display: block;
+}

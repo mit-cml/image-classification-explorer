@@ -17,7 +17,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 export function init() {
-  // document.getElementById('controller').style.display = '';
+  document.getElementById('content').style.display = '';
   statusElement.style.display = 'none';
 }
 
@@ -25,20 +25,26 @@ const trainStatusElement = document.getElementById('train-status');
 
 const statusElement = document.getElementById('status');
 
+const predictResultElement = document.getElementById('predict-result');
+
 // Elements dealing with label display
 const labelsOuter = document.getElementsByClassName("labels-outer")[0];
 
 const addLabelsInput = document.getElementById('label-name');
 const addLabelsButton = document.getElementById('add-labels-button');
 
-export function isPredicting() {
-  statusElement.style.visibility = 'visible';
-}
-export function donePredicting() {
-  statusElement.style.visibility = 'hidden';
-}
+// export function isPredicting() {
+//   statusElement.style.visibility = 'visible';
+// }
+// export function donePredicting() {
+//   statusElement.style.visibility = 'hidden';
+// }
 export function trainStatus(status) {
   trainStatusElement.innerText = status;
+}
+
+export function predictResult(result) {
+  predictResultElement.innerText = result;
 }
 
 export let addExampleHandler;

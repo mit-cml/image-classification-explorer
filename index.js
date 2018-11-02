@@ -94,7 +94,7 @@ async function train() {
       // Layer 2. The number of units of the last layer should correspond
       // to the number of classes we want to predict.
       tf.layers.dense({
-        units: NUM_CLASSES,
+        units: controllerDataset.numLabels,
         kernelInitializer: 'varianceScaling',
         useBias: false,
         activation: 'softmax'
@@ -111,7 +111,9 @@ async function train() {
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
   // Get xs and ys
-  const xsAndYs = controllerDataset.getXsAndYs();
+  const xsAndYs = await tf.tidy(() => {
+    return controllerDataset.getXsAndYs();
+  });
 
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends on how many examples the user
@@ -135,48 +137,71 @@ async function train() {
   });
 }
 
-let isPredicting = false;
-
 async function predict() {
-  ui.isPredicting();
-  while (isPredicting) {
-    const predictedClass = tf.tidy(() => {
-      // Capture the frame from the webcam.
-      const img = webcam.capture();
+  const predictedClass = tf.tidy(() => {
+    // Capture the frame from the webcam.
+    const img = webcam.capture();
 
-      // Make a prediction through mobilenet, getting the internal activation of
-      // the mobilenet model.
-      const activation = mobilenet.predict(img);
+    // Make a prediction through mobilenet, getting the internal activation of
+    // the mobilenet model.
+    const activation = mobilenet.predict(img);
 
-      // Make a prediction through our newly-trained model using the activation
-      // from mobilenet as input.
-      const predictions = model.predict(activation);
+    // Make a prediction through our newly-trained model using the activation
+    // from mobilenet as input.
+    const predictions = model.predict(activation);
 
-      // Returns the index with the maximum probability. This number corresponds
-      // to the class the model thinks is the most probable given the input.
-      return predictions.as1D().argMax();
-    });
+    // Returns the index with the maximum probability. This number corresponds
+    // to the class the model thinks is the most probable given the input.
+    return predictions.as1D();
+  });
 
-    const classId = (await predictedClass.data())[0];
-    predictedClass.dispose();
+  const numPredictions = Math.min(3, controllerDataset.numLabels);
+  const topPredictions = await predictedClass.topk(numPredictions);
 
-    ui.predictClass(classId);
-    await tf.nextFrame();
+  const predictionIndices = await topPredictions.indices.data();
+  const predictionValues = await topPredictions.values.data();
+
+  let predictionText = "Result:";
+
+  for (let i = 0; i < numPredictions; i++) {
+    const currentIndex = predictionIndices[i];
+    const currentValue = predictionValues[i];
+
+    const labelName = controllerDataset.getLabelNameFromModelPrediction(currentIndex);
+
+    predictionText += "\n" + labelName + ": " + currentValue.toFixed(5);
   }
-  ui.donePredicting();
+
+  ui.predictResult(predictionText);
+  predictedClass.dispose();
+  await tf.nextFrame();
 }
 
-// document.getElementById('train').addEventListener('click', async () => {
-//   ui.trainStatus('Training...');
-//   await tf.nextFrame();
-//   await tf.nextFrame();
-//   isPredicting = false;
-//   train();
-// });
-// document.getElementById('predict').addEventListener('click', () => {
-//   isPredicting = true;
-//   predict();
-// });
+document.getElementById('train').addEventListener('click', async () => {
+  ui.trainStatus('Training...');
+  await tf.nextFrame();
+  await tf.nextFrame();
+  train();
+});
+document.getElementById('predict').addEventListener('click', () => {
+  predict();
+});
+
+document.getElementById('download-button').addEventListener('click', async () => {
+  // console.log("downloading");
+  const savedModel = await model.save('downloads://my-model');
+  // console.log(savedModel);
+});
+
+document.getElementById('upload-button').addEventListener('click', async () => {
+  const jsonUpload = document.getElementById('json-upload');
+  const weightsUpload = document.getElementById('weights-upload');
+
+  model = await tf.loadModel(
+    tf.io.browserFiles([jsonUpload.files[0], weightsUpload.files[0]]));
+
+  // console.log(model);
+});
 
 async function init() {
   try {
@@ -185,6 +210,12 @@ async function init() {
     document.getElementById('no-webcam').style.display = 'block';
   }
   mobilenet = await loadMobilenet();
+
+  // model = tf.sequential(
+  //    {layers: [tf.layers.dense({units: 1, inputShape: [3]})]});
+  // const saveResults = await model.save('downloads://my-model-1');
+
+  // console.log(saveResults);
 
   // Warm up the model. This uploads weights to the GPU and compiles the WebGL
   // programs so the first time we collect data from the webcam it will be

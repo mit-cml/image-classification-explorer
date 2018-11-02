@@ -22,22 +22,23 @@ import * as tf from '@tensorflow/tfjs';
  */
 export class ControllerDataset {
   constructor() {
+    // Current number of active labels
     this.numLabels = 0;
 
-    // Keeps track of unique label ids for every label
+    // Keeps track of total number of unique labels added
     this.totalNumLabelsAdded = 0;
 
     // Keeps track of all active labels and maps their ids to their names
     this.activeLabels = {};
+
+    // Maps model label prediction numbers to label names
+    this.currentModelPredictionsToLabelNames = {};
 
     // A mapping from class labels to lists of images users uploaded for that class (imgs as in those returned by webcam.capture())
     this.labelImgs = {};
 
     // A mapping from class labels to lists of activation tensors obtained from corresponding images in this.classImgs
     this.labelXs = {};
-
-    // Checks whether or not we have calculated xs and ys to return already. If so, we cannot add new labels.
-    this.gotXsAndYs = false;
   }
 
   /**
@@ -67,6 +68,10 @@ export class ControllerDataset {
     }
   }
 
+  getLabelNameFromModelPrediction(prediction) {
+    return this.currentModelPredictionsToLabelNames[prediction];
+  }
+
   addLabel(labelName) {
     this.activeLabels[this.totalNumLabelsAdded] = labelName;
     this.numLabels += 1;
@@ -85,7 +90,9 @@ export class ControllerDataset {
   }
 
   getXsAndYs() {
-    const activeLabelIds = this.activeLabels.keys();
+    const activeLabelIds = Object.keys(this.activeLabels);
+
+    this.currentModelPredictionsToLabelNames = {};
 
     // Initialize the xs and ys
     let labelXs = tf.tensor([]);
@@ -93,6 +100,8 @@ export class ControllerDataset {
 
     // Adding the labels' xs and ys
     for (let i = 0; i < activeLabelIds.length; i++) {
+      this.currentModelPredictionsToLabelNames[i] = this.activeLabels[activeLabelIds[i]];
+
       const currentLabelXs = this.labelXs[activeLabelIds[i]];
       labelXs = labelXs.concat(currentLabelXs, 0);
 
@@ -101,7 +110,6 @@ export class ControllerDataset {
       labelYs = labelYs.concat(currentY.tile([currentNumXs, 1]), 0);
     }
 
-    this.gotXsAndYs = true;
     return {'xs': tf.keep(labelXs), 'ys': tf.keep(labelYs)};
   }
 }
