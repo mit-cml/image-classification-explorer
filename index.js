@@ -16,6 +16,8 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+const JSZip = require('jszip');
+const FileSaver = require('file-saver');
 
 import {ControllerDataset} from './controller_dataset';
 import * as ui from './ui';
@@ -155,7 +157,7 @@ async function predict() {
     return predictions.as1D();
   });
 
-  const numPredictions = Math.min(3, controllerDataset.numLabels);
+  const numPredictions = 3;
   const topPredictions = await predictedClass.topk(numPredictions);
 
   const predictionIndices = await topPredictions.indices.data();
@@ -188,20 +190,58 @@ document.getElementById('predict').addEventListener('click', () => {
 });
 
 document.getElementById('download-button').addEventListener('click', async () => {
-  // console.log("downloading");
-  const savedModel = await model.save('downloads://my-model');
-  // console.log(savedModel);
+  const zipSaver = {save: function(modelSpecs) {
+    const modelTopologyFileName = "model.json";
+    const weightDataFileName = "model.weights.bin";
+    const modelLabelsName = "model_labels.json";
+    const modelZipName = "model.mdl";
+
+    const weightsBlob = new Blob(
+      [modelSpecs.weightData], {type: 'application/octet-stream'});
+
+    const weightsManifest = [{
+      paths: ['./' + weightDataFileName],
+      weights: modelSpecs.weightSpecs
+    }];
+    const modelTopologyAndWeightManifest = {
+      modelTopology: modelSpecs.modelTopology,
+      weightsManifest
+    };
+    const modelTopologyAndWeightManifestBlob = new Blob(
+      [JSON.stringify(modelTopologyAndWeightManifest)],
+      {type: 'application/json'});
+
+    const zip = new JSZip();
+    zip.file(modelTopologyFileName, modelTopologyAndWeightManifestBlob);
+    zip.file(weightDataFileName, weightsBlob);
+    zip.file(modelLabelsName, controllerDataset.getCurrentLabelNamesJson());
+
+    zip.generateAsync({type:"blob"})
+      .then(function (blob) {
+          FileSaver.saveAs(blob, modelZipName);
+      });
+  }};
+
+  const savedModel = await model.save(zipSaver);
 });
 
-document.getElementById('upload-button').addEventListener('click', async () => {
-  const jsonUpload = document.getElementById('json-upload');
-  const weightsUpload = document.getElementById('weights-upload');
+// document.getElementById('upload-button').addEventListener('click', async () => {
+//   const jsonUpload = document.getElementById('json-upload');
+//   const weightsUpload = document.getElementById('weights-upload');
+//   const labelsUpload = document.getElementById('labels-upload');
 
-  model = await tf.loadModel(
-    tf.io.browserFiles([jsonUpload.files[0], weightsUpload.files[0]]));
+//   model = await tf.loadModel(
+//     tf.io.browserFiles([jsonUpload.files[0], weightsUpload.files[0]]));
 
-  // console.log(model);
-});
+//   const reader = new FileReader();
+
+//   reader.onload = function(event) {
+//     controllerDataset.setCurrentLabelNames(event.target.result);
+//     console.log("Done uploading");
+//   }
+
+//   reader.readAsText(labelsUpload.files[0]);
+// });
 
 async function init() {
   try {
@@ -210,12 +250,6 @@ async function init() {
     document.getElementById('no-webcam').style.display = 'block';
   }
   mobilenet = await loadMobilenet();
-
-  // model = tf.sequential(
-  //    {layers: [tf.layers.dense({units: 1, inputShape: [3]})]});
-  // const saveResults = await model.save('downloads://my-model-1');
-
-  // console.log(saveResults);
 
   // Warm up the model. This uploads weights to the GPU and compiles the WebGL
   // programs so the first time we collect data from the webcam it will be

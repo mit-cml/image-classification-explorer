@@ -32,7 +32,7 @@ export class ControllerDataset {
     this.activeLabels = {};
 
     // Maps model label prediction numbers to label names
-    this.currentModelPredictionsToLabelNames = {};
+    this.currentLabelNamesMap = {};
 
     // A mapping from class labels to lists of images users uploaded for that class (imgs as in those returned by webcam.capture())
     this.labelImgs = {};
@@ -69,7 +69,15 @@ export class ControllerDataset {
   }
 
   getLabelNameFromModelPrediction(prediction) {
-    return this.currentModelPredictionsToLabelNames[prediction];
+    return this.currentLabelNamesMap[prediction];
+  }
+
+  getCurrentLabelNamesJson() {
+    return JSON.stringify(this.currentLabelNamesMap);
+  }
+
+  setCurrentLabelNames(labelNamesJson) {
+    this.currentLabelNamesMap = JSON.parse(labelNamesJson);
   }
 
   addLabel(labelName) {
@@ -92,7 +100,7 @@ export class ControllerDataset {
   getXsAndYs() {
     const activeLabelIds = Object.keys(this.activeLabels);
 
-    this.currentModelPredictionsToLabelNames = {};
+    this.currentLabelNamesMap = {};
 
     // Initialize the xs and ys
     let labelXs = tf.tensor([]);
@@ -100,7 +108,7 @@ export class ControllerDataset {
 
     // Adding the labels' xs and ys
     for (let i = 0; i < activeLabelIds.length; i++) {
-      this.currentModelPredictionsToLabelNames[i] = this.activeLabels[activeLabelIds[i]];
+      this.currentLabelNamesMap[i] = this.activeLabels[activeLabelIds[i]];
 
       const currentLabelXs = this.labelXs[activeLabelIds[i]];
       labelXs = labelXs.concat(currentLabelXs, 0);

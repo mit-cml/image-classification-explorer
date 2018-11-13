@@ -15,6 +15,11 @@
  * =============================================================================
  */
 
+body {
+  background-color: #f1f1f1;
+}
+
+/* Displays if no webcam is found */
 #no-webcam {
   display: none;
   text-align: center;
@@ -24,39 +29,57 @@
   line-height: 30px;
 }
 
-/*.webcam-box-outer {
-  background: black;
-  border: 1px solid #585858;
-  border-radius: 4px;
-  box-sizing: border-box;
-  display: inline-block;
-  padding: 9px;
-}*/
+/* Styling for the title at the top of the page */
+.title-container {
+  text-align: center;
+}
 
-.webcam-box-inner {
-  border: 1px solid #585858;
-  border-radius: 4px;
-  box-sizing: border-box;
-  display: flex;
-  justify-content: center;
+.download-upload-container {
+  float: left;
+  margin-top: 8px;
+}
+
+/* Styling for the tabs */
+.tab-container {
   overflow: hidden;
-  width: 160px;
-}
-#webcam {
-  height: 160px;
-  transform: scaleX(-1);
+  border: 1px solid #ccc;
 }
 
-/*.label-images-outer {
-  background: black;
-  border: 1px solid #585858;
-  border-radius: 4px;
-  box-sizing: border-box;
-  display: inline-block;
-  padding: 9px;
-  position: relative;
-  transition: box-shadow 0.3s;
-}*/
+.tab-button {
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+}
+
+.tab-button:hover {
+  background-color: #ddd;
+}
+
+.tab-button.active {
+  background-color: #ccc;
+}
+
+/* Styling for 3 columns */
+.content-column {
+  width: 33.33333333%;
+  float: left;
+}
+
+/* Styling for the labels column */
+.labels-container {
+  display: flex;
+  flex-flow: column wrap;
+  justify-content: space-evenly;
+  height: 75%;
+}
+
+.add-labels-container {
+  text-align: center;
+  margin-top: 12px;
+}
 
 .label-images-inner {
   border: 1px solid #585858;
@@ -78,11 +101,59 @@ label {
     display: block;
 }
 
-#download-button {
+/* Styling for the run model column */
+
+.run-model-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 80%;
+}
+
+.webcam-box-inner {
+  border: 1px solid #585858;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  width: 160px;
+  margin: 0 auto;
+}
+
+#webcam {
+  height: 160px;
+  transform: scaleX(-1);
+}
+
+/* Styling for the results column */
+
+.results-title {
+  text-align: center;
+}
+
+.results-image-container {
+  text-align: center;
+}
+
+.analysis-tools-buttons-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 40%;
+}
+
+
+
+
+
+/*#download-button {
   margin-top: 1rem;
 }
 
 #upload-button {
   margin-top: 1rem;
   display: block;
-}
+}*/

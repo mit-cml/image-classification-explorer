@@ -28,54 +28,112 @@ limitations under the License.
   <div id="no-webcam">
       No webcam found. <br/>
       To use this interface, use a device with a webcam.
-    </div>
-  <!-- Top -->
+  </div>
+
   <div id="status">Loading mobilenet...</div>
 
-  <div id="content" style="display:none">
+  <div id="explorer" style="display:none">
 
-    <div class="labels-container">
-      Make sure your labels are all named differently!
-      
-      <div class="labels-outer">
-      </div>
+    <div class="title-container">
+      <div class="download-upload-container">
+        <button id="download-button"><span>Download Model</span></button>
 
-      <div class="add-labels-container">
-        <div class="add-labels-name">
-          Add a label: <input type="text" name="label-name" id="label-name">
+        <!-- <div class="upload-container">
+          <label for="json-upload">Model JSON:</label>
+          <input name="json-upload" id="json-upload" type="file"/>
+          <label for="weights-upload">Model Weights:</label>
+          <input name="weights-upload" id="weights-upload" type="file"/>
+          <label for="labels-upload">Model Labels:</label>
+          <input name="labels-upload" id="labels-upload" type="file"/>
         </div>
-        <button id="add-labels-button"><span>Add a class</span></button>
+
+        <button id="upload-button"><span>Upload Model</span></button> -->
       </div>
+
+      <h1 class="title-text">Image Classification Explorer</h1>
     </div>
 
-    <div class="run-model-container">
-      <button id="train">
-        <span id="train-status">TRAIN MODEL</span>
-      </button>
-      <button id="predict">
-        <span>PREDICT</span>
-      </button>
-      <div class="predict-result-container">
-        <span id="predict-result"></span>
-      </div>
+    <div class="tab-container">
+      <button class="tab-button">Training</button>
+      <button class="tab-button">Testing</button>
     </div>
 
-    <div class="webcam-box-outer">
-      <div class="webcam-box-inner">
-        <video autoplay playsinline muted id="webcam" width="224" height="224"></video>
+    <div class="training-container">
+
+      <div class="content-column">
+
+        <div class="add-labels-container">
+          <div class="add-labels-name">
+            <input type="text" name="label-name" id="label-name">
+          </div>
+          <button id="add-labels-button"><span>Add a label</span></button>
+        </div>
+
+        <div class="labels-container">
+        </div>
+
       </div>
-    </div>
 
-    <div class="download-upload-container">
-      <button id="download-button"><span>Download Model</span></button>
-      <!-- <a href="path_to_file" id="download-button" download="proposed_file_name">Download Model</a> -->
+      <div class="content-column">
 
-      <div class="upload-container">
-        <label for="json-upload">Model JSON:</label>
-        <input name="json-upload" id="json-upload" type="file"/>
-        <label for="weights-upload">Model Weights:</label>
-        <input name="weights-upload" id="weights-upload" type="file"/>
-        <button id="upload-button"><span>Upload Model</span></button>
+        <div class="run-model-container">
+          <div class="webcam-box-outer">
+            <div class="webcam-box-inner">
+              <video autoplay playsinline muted id="webcam" width="224" height="224"></video>
+            </div>
+          </div>
+
+          <div class="run-model">
+            <button id="train">
+              <span>Train model</span>
+            </button>
+            <div>
+              <span id="train-status"></span>
+            </div>
+          </div>
+
+          <div class="predict-result-container">
+            <button id="predict">
+              <span>Predict</span>
+            </button>
+            <div>
+              <span id="predict-result"></span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="content-column">
+
+        <div class="results-container">
+          <div class="results-title">
+            <p>Results</p>
+          </div>
+
+          <div class="results-image-container">
+            <canvas class="results-image-canvas"></canvas>
+            <div>
+              <span id="results-image-predictions"></span>
+            </div>
+          </div>
+
+          <div class="analysis-tools-buttons-container">
+            <div class="analysis-tools-buttons">
+              <button id="analysis-correctness"><span>Label Correctness</span></button>
+            </div>
+            
+            <div class="analysis-tools-buttons">
+              <button id="analysis-error"><span>Error per Label</span></button>
+            </div>
+            
+            <div class="analysis-tools-buttons">
+              <button id="analysis-confidence"><span>Confidence Graph</span></button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
