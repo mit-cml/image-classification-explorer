@@ -17,10 +17,10 @@
 import * as tf from '@tensorflow/tfjs';
 
 /**
- * A dataset for webcam controls which allows the user to add example Tensors
+ * A class representing a dataset which allows the user to add example Tensors
  * for particular labels. This object will concat them into two large xs and ys.
  */
-export class ControllerDataset {
+export class Dataset {
   constructor() {
     // Current number of active labels
     this.numLabels = 0;
@@ -51,7 +51,7 @@ export class ControllerDataset {
   addExample(image, activation, labelId) {
     if (!(labelId in this.labelImgs)) {
       // For the first example that gets added for each label, keep the image 
-      // and its activation so that the ControllerDataset owns the memory of 
+      // and its activation so that the Dataset owns the memory of 
       // the inputs. This makes sure that if addExample() is called in a tf.tidy(),
       // these Tensors will not get disposed.
       this.labelImgs[labelId] = tf.keep(image);
@@ -97,7 +97,7 @@ export class ControllerDataset {
     return this.labelImgs[labelId];
   }
 
-  getXsAndYs() {
+  getData() {
     const activeLabelIds = Object.keys(this.activeLabels);
 
     this.currentLabelNamesMap = {};
@@ -106,18 +106,24 @@ export class ControllerDataset {
     let labelXs = tf.tensor([]);
     let labelYs = tf.tensor([]);
 
-    // Adding the labels' xs and ys
+    // Initialize the label images
+    let labelImgs = tf.tensor([]);
+
+    // Adding the labels' xs and ys and images
     for (let i = 0; i < activeLabelIds.length; i++) {
       this.currentLabelNamesMap[i] = this.activeLabels[activeLabelIds[i]];
 
       const currentLabelXs = this.labelXs[activeLabelIds[i]];
       labelXs = labelXs.concat(currentLabelXs, 0);
 
+      const currentLabelImgs = this.labelImgs[activeLabelIds[i]];
+      labelImgs = labelImgs.concat(currentLabelImgs, 0);
+
       const currentY = tf.oneHot(tf.tensor1d([i]).toInt(), this.numLabels);
       const currentNumXs = currentLabelXs.shape[0];
       labelYs = labelYs.concat(currentY.tile([currentNumXs, 1]), 0);
     }
 
-    return {'xs': tf.keep(labelXs), 'ys': tf.keep(labelYs)};
+    return {'xs': tf.keep(labelXs), 'ys': tf.keep(labelYs), 'imgs': tf.keep(labelImgs)};
   }
 }

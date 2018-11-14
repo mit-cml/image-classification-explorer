@@ -54,11 +54,15 @@ limitations under the License.
     </div>
 
     <div class="tab-container">
-      <button class="tab-button">Training</button>
-      <button class="tab-button">Testing</button>
+      <button class="tab-button" id="training-tab">Training</button>
+      <button class="tab-button" id="testing-tab">Testing</button>
     </div>
 
-    <div class="training-container">
+
+    <!-- TRAINING TAB -->
+
+
+    <div class="explorer-data-container" id="training">
 
       <div class="content-column">
 
@@ -69,7 +73,7 @@ limitations under the License.
           <button id="add-labels-button"><span>Add a label</span></button>
         </div>
 
-        <div class="labels-container">
+        <div class="labels-container" id="labels-container-training">
         </div>
 
       </div>
@@ -77,27 +81,19 @@ limitations under the License.
       <div class="content-column">
 
         <div class="run-model-container">
+
           <div class="webcam-box-outer">
-            <div class="webcam-box-inner">
+            <div class="webcam-box-inner" id="webcam-box-inner-training">
               <video autoplay playsinline muted id="webcam" width="224" height="224"></video>
             </div>
           </div>
 
-          <div class="run-model">
-            <button id="train">
+          <div class="run-model-button-inner">
+            <button class="run-model-button" id="train">
               <span>Train model</span>
             </button>
             <div>
               <span id="train-status"></span>
-            </div>
-          </div>
-
-          <div class="predict-result-container">
-            <button id="predict">
-              <span>Predict</span>
-            </button>
-            <div>
-              <span id="predict-result"></span>
             </div>
           </div>
 
@@ -107,35 +103,112 @@ limitations under the License.
 
       <div class="content-column">
 
-        <div class="results-container">
+        <div class="results-container" id="results-container-training" style="display:none">
           <div class="results-title">
             <p>Results</p>
           </div>
 
           <div class="results-image-container">
-            <canvas class="results-image-canvas"></canvas>
-            <div>
-              <span id="results-image-predictions"></span>
+            <div class="results-image-canvas-inner">
+              <canvas class="results-image-canvas" id="results-image-canvas-training" width="224" height="224"></canvas>
+            </div>
+            <div class="results-image-predictions-inner">
+              <span class="results-image-predictions" id="results-image-predictions-training"></span>
+            </div>
+            <div class="results-image-buttons-inner">
+              <button class="results-image-button" id="results-image-button-prev-training"><span>Previous</span></button>
+              <button class="results-image-button" id="results-image-button-next-training"><span>Next</span></button>
             </div>
           </div>
 
-          <div class="analysis-tools-buttons-container">
-            <div class="analysis-tools-buttons">
-              <button id="analysis-correctness"><span>Label Correctness</span></button>
+          <div class="analysis-tools-button-container">
+            <div class="analysis-tools-button-inner">
+              <button class="analysis-tools-button" id="analysis-correctness-training"><span>Label Correctness</span></button>
             </div>
             
-            <div class="analysis-tools-buttons">
-              <button id="analysis-error"><span>Error per Label</span></button>
+            <div class="analysis-tools-button-inner">
+              <button class="analysis-tools-button" id="analysis-error-training"><span>Error per Label</span></button>
             </div>
             
-            <div class="analysis-tools-buttons">
-              <button id="analysis-confidence"><span>Confidence Graph</span></button>
+            <div class="analysis-tools-button-inner">
+              <button class="analysis-tools-button" id="analysis-confidence-training"><span>Confidence Graph</span></button>
             </div>
           </div>
         </div>
 
       </div>
     </div>
+
+
+    <!-- TESTING TAB -->
+
+
+    <div class="explorer-data-container" id="testing">
+
+      <div class="content-column">
+
+        <div class="labels-container" id="labels-container-testing">
+        </div>
+
+      </div>
+
+      <div class="content-column">
+
+        <div class="run-model-container">
+
+          <div class="webcam-box-outer">
+            <div class="webcam-box-inner" id="webcam-box-inner-testing">
+            </div>
+          </div>
+
+          <div class="run-model-button-inner">
+            <button class="run-model-button" id="predict">
+              <span>Predict</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="content-column">
+
+        <div class="results-container" id="results-container-testing" style="display:none">
+          <div class="results-title">
+            <p>Results</p>
+          </div>
+
+          <div class="results-image-container">
+            <div class="results-image-canvas-inner">
+              <canvas class="results-image-canvas" id="results-image-canvas-testing" width="224" height="224"></canvas>
+            </div>
+            <div class="results-image-predictions-inner">
+              <span class="results-image-predictions" id="results-image-predictions-testing"></span>
+            </div>
+            <div class="results-image-buttons-inner">
+              <button class="results-image-button" id="results-image-button-prev-testing"><span>Previous</span></button>
+              <button class="results-image-button" id="results-image-button-next-testing"><span>Next</span></button>
+            </div>
+          </div>
+
+          <div class="analysis-tools-button-container">
+            <div class="analysis-tools-button-inner">
+              <button class="analysis-tools-button" id="analysis-correctness-testing"><span>Label Correctness</span></button>
+            </div>
+            
+            <div class="analysis-tools-button-inner">
+              <button class="analysis-tools-button" id="analysis-error-testing"><span>Error per Label</span></button>
+            </div>
+            
+            <div class="aanalysis-tools-button-inner">
+              <button class="analysis-tools-button" id="analysis-confidence-testing"><span>Confidence Graph</span></button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
 
   </div>
 

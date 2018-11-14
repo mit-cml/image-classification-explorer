@@ -19,7 +19,8 @@ import * as tf from '@tensorflow/tfjs';
 const JSZip = require('jszip');
 const FileSaver = require('file-saver');
 
-import {ControllerDataset} from './controller_dataset';
+import {Dataset} from './dataset';
+import {Results} from './results';
 import * as ui from './ui';
 import {Webcam} from './webcam';
 
@@ -32,8 +33,12 @@ const DENSE_UNITS = 100;
 // A webcam class that generates Tensors from the images from the webcam.
 const webcam = new Webcam(document.getElementById('webcam'));
 
-// The dataset object where we will store activations.
-const controllerDataset = new ControllerDataset();
+// Dataset objects for the training and test sets
+const trainingDataset = new Dataset();
+const testingDataset = new Dataset();
+
+let trainingResults;
+let testingResults;
 
 let mobilenet;
 let model;
@@ -51,29 +56,36 @@ async function loadMobilenet() {
 
 // When a label's add example button is clicked, read a frame from the 
 // webcam and associate it with the corresponding label
-ui.setAddExampleHandler(labelId => {
-  tf.tidy(() => {
+ui.setAddExampleHandler((labelId, datasetName) => {
+  tf.tidy(async () => {
     const img = webcam.capture();
-    controllerDataset.addExample(img, mobilenet.predict(img), labelId);
+
+    if (datasetName === "training") {
+      trainingDataset.addExample(img, mobilenet.predict(img), labelId);
+    } else {
+      testingDataset.addExample(img, mobilenet.predict(img), labelId);
+    }
 
     // Draw the preview thumbnail.
-    ui.drawThumb(img, labelId);
+    ui.drawThumb(img, datasetName, labelId);
   });
 });
 
-// Functions to update the state of the controller dataset
+// Functions to update the state of the datasets
 ui.setAddLabelHandler(labelName => {
-  return controllerDataset.addLabel(labelName);
+  testingDataset.addLabel(labelName);
+  return trainingDataset.addLabel(labelName);
 });
 ui.setRemoveLabelHandler(labelId => {
-  controllerDataset.removeLabel(labelId);
+  testingDataset.removeLabel(labelId);
+  trainingDataset.removeLabel(labelId);
 });
 
 /**
  * Sets up and trains the classifier.
  */
 async function train() {
-  if (controllerDataset.labelXs == {}) {
+  if (trainingDataset.labelXs == {}) {
     throw new Error('Add some examples before training!');
   }
 
@@ -96,7 +108,7 @@ async function train() {
       // Layer 2. The number of units of the last layer should correspond
       // to the number of classes we want to predict.
       tf.layers.dense({
-        units: controllerDataset.numLabels,
+        units: trainingDataset.numLabels,
         kernelInitializer: 'varianceScaling',
         useBias: false,
         activation: 'softmax'
@@ -113,22 +125,22 @@ async function train() {
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
   // Get xs and ys
-  const xsAndYs = await tf.tidy(() => {
-    return controllerDataset.getXsAndYs();
+  const trainingData = await tf.tidy(() => {
+    return trainingDataset.getData();
   });
 
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends on how many examples the user
   // collects. This allows us to have a flexible batch size.
   const batchSize =
-      Math.floor(xsAndYs.xs.shape[0] * BATCH_SIZE_FRACTION);
+      Math.floor(trainingData.xs.shape[0] * BATCH_SIZE_FRACTION);
   if (!(batchSize > 0)) {
     throw new Error(
         `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
   }
 
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
-  model.fit(xsAndYs.xs, xsAndYs.ys, {
+  await model.fit(trainingData.xs, trainingData.ys, {
     batchSize,
     epochs: EPOCHS,
     callbacks: {
@@ -139,54 +151,89 @@ async function train() {
   });
 }
 
-async function predict() {
+async function predict(dataset) {
+  const datasetData = await tf.tidy(() => {
+    return dataset.getData();
+  });
+
   const predictedClass = tf.tidy(() => {
-    // Capture the frame from the webcam.
-    const img = webcam.capture();
-
-    // Make a prediction through mobilenet, getting the internal activation of
-    // the mobilenet model.
-    const activation = mobilenet.predict(img);
-
-    // Make a prediction through our newly-trained model using the activation
-    // from mobilenet as input.
-    const predictions = model.predict(activation);
-
-    // Returns the index with the maximum probability. This number corresponds
-    // to the class the model thinks is the most probable given the input.
-    return predictions.as1D();
+    // Make predictions from the mobilenet activations of the dataset
+    return model.predict(datasetData.xs);
   });
 
   const numPredictions = 3;
   const topPredictions = await predictedClass.topk(numPredictions);
 
-  const predictionIndices = await topPredictions.indices.data();
-  const predictionValues = await topPredictions.values.data();
+  const predictedIndices = await topPredictions.indices.data();
+  const predictedValues = await topPredictions.values.data();
 
-  let predictionText = "Result:";
+  const actualIndices = await datasetData.ys.argMax(1).data();
+  const labelNamesMap = JSON.parse(dataset.getCurrentLabelNamesJson());
 
-  for (let i = 0; i < numPredictions; i++) {
-    const currentIndex = predictionIndices[i];
-    const currentValue = predictionValues[i];
-
-    const labelName = controllerDataset.getLabelNameFromModelPrediction(currentIndex);
-
-    predictionText += "\n" + labelName + ": " + currentValue.toFixed(5);
-  }
-
-  ui.predictResult(predictionText);
   predictedClass.dispose();
-  await tf.nextFrame();
+
+  return new Results(datasetData.imgs, actualIndices, predictedIndices, predictedValues, labelNamesMap);
 }
+
+let resultsPrevButtonFunctionTraining = null;
+let resultsNextButtonFunctionTraining = null;
 
 document.getElementById('train').addEventListener('click', async () => {
   ui.trainStatus('Training...');
   await tf.nextFrame();
   await tf.nextFrame();
-  train();
+  await train();
+
+  trainingResults = await predict(trainingDataset);
+  ui.updateResult(trainingResults.getNextResult(), "training");
+
+  const resultsPrevButton = document.getElementById("results-image-button-prev-training");
+  const resultsNextButton = document.getElementById("results-image-button-next-training");
+
+  if (resultsPrevButtonFunctionTraining != null) {
+    resultsPrevButton.removeEventListener('click', resultsPrevButtonFunctionTraining);
+    resultsNextButton.removeEventListener('click', resultsNextButtonFunctionTraining);
+  }
+
+  resultsPrevButtonFunctionTraining = () => {
+    ui.updateResult(trainingResults.getPreviousResult(), "training");
+  }
+
+  resultsNextButtonFunctionTraining = () => {
+    ui.updateResult(trainingResults.getNextResult(), "training");
+  }
+
+  resultsPrevButton.addEventListener('click', resultsPrevButtonFunctionTraining);
+  resultsNextButton.addEventListener('click', resultsNextButtonFunctionTraining);
+
 });
-document.getElementById('predict').addEventListener('click', () => {
-  predict();
+
+let resultsPrevButtonFunctionTesting = null;
+let resultsNextButtonFunctionTesting = null;
+
+document.getElementById('predict').addEventListener('click', async () => {
+  testingResults = await predict(testingDataset);
+  ui.updateResult(testingResults.getNextResult(), "testing");
+
+  const resultsPrevButton = document.getElementById("results-image-button-prev-testing");
+  const resultsNextButton = document.getElementById("results-image-button-next-testing");
+
+  if (resultsPrevButtonFunctionTesting != null) {
+    resultsPrevButton.removeEventListener('click', resultsPrevButtonFunctionTesting);
+    resultsNextButton.removeEventListener('click', resultsNextButtonFunctionTesting);
+  }
+
+  resultsPrevButtonFunctionTesting = () => {
+    ui.updateResult(testingResults.getPreviousResult(), "testing");
+  }
+
+  resultsNextButtonFunctionTesting = () => {
+    ui.updateResult(testingResults.getNextResult(), "testing");
+  }
+
+  resultsPrevButton.addEventListener('click', resultsPrevButtonFunctionTesting);
+  resultsNextButton.addEventListener('click', resultsNextButtonFunctionTesting);
+
 });
 
 document.getElementById('download-button').addEventListener('click', async () => {
@@ -214,7 +261,7 @@ document.getElementById('download-button').addEventListener('click', async () =>
     const zip = new JSZip();
     zip.file(modelTopologyFileName, modelTopologyAndWeightManifestBlob);
     zip.file(weightDataFileName, weightsBlob);
-    zip.file(modelLabelsName, controllerDataset.getCurrentLabelNamesJson());
+    zip.file(modelLabelsName, trainingDataset.getCurrentLabelNamesJson());
 
     zip.generateAsync({type:"blob"})
       .then(function (blob) {
@@ -236,7 +283,7 @@ document.getElementById('download-button').addEventListener('click', async () =>
 //   const reader = new FileReader();
 
 //   reader.onload = function(event) {
-//     controllerDataset.setCurrentLabelNames(event.target.result);
+//     trainingDataset.setCurrentLabelNames(event.target.result);
 //     console.log("Done uploading");
 //   }
 

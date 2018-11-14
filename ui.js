@@ -18,33 +18,24 @@ import * as tf from '@tensorflow/tfjs';
 
 export function init() {
   document.getElementById('explorer').style.display = '';
-  statusElement.style.display = 'none';
+  document.getElementById('status').style.display = 'none';
+
+  trainingTabButton.click();
 }
 
-const trainStatusElement = document.getElementById('train-status');
-
-const statusElement = document.getElementById('status');
-
-const predictResultElement = document.getElementById('predict-result');
+// Trackers for the current state of the explorer (eg. training or testing)
+const datasetNames = ["training", "testing"];
+let currentDatasetName = datasetNames[0];
 
 // Elements dealing with label display
-const labelsOuter = document.getElementsByClassName("labels-container")[0];
-
 const addLabelsInput = document.getElementById('label-name');
 const addLabelsButton = document.getElementById('add-labels-button');
 
-// export function isPredicting() {
-//   statusElement.style.visibility = 'visible';
-// }
-// export function donePredicting() {
-//   statusElement.style.visibility = 'hidden';
-// }
+// Element for displaying training loss
+const trainStatusElement = document.getElementById('train-status');
+
 export function trainStatus(status) {
   trainStatusElement.innerText = status;
-}
-
-export function predictResult(result) {
-  predictResultElement.innerText = result;
 }
 
 export let addExampleHandler;
@@ -62,21 +53,7 @@ export function setRemoveLabelHandler(handler) {
   removeLabelHandler = handler;
 }
 
-/*
-<div class="label-box" id="0">
-  <div class="label-name">
-    <span>Cat</span>
-  </div>
-  <div
-  <div class="label-images">
-
-  </div>
-  <button class="label-remove"><span>Remove this label</span></button>
-  <button class="label-add-example"><span>Add example</span></button>
-</div>
-*/
-
-// Handlers for adding a new label
+// Handler for adding a new label
 function addLabel() {
   const newLabelName = addLabelsInput.value;
   const newLabelId = addLabelHandler(newLabelName);
@@ -85,96 +62,153 @@ function addLabel() {
   const removeLabelButtonText = "Remove this label";
   const addLabelExampleButtonText = "Add example";
 
-  // Overarching div for a label
-  const labelBox = document.createElement("div");
-  labelBox.setAttribute("class", "label-box");
-  labelBox.setAttribute("id", newLabelId.toString());
+  // We use this array so that we can remove labelBoxes from
+  // both the training and testing tabs when clicking the
+  // remove buttons in the training tab
+  const labelBoxTraining = document.createElement("div");
+  const labelBoxTesting = document.createElement("div");
+  const labelBoxes = [labelBoxTraining, labelBoxTesting];
 
-  // Div for counting number of examples for this label
-  const labelCount = document.createElement("div");
-  labelCount.setAttribute("class", "label-count-outer");
-  const labelCountText = document.createElement("span");
-  labelCountText.textContent = "Num examples: ";
-  const labelCountSpan = document.createElement("span");
-  labelCountSpan.textContent = 0;
-  labelCount.appendChild(labelCountText);
-  labelCount.appendChild(labelCountSpan);
+  for (let i = 0; i < datasetNames.length; i++) {
+    const datasetName = datasetNames[i];
+    const labelsOuter = document.getElementById("labels-container-" + datasetName);
 
-  // Div for placing the label name
-  const labelName = document.createElement("div");
-  labelName.setAttribute("class", "label-name-outer");
-  const labelNameSpan = document.createElement("span");
-  labelNameSpan.textContent = "Label: " + newLabelName;
-  labelName.appendChild(labelNameSpan);
+    // Overarching div for a label
+    const labelBox = labelBoxes[i];
+    labelBox.setAttribute("class", "label-container");
+    labelBox.setAttribute("id", datasetName + "-" + newLabelId);
 
-  // Div where we will put a thumbnail/previews of images users have added
-  const labelImagesOuter = document.createElement("div");
-  labelImagesOuter.setAttribute("class", "label-images-outer");
-  const labelImagesInner = document.createElement("div");
-  labelImagesInner.setAttribute("class", "label-images-inner");
-  const labelImagesCanvas = document.createElement("canvas");
-  labelImagesCanvas.setAttribute("class", "label-images-canvas");
-  labelImagesCanvas.setAttribute("width", 224);
-  labelImagesCanvas.setAttribute("height", 224);
-  labelImagesCanvas.setAttribute("id", "label-images-canvas-" + newLabelId);
-  labelImagesInner.appendChild(labelImagesCanvas);
-  labelImagesOuter.appendChild(labelImagesInner);
+    // Div for counting number of examples for this label
+    const labelCount = document.createElement("div");
+    labelCount.setAttribute("class", "label-count-outer");
+    const labelCountText = document.createElement("span");
+    labelCountText.textContent = "Num examples: ";
+    const labelCountSpan = document.createElement("span");
+    labelCountSpan.textContent = 0;
+    labelCount.appendChild(labelCountText);
+    labelCount.appendChild(labelCountSpan);
 
-  // Button for removing this label
-  const labelRemove = document.createElement("button");
-  labelRemove.setAttribute("class", "label-remove");
-  const labelRemoveSpan = document.createElement("span");
-  labelRemoveSpan.textContent = removeLabelButtonText;
-  labelRemove.appendChild(labelRemoveSpan);
+    // Div for placing the label name
+    const labelName = document.createElement("div");
+    labelName.setAttribute("class", "label-name-outer");
+    const labelNameSpan = document.createElement("span");
+    labelNameSpan.textContent = "Label: " + newLabelName;
+    labelName.appendChild(labelNameSpan);
 
-  labelRemove.addEventListener("click", () => {
-    removeLabelHandler(newLabelId);
-    labelBox.parentNode.removeChild(labelBox);
-  });
+    // Div where we will put a thumbnail/previews of images users have added
+    const labelImagesOuter = document.createElement("div");
+    labelImagesOuter.setAttribute("class", "label-images-outer");
+    const labelImagesInner = document.createElement("div");
+    labelImagesInner.setAttribute("class", "label-images-inner");
+    const labelImagesCanvas = document.createElement("canvas");
+    labelImagesCanvas.setAttribute("class", "label-images-canvas");
+    labelImagesCanvas.setAttribute("width", 224);
+    labelImagesCanvas.setAttribute("height", 224);
+    labelImagesCanvas.setAttribute("id", "label-images-canvas-" + datasetName + "-" + newLabelId);
+    labelImagesInner.appendChild(labelImagesCanvas);
+    labelImagesOuter.appendChild(labelImagesInner);
 
-  // Button for adding an example to this label
-  const labelAddExample = document.createElement("button");
-  labelAddExample.setAttribute("class", "label-add-example");
-  const labelAddExampleSpan = document.createElement("span");
-  labelAddExampleSpan.textContent = addLabelExampleButtonText;
-  labelAddExample.appendChild(labelAddExampleSpan);
+    // Button for adding an example to this label
+    const labelAddExample = document.createElement("button");
+    labelAddExample.setAttribute("class", "label-add-example");
+    const labelAddExampleSpan = document.createElement("span");
+    labelAddExampleSpan.textContent = addLabelExampleButtonText;
+    labelAddExample.appendChild(labelAddExampleSpan);
 
-  labelAddExample.addEventListener("click", function() {
-    labelCountSpan.textContent = parseInt(labelCountSpan.textContent) + 1;
-    addExampleHandler(newLabelId);
-  });
+    labelAddExample.addEventListener("click", function() {
+      labelCountSpan.textContent = parseInt(labelCountSpan.textContent) + 1;
+      addExampleHandler(newLabelId, datasetName);
+    });
 
-  // Add all elements we just created to the label box and append to
-  // the container on the page
-  labelBox.appendChild(labelName);
-  labelBox.appendChild(labelCount);
-  labelBox.appendChild(labelImagesOuter);
-  labelBox.appendChild(labelRemove);
-  labelBox.appendChild(labelAddExample);
+    // Add all elements we just created to the label box and append to
+    // the container on the page. Also creates a remove label button if
+    // this is for the training tab
+    labelBox.appendChild(labelName);
+    labelBox.appendChild(labelCount);
+    labelBox.appendChild(labelImagesOuter);
 
-  labelsOuter.appendChild(labelBox);
+    if (datasetName === "training") {
+      const labelRemove = document.createElement("button");
+      labelRemove.setAttribute("class", "label-remove");
+      const labelRemoveSpan = document.createElement("span");
+      labelRemoveSpan.textContent = removeLabelButtonText;
+      labelRemove.appendChild(labelRemoveSpan);
+
+      labelRemove.addEventListener("click", () => {
+        removeLabelHandler(newLabelId);
+        labelBox.parentNode.removeChild(labelBox);
+        labelBoxes[i + 1].parentNode.removeChild(labelBoxes[i + 1]);
+      });
+
+      labelBox.appendChild(labelRemove);
+    }
+
+    labelBox.appendChild(labelAddExample);
+
+    labelsOuter.appendChild(labelBox);
+  }
+
+  
 }
 
 addLabelsButton.addEventListener('click', () => addLabel());
 
-// let mouseDown = false;
+// Handler for updating results
+export function updateResult(result, datasetName) {
+  document.getElementById('results-container-' + datasetName).style.display = "";
 
-// async function handler(label) {
-//   mouseDown = true;
-//   const className = CONTROLS[label];
-//   const button = document.getElementById(className);
-//   const total = document.getElementById(className + '-total');
-//   while (mouseDown) {
-//     addExampleHandler(label);
-//     document.body.setAttribute('data-active', CONTROLS[label]);
-//     total.innerText = totals[label]++;
-//     await tf.nextFrame();
-//   }
-//   document.body.removeAttribute('data-active');
-// }
+  const resultCanvas = document.getElementById("results-image-canvas-" + datasetName);
+  draw(result.img, resultCanvas);
 
-export function drawThumb(img, labelId) {
-  const thumbCanvas = document.getElementById("label-images-canvas-" + labelId);
+  const resultPredictionsSpan = document.getElementById("results-image-predictions-" + datasetName);
+  let predictionText = "Result:";
+
+  for (let i = 0; i < result.predictedLabels.length; i++) {
+    const currentLabel = result.predictedLabels[i];
+    const currentValue = result.predictedValues[i];
+
+    predictionText += "\n" + currentLabel + ": " + currentValue.toFixed(5);
+  }
+
+  resultPredictionsSpan.innerText = predictionText;
+}
+
+// Handler for switching tabs
+const trainingTabButton = document.getElementById("training-tab");
+const testingTabButton = document.getElementById("testing-tab");
+
+const trainingContainer = document.getElementById("training");
+const testingContainer = document.getElementById("testing");
+
+const webcam = document.getElementById("webcam");
+const webcamBoxTraining = document.getElementById("webcam-box-inner-training");
+const webcamBoxTesting = document.getElementById("webcam-box-inner-testing")
+
+trainingTabButton.addEventListener('click', () => {
+  trainingContainer.style.display = "";
+  testingContainer.style.display = "none";
+
+  trainingTabButton.className += " active";
+  testingTabButton.className = testingTabButton.className.replace(" active", "");
+
+  webcam.parentNode.removeChild(webcam);
+  webcamBoxTraining.appendChild(webcam);
+});
+
+testingTabButton.addEventListener('click', () => {
+  trainingContainer.style.display = "none";
+  testingContainer.style.display = "";
+
+  trainingTabButton.className = trainingTabButton.className.replace(" active", "");
+  testingTabButton.className += " active";
+
+  webcam.parentNode.removeChild(webcam);
+  webcamBoxTesting.appendChild(webcam);
+});
+
+// Handlers for drawing images on canvases
+export function drawThumb(img, datasetName, labelId) {
+  const thumbCanvas = document.getElementById("label-images-canvas-" + datasetName + "-" + labelId);
   draw(img, thumbCanvas);
 }
 
