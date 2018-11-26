@@ -53,11 +53,9 @@ export function setRemoveLabelHandler(handler) {
   removeLabelHandler = handler;
 }
 
-// Handler for adding a new label
-function addLabel() {
-  const newLabelName = addLabelsInput.value;
+// Handlers for adding/removing labels
+export function addLabel(newLabelName) {
   const newLabelId = addLabelHandler(newLabelName);
-  addLabelsInput.value = "";
 
   const removeLabelButtonText = "Remove this label";
   const addLabelExampleButtonText = "Add example";
@@ -147,11 +145,20 @@ function addLabel() {
 
     labelsOuter.appendChild(labelBox);
   }
-
-  
 }
 
-addLabelsButton.addEventListener('click', () => addLabel());
+addLabelsButton.addEventListener('click', () => {
+  const newLabelName = addLabelsInput.value;
+  addLabel(newLabelName);
+  addLabelsInput.value = "";
+});
+
+export function removeLabels() {
+  var removeButtons = document.getElementsByClassName('label-remove');
+  while (removeButtons.length) {
+    removeButtons[0].click();
+  }
+}
 
 // Handler for updating results
 export function updateResult(result, datasetName) {
@@ -160,20 +167,29 @@ export function updateResult(result, datasetName) {
   const resultCanvas = document.getElementById("results-image-canvas-" + datasetName);
   draw(result.img, resultCanvas);
 
-  const resultPredictionsSpan = document.getElementById("results-image-predictions-" + datasetName);
-  let predictionText = "Result:";
+  const resultPredictionsDiv = document.getElementById("results-image-predictions-inner-" + datasetName);
+  while (resultPredictionsDiv.firstChild) {
+    resultPredictionsDiv.removeChild(resultPredictionsDiv.firstChild);
+  }
 
   for (let i = 0; i < result.predictedLabels.length; i++) {
     const currentLabel = result.predictedLabels[i];
     const currentValue = result.predictedValues[i];
 
-    predictionText += "\n" + currentLabel + ": " + currentValue.toFixed(5);
-  }
+    const resultPredictionSpan = document.createElement("span");
+    resultPredictionSpan.innerText = currentLabel + ": " + currentValue.toFixed(5);
 
-  resultPredictionsSpan.innerText = predictionText;
+    if (currentLabel === result.actualLabel) {
+      resultPredictionSpan.setAttribute("class", "result-image-prediction correct");
+    } else {
+      resultPredictionSpan.setAttribute("class", "result-image-prediction incorrect");
+    }
+
+    resultPredictionsDiv.appendChild(resultPredictionSpan);
+  }
 }
 
-// Handler for switching tabs
+// Handlers for switching tabs
 const trainingTabButton = document.getElementById("training-tab");
 const testingTabButton = document.getElementById("testing-tab");
 

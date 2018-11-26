@@ -34,11 +34,6 @@ body {
   text-align: center;
 }
 
-.download-upload-container {
-  float: left;
-  margin-top: 8px;
-}
-
 /* Styling for the tabs */
 .tab-container {
   overflow: hidden;
@@ -52,6 +47,10 @@ body {
   cursor: pointer;
   padding: 14px 16px;
   transition: 0.3s;
+}
+
+.tab-button.download-upload-button {
+  float: right;
 }
 
 .tab-button:hover {
@@ -140,14 +139,6 @@ label {
   text-align: center;
 }
 
-.analysis-tools-button-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  align-items: center;
-  height: 40%;
-}
-
 .results-image-canvas-inner {
   border: 1px solid #585858;
   border-radius: 4px;
@@ -161,6 +152,27 @@ label {
 .results-image-canvas {
   height: 66px;
   transform: scaleX(-1);
+}
+
+.result-image-prediction {
+  position: relative;
+  display: block;
+}
+
+.result-image-prediction.correct {
+  color: green;
+}
+
+.result-image-prediction.incorrect {
+  color: red;
+}
+
+.analysis-tools-button-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 40%;
 }
 
 

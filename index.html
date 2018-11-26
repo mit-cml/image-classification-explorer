@@ -35,27 +35,16 @@ limitations under the License.
   <div id="explorer" style="display:none">
 
     <div class="title-container">
-      <div class="download-upload-container">
-        <button id="download-button"><span>Download Model</span></button>
-
-        <!-- <div class="upload-container">
-          <label for="json-upload">Model JSON:</label>
-          <input name="json-upload" id="json-upload" type="file"/>
-          <label for="weights-upload">Model Weights:</label>
-          <input name="weights-upload" id="weights-upload" type="file"/>
-          <label for="labels-upload">Model Labels:</label>
-          <input name="labels-upload" id="labels-upload" type="file"/>
-        </div>
-
-        <button id="upload-button"><span>Upload Model</span></button> -->
-      </div>
-
       <h1 class="title-text">Image Classification Explorer</h1>
     </div>
 
     <div class="tab-container">
       <button class="tab-button" id="training-tab">Training</button>
       <button class="tab-button" id="testing-tab">Testing</button>
+
+      <input name="model-upload" id="model-upload" type="file" style="display:none"/>
+      <button class="tab-button download-upload-button" id="upload-button">Upload Model</button>
+      <button class="tab-button download-upload-button" id="download-button">Download Model</button>
     </div>
 
 
@@ -112,8 +101,7 @@ limitations under the License.
             <div class="results-image-canvas-inner">
               <canvas class="results-image-canvas" id="results-image-canvas-training" width="224" height="224"></canvas>
             </div>
-            <div class="results-image-predictions-inner">
-              <span class="results-image-predictions" id="results-image-predictions-training"></span>
+            <div class="results-image-predictions-inner" id="results-image-predictions-inner-training">
             </div>
             <div class="results-image-buttons-inner">
               <button class="results-image-button" id="results-image-button-prev-training"><span>Previous</span></button>
@@ -182,8 +170,7 @@ limitations under the License.
             <div class="results-image-canvas-inner">
               <canvas class="results-image-canvas" id="results-image-canvas-testing" width="224" height="224"></canvas>
             </div>
-            <div class="results-image-predictions-inner">
-              <span class="results-image-predictions" id="results-image-predictions-testing"></span>
+            <div class="results-image-predictions-inner" id="results-image-predictions-inner-testing">
             </div>
             <div class="results-image-buttons-inner">
               <button class="results-image-button" id="results-image-button-prev-testing"><span>Previous</span></button>

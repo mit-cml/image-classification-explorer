@@ -76,8 +76,8 @@ export class Dataset {
     return JSON.stringify(this.currentLabelNamesMap);
   }
 
-  setCurrentLabelNames(labelNamesJson) {
-    this.currentLabelNamesMap = JSON.parse(labelNamesJson);
+  setCurrentLabelNames(labelNamesJsonString) {
+    this.currentLabelNamesMap = JSON.parse(labelNamesJsonString);
   }
 
   addLabel(labelName) {
@@ -111,17 +111,21 @@ export class Dataset {
 
     // Adding the labels' xs and ys and images
     for (let i = 0; i < activeLabelIds.length; i++) {
-      this.currentLabelNamesMap[i] = this.activeLabels[activeLabelIds[i]];
+      const currentActiveLabelId = activeLabelIds[i];
 
-      const currentLabelXs = this.labelXs[activeLabelIds[i]];
-      labelXs = labelXs.concat(currentLabelXs, 0);
+      this.currentLabelNamesMap[i] = this.activeLabels[currentActiveLabelId];
 
-      const currentLabelImgs = this.labelImgs[activeLabelIds[i]];
-      labelImgs = labelImgs.concat(currentLabelImgs, 0);
+      if (currentActiveLabelId in this.labelImgs) {
+        const currentLabelXs = this.labelXs[currentActiveLabelId];
+        labelXs = labelXs.concat(currentLabelXs, 0);
 
-      const currentY = tf.oneHot(tf.tensor1d([i]).toInt(), this.numLabels);
-      const currentNumXs = currentLabelXs.shape[0];
-      labelYs = labelYs.concat(currentY.tile([currentNumXs, 1]), 0);
+        const currentLabelImgs = this.labelImgs[currentActiveLabelId];
+        labelImgs = labelImgs.concat(currentLabelImgs, 0);
+
+        const currentY = tf.oneHot(tf.tensor1d([i]).toInt(), this.numLabels);
+        const currentNumXs = currentLabelXs.shape[0];
+        labelYs = labelYs.concat(currentY.tile([currentNumXs, 1]), 0);
+      }
     }
 
     return {'xs': tf.keep(labelXs), 'ys': tf.keep(labelYs), 'imgs': tf.keep(labelImgs)};

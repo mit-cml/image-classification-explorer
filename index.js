@@ -151,7 +151,7 @@ async function train() {
   });
 }
 
-async function predict(dataset) {
+async function predict(dataset, modelLabelsJson) {
   const datasetData = await tf.tidy(() => {
     return dataset.getData();
   });
@@ -161,14 +161,15 @@ async function predict(dataset) {
     return model.predict(datasetData.xs);
   });
 
-  const numPredictions = 3;
+  const labelNamesMap = JSON.parse(modelLabelsJson);
+
+  const numPredictions = Math.min(3, Object.keys(labelNamesMap).length);
   const topPredictions = await predictedClass.topk(numPredictions);
 
   const predictedIndices = await topPredictions.indices.data();
   const predictedValues = await topPredictions.values.data();
 
   const actualIndices = await datasetData.ys.argMax(1).data();
-  const labelNamesMap = JSON.parse(dataset.getCurrentLabelNamesJson());
 
   predictedClass.dispose();
 
@@ -184,7 +185,7 @@ document.getElementById('train').addEventListener('click', async () => {
   await tf.nextFrame();
   await train();
 
-  trainingResults = await predict(trainingDataset);
+  trainingResults = await predict(trainingDataset, trainingDataset.getCurrentLabelNamesJson());
   ui.updateResult(trainingResults.getNextResult(), "training");
 
   const resultsPrevButton = document.getElementById("results-image-button-prev-training");
@@ -205,14 +206,13 @@ document.getElementById('train').addEventListener('click', async () => {
 
   resultsPrevButton.addEventListener('click', resultsPrevButtonFunctionTraining);
   resultsNextButton.addEventListener('click', resultsNextButtonFunctionTraining);
-
 });
 
 let resultsPrevButtonFunctionTesting = null;
 let resultsNextButtonFunctionTesting = null;
 
 document.getElementById('predict').addEventListener('click', async () => {
-  testingResults = await predict(testingDataset);
+  testingResults = await predict(testingDataset, trainingDataset.getCurrentLabelNamesJson());
   ui.updateResult(testingResults.getNextResult(), "testing");
 
   const resultsPrevButton = document.getElementById("results-image-button-prev-testing");
@@ -233,7 +233,6 @@ document.getElementById('predict').addEventListener('click', async () => {
 
   resultsPrevButton.addEventListener('click', resultsPrevButtonFunctionTesting);
   resultsNextButton.addEventListener('click', resultsNextButtonFunctionTesting);
-
 });
 
 document.getElementById('download-button').addEventListener('click', async () => {
@@ -272,23 +271,50 @@ document.getElementById('download-button').addEventListener('click', async () =>
   const savedModel = await model.save(zipSaver);
 });
 
-// document.getElementById('upload-button').addEventListener('click', async () => {
-//   const jsonUpload = document.getElementById('json-upload');
-//   const weightsUpload = document.getElementById('weights-upload');
-//   const labelsUpload = document.getElementById('labels-upload');
+// From https://stackoverflow.com/questions/27159179/how-to-convert-blob-to-file-in-javascript
+function blobToFile(blob, fileName) {
+  // A Blob() is almost a File() - it's just missing the two properties below which we will add
+  blob.lastModifiedDate = new Date();
+  blob.name = fileName;
+  return blob;
+}
 
-//   model = await tf.loadModel(
-//     tf.io.browserFiles([jsonUpload.files[0], weightsUpload.files[0]]));
+const modelUpload = document.getElementById('model-upload');
 
-//   const reader = new FileReader();
+document.getElementById('upload-button').addEventListener('click', async () => {
+  modelUpload.click();
+});
 
-//   reader.onload = function(event) {
-//     trainingDataset.setCurrentLabelNames(event.target.result);
-//     console.log("Done uploading");
-//   }
+modelUpload.addEventListener('change', async () => {
+  const modelZipFile = modelUpload.files[0];
 
-//   reader.readAsText(labelsUpload.files[0]);
-// });
+  const modelJsonName = "model.json";
+  const modelWeightsName = "model.weights.bin";
+  const modelLabelsName = "model_labels.json";
+
+  const modelFiles = await JSZip.loadAsync(modelZipFile);
+  const modelJsonBlob = await modelFiles.file(modelJsonName).async("blob");
+  const modelWeightsBlob = await modelFiles.file(modelWeightsName).async("blob");
+  const modelLabelsText = await modelFiles.file(modelLabelsName).async("text");
+
+  const modelJsonFile = blobToFile(modelJsonBlob, modelJsonName);
+  const modelWeightsFile = blobToFile(modelWeightsBlob, modelWeightsName);
+
+  model = await tf.loadModel(
+    tf.io.browserFiles([modelJsonFile, modelWeightsFile]));
+  trainingDataset.setCurrentLabelNames(modelLabelsText);
+
+  const modelLabelsJson = JSON.parse(modelLabelsText);
+
+  ui.removeLabels();
+  for (let labelNumber in modelLabelsJson) {
+    if (modelLabelsJson.hasOwnProperty(labelNumber)) {
+        ui.addLabel(modelLabelsJson[labelNumber]);
+    }
+  }
+
+  modelUpload.value = "";
+});
 
 async function init() {
   try {
