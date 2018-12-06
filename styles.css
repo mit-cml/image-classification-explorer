@@ -80,7 +80,7 @@ body {
   margin-top: 12px;
 }
 
-.label-images-inner {
+.label-images-inner {   /* This has the same styling as the other canvas divs */
   border: 1px solid #585858;
   border-radius: 4px;
   box-sizing: border-box;
@@ -177,11 +177,131 @@ label {
 
 
 
-/*#download-button {
-  margin-top: 1rem;
+/* Styling for the analysis modal */
+
+
+
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
 
-#upload-button {
-  margin-top: 1rem;
+.modal-content {
+  position: absolute;
+  background-color: #f1f1f1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #888;
+  width: 50%;
+  height: 70%;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+  animation-name: fadein;
+  animation-duration: 0.4s
+}
+
+@keyframes fadein {
+  from {opacity: 0}
+  to {opacity: 1}
+}
+
+.modal-header {
+  padding: 2px 16px;
+  height: 10%;
+}
+
+.modal-close-button {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.modal-close-button:hover,
+.modal-close-button:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 2px 16px;
+  height: 80%;
+  overflow: auto;
+}
+
+.modal-footer {
+  padding: 2px 16px;
+  height: 10%;
+}
+
+.analysis-table-cell-inner {
+  border: 1px solid #585858;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  /*overflow: hidden;*/
+  width: 66px;
+  align-self: flex-start;
+  position: relative;
+}
+
+.analysis-table-cell-canvas {
+  height: 66px;
+  transform: scaleX(-1);
+}
+
+/* Styling for the analysis correctness table */
+.analysis-table-cell-correctness-outer {
+  display: flex;
+  flex-flow: row wrap;
+  height: 135px;
+  width: 300px;
+  overflow: auto;
+}
+
+/* Styling for the analysis error table */
+.analysis-table-cell-error-outer {
+  display: flex;
+  flex-flow: row wrap;
+  height: 135px;
+  width: 150;
+  overflow: auto;
+}
+
+/* Styling for the predictions popup */
+.analysis-table-prediction {
+  position: relative;
   display: block;
-}*/
+}
+
+.analysis-table-prediction.correct {
+  color: green;
+}
+
+.analysis-table-prediction.incorrect {
+  color: red;
+}
+
+.analysis-table-cell-inner .analysis-table-predictions-popup {
+  visibility: hidden;
+  text-align: center;
+  background-color: rgb(255,255,255);
+  background-color: rgba(255,255,255,0.6);
+
+  position: absolute;
+  z-index: 1;
+}
+
+.analysis-table-cell-inner:hover .analysis-table-predictions-popup {
+  visibility: visible;
+}

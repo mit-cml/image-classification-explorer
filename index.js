@@ -22,6 +22,7 @@ const FileSaver = require('file-saver');
 import {Dataset} from './dataset';
 import {Results} from './results';
 import * as ui from './ui';
+import * as modal from './modal';
 import {Webcam} from './webcam';
 
 // We pick these values for the users of our interface.
@@ -79,6 +80,15 @@ ui.setAddLabelHandler(labelName => {
 ui.setRemoveLabelHandler(labelId => {
   testingDataset.removeLabel(labelId);
   trainingDataset.removeLabel(labelId);
+});
+
+// Functions to supply results to the results modal
+modal.setGetResultsHandler(() => {
+  if (ui.getCurrentTab() == "training") {
+    return trainingResults;
+  } else {
+    return testingResults;
+  }
 });
 
 /**
@@ -330,6 +340,7 @@ async function init() {
   tf.tidy(() => mobilenet.predict(webcam.capture()));
 
   ui.init();
+  modal.init();
 }
 
 // Initialize the application.

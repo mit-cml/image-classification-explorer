@@ -24,8 +24,8 @@ export function init() {
 }
 
 // Trackers for the current state of the explorer (eg. training or testing)
-const datasetNames = ["training", "testing"];
-let currentDatasetName = datasetNames[0];
+const tabNames = ["training", "testing"];
+let currentTab = tabNames[0];
 
 // Elements dealing with label display
 const addLabelsInput = document.getElementById('label-name');
@@ -67,8 +67,8 @@ export function addLabel(newLabelName) {
   const labelBoxTesting = document.createElement("div");
   const labelBoxes = [labelBoxTraining, labelBoxTesting];
 
-  for (let i = 0; i < datasetNames.length; i++) {
-    const datasetName = datasetNames[i];
+  for (let i = 0; i < tabNames.length; i++) {
+    const datasetName = tabNames[i];
     const labelsOuter = document.getElementById("labels-container-" + datasetName);
 
     // Overarching div for a label
@@ -209,6 +209,8 @@ trainingTabButton.addEventListener('click', () => {
 
   webcam.parentNode.removeChild(webcam);
   webcamBoxTraining.appendChild(webcam);
+
+  currentTab = tabNames[0];
 });
 
 testingTabButton.addEventListener('click', () => {
@@ -220,7 +222,13 @@ testingTabButton.addEventListener('click', () => {
 
   webcam.parentNode.removeChild(webcam);
   webcamBoxTesting.appendChild(webcam);
+
+  currentTab = tabNames[1];
 });
+
+export function getCurrentTab() {
+  return currentTab;
+}
 
 // Handlers for drawing images on canvases
 export function drawThumb(img, datasetName, labelId) {

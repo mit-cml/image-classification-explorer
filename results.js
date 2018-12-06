@@ -66,4 +66,23 @@ export class Results {
 
     return result;
   }
+
+  getAllResults() {
+    const results = [];
+    const oldAbsoluteIndex = this.absoluteIndex;
+
+    this.absoluteIndex = -1;
+
+    for (let i = 0; i < this.numResults; i++) {
+      results.push(this.getNextResult());
+    }
+
+    this.absoluteIndex = oldAbsoluteIndex;
+    return results;
+  }
+
+  getLabelNamesMap() {
+    return JSON.stringify(this.labelNamesMap);
+  }
+
 }
