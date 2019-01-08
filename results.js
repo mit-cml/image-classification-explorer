@@ -17,7 +17,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 /**
- * A class representing results 
+ * A class representing results from a classifier
  */
 export class Results {
   constructor(imgs, actualIndices, predictedIndices, predictedValues, labelNamesMap) {

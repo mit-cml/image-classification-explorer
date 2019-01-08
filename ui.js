@@ -23,11 +23,11 @@ export function init() {
   trainingTabButton.click();
 }
 
-// Trackers for the current state of the explorer (eg. training or testing)
+// Trackers for the current state of the explorer (training or testing)
 const tabNames = ["training", "testing"];
 let currentTab = tabNames[0];
 
-// Elements dealing with label display
+// Elements dealing with adding labels to the model
 const addLabelsInput = document.getElementById('label-name');
 const addLabelsButton = document.getElementById('add-labels-button');
 
@@ -38,6 +38,7 @@ export function trainStatus(status) {
   trainStatusElement.innerText = status;
 }
 
+// These are set in index.js
 export let addExampleHandler;
 export function setAddExampleHandler(handler) {
   addExampleHandler = handler;
@@ -160,7 +161,7 @@ export function removeLabels() {
   }
 }
 
-// Handler for updating results
+// Handler for updating the results column
 export function updateResult(result, datasetName) {
   document.getElementById('results-container-' + datasetName).style.display = "";
 
@@ -189,7 +190,7 @@ export function updateResult(result, datasetName) {
   }
 }
 
-// Handlers for switching tabs
+// Handlers for switching tabs between training and testing
 const trainingTabButton = document.getElementById("training-tab");
 const testingTabButton = document.getElementById("testing-tab");
 

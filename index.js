@@ -25,16 +25,14 @@ import * as ui from './ui';
 import * as modal from './modal';
 import {Webcam} from './webcam';
 
-// We pick these values for the users of our interface.
+// Later, maybe allow users to pick these values themselves?
 const LEARNING_RATE = 0.0001;
 const BATCH_SIZE_FRACTION = 0.4;
 const EPOCHS = 20;
 const DENSE_UNITS = 100;
 
-// A webcam class that generates Tensors from the images from the webcam.
-const webcam = new Webcam(document.getElementById('webcam'));
-
-// Dataset objects for the training and test sets
+// Variables for containing the model datasets, prediction results,
+// the models themselves, and the webcam
 const trainingDataset = new Dataset();
 const testingDataset = new Dataset();
 
@@ -44,19 +42,19 @@ let testingResults;
 let mobilenet;
 let model;
 
+const webcam = new Webcam(document.getElementById('webcam'));
+
 // Loads mobilenet and returns a model that returns the internal activation
 // we'll use as input to our classifier model.
 async function loadMobilenet() {
   const mobilenet = await tf.loadModel(
       'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
 
-  // Return a model that outputs an internal activation.
   const layer = mobilenet.getLayer('conv_pw_13_relu');
   return tf.model({inputs: mobilenet.inputs, outputs: layer.output});
 }
 
-// When a label's add example button is clicked, read a frame from the 
-// webcam and associate it with the corresponding label
+// Methods for updating the dataset objects from the ui
 ui.setAddExampleHandler((labelId, datasetName) => {
   tf.tidy(async () => {
     const img = webcam.capture();
@@ -67,12 +65,10 @@ ui.setAddExampleHandler((labelId, datasetName) => {
       testingDataset.addExample(img, mobilenet.predict(img), labelId);
     }
 
-    // Draw the preview thumbnail.
     ui.drawThumb(img, datasetName, labelId);
   });
 });
 
-// Functions to update the state of the datasets
 ui.setAddLabelHandler(labelName => {
   testingDataset.addLabel(labelName);
   return trainingDataset.addLabel(labelName);
@@ -82,7 +78,7 @@ ui.setRemoveLabelHandler(labelId => {
   trainingDataset.removeLabel(labelId);
 });
 
-// Functions to supply results to the results modal
+// Methods to supply results to the results modal
 modal.setGetResultsHandler(() => {
   if (ui.getCurrentTab() == "training") {
     return trainingResults;
@@ -91,9 +87,7 @@ modal.setGetResultsHandler(() => {
   }
 });
 
-/**
- * Sets up and trains the classifier.
- */
+// Sets up and trains the classifier
 async function train() {
   if (trainingDataset.labelXs == {}) {
     throw new Error('Add some examples before training!');
@@ -126,15 +120,14 @@ async function train() {
     ]
   });
 
-  // Creates the optimizers which drives training of the model.
-  const optimizer = tf.train.adam(LEARNING_RATE);
   // We use categoricalCrossentropy which is the loss function we use for
   // categorical classification which measures the error between our predicted
   // probability distribution over classes (probability that an input is of each
   // class), versus the label (100% probability in the true class)>
+  const optimizer = tf.train.adam(LEARNING_RATE);
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
-  // Get xs and ys
+  // Get data from the training dataset
   const trainingData = await tf.tidy(() => {
     return trainingDataset.getData();
   });
@@ -161,6 +154,7 @@ async function train() {
   });
 }
 
+// Uses the classifier to classify examples
 async function predict(dataset, modelLabelsJson) {
   const datasetData = await tf.tidy(() => {
     return dataset.getData();
@@ -186,6 +180,7 @@ async function predict(dataset, modelLabelsJson) {
   return new Results(datasetData.imgs, actualIndices, predictedIndices, predictedValues, labelNamesMap);
 }
 
+// Train and predict button functionality. Also updates the results' prev/next buttons.
 let resultsPrevButtonFunctionTraining = null;
 let resultsNextButtonFunctionTraining = null;
 
@@ -245,6 +240,8 @@ document.getElementById('predict').addEventListener('click', async () => {
   resultsNextButton.addEventListener('click', resultsNextButtonFunctionTesting);
 });
 
+// Download and upload button functionality.
+
 document.getElementById('download-button').addEventListener('click', async () => {
   const zipSaver = {save: function(modelSpecs) {
     const modelTopologyFileName = "model.json";
@@ -281,7 +278,6 @@ document.getElementById('download-button').addEventListener('click', async () =>
   const savedModel = await model.save(zipSaver);
 });
 
-// From https://stackoverflow.com/questions/27159179/how-to-convert-blob-to-file-in-javascript
 function blobToFile(blob, fileName) {
   // A Blob() is almost a File() - it's just missing the two properties below which we will add
   blob.lastModifiedDate = new Date();
@@ -326,6 +322,8 @@ modelUpload.addEventListener('change', async () => {
   modelUpload.value = "";
 });
 
+// Initialize the application
+
 async function init() {
   try {
     await webcam.setup();
@@ -334,14 +332,11 @@ async function init() {
   }
   mobilenet = await loadMobilenet();
 
-  // Warm up the model. This uploads weights to the GPU and compiles the WebGL
-  // programs so the first time we collect data from the webcam it will be
-  // quick.
+  // Warm up the model so that the first time we use it will be quick
   tf.tidy(() => mobilenet.predict(webcam.capture()));
 
   ui.init();
   modal.init();
 }
 
-// Initialize the application.
 init();

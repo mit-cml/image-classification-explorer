@@ -1,10 +1,12 @@
 import * as tf from '@tensorflow/tfjs';
 import * as ui from './ui';
 
+// Names for the titles of the analysis tools
 const ANALYSIS_CORRECTNESS_TITLE = "Label Correctness";
 const ANALYSIS_ERROR_TITLE = "Error per Label";
 const ANALYSIS_CONFIDENCE_TITLE = "Confidence Graph";
 
+// Names for the classes of the html elements in the modal
 const ANALYSIS_TABLE_CLASS = "analysis-table";
 const ANALYSIS_TABLE_ROW_CLASS = "analysis-table-row";
 const ANALYSIS_TABLE_HEADER_CLASS = "analysis-table-header";
@@ -15,13 +17,29 @@ const ANALYSIS_TABLE_CELL_CANVAS_CLASS = "analysis-table-cell-canvas";
 const ANALYSIS_TABLE_PREDICTIONS_POPUP_CLASS = "analysis-table-predictions-popup";
 const ANALYSIS_TABLE_PREDICTION_CLASS = "analysis-table-prediction";
 
+// Html elements in the modal that we want to refer to
 const modal = document.getElementsByClassName("modal")[0];
 const modalContent = document.getElementsByClassName("modal-content")[0];
 const modalCloseButton = document.getElementsByClassName("modal-close-button")[0];
 const modalHeaderText = document.getElementsByClassName("modal-header-text")[0];
 const modalBody = document.getElementsByClassName("modal-body")[0];
+const modalFooter = document.getElementsByClassName("modal-footer")[0];
 
-// Maps button names to correct content function
+const modalCompareClearButton1 = document.getElementById("modal-compare-clear-button-1");
+const modalCompareClearButton2 = document.getElementById("modal-compare-clear-button-2");
+const modalCompareCanvas1 = document.getElementById("modal-compare-canvas-1");
+const modalCompareCanvas2 = document.getElementById("modal-compare-canvas-2");
+const modalCompareResults1 = document.getElementById("modal-compare-results-1");
+const modalCompareResults2 = document.getElementById("modal-compare-results-2");
+
+const modalCompareElements = {};
+modalCompareElements[1] = [modalCompareCanvas1, modalCompareResults1];
+modalCompareElements[2] = [modalCompareCanvas2, modalCompareResults2];
+
+let currentModalCompareElement = 1;
+let secondModalCompareElementOn = false;
+
+// Maps analysis button names to their corresponding handlers
 let toolTitleToContentFunction = {};
 
 export function init() {
@@ -31,11 +49,15 @@ export function init() {
 
   modalCloseButton.addEventListener('click', () => {
     modal.style.display = "none";
+    modalCompareClearButton1.click();
+    modalCompareClearButton2.click();
   });
 
   window.onclick = function(event) {
     if (event.target == modal) {
       modal.style.display = "none";
+      modalCompareClearButton1.click();
+      modalCompareClearButton2.click();
     }
   }
 
@@ -51,13 +73,28 @@ export function init() {
       modal.style.display = "block";
     });
   }
+
+  modalCompareClearButton1.addEventListener("click", () => {
+    clearCompareElements(1);
+    currentModalCompareElement = 1;
+  });
+
+  modalCompareClearButton2.addEventListener("click", () => {
+    clearCompareElements(2);
+    secondModalCompareElementOn = false;
+    if (currentModalCompareElement > 1) {
+      currentModalCompareElement = 2;
+    }
+  });
 }
 
+// This is set in index.js
 export let getResultsHandler;
 export function setGetResultsHandler(handler) {
   getResultsHandler = handler;
 }
 
+// General helper methods for populating the modal
 function removeBodyContent() {
   while (modalBody.firstChild) {
     modalBody.removeChild(modalBody.firstChild);
@@ -67,8 +104,6 @@ function removeBodyContent() {
 function setModalHeader(title) {
   modalHeaderText.innerHTML = title;
 }
-
-// General helper methods for populating the modal
 
 function createTableCellCanvas(img) {
   const labelInner = document.createElement("div");
@@ -83,31 +118,72 @@ function createTableCellCanvas(img) {
   return labelInner;
 }
 
-function createPredictionsPopup(result) {
-  const predictionsPopupDiv = document.createElement("div");
-  predictionsPopupDiv.setAttribute("class", ANALYSIS_TABLE_PREDICTIONS_POPUP_CLASS);
+// Methods for adding functionality to the compare divs
+function clearCompareElements(i) {
+  const currentModalCompareElements = modalCompareElements[i];
 
-  for (let i = 0; i < result.predictedLabels.length; i++) {
-    const currentLabel = result.predictedLabels[i];
-    const currentValue = result.predictedValues[i];
+  const currentCanvas = currentModalCompareElements[0];
+  const canvasContext = currentCanvas.getContext('2d');
+  canvasContext.clearRect(0, 0, currentCanvas.width, currentCanvas.height);
 
-    const resultPredictionSpan = document.createElement("span");
-    resultPredictionSpan.innerText = currentLabel + ": " + currentValue.toFixed(5);
-
-    if (currentLabel === result.actualLabel) {
-      resultPredictionSpan.setAttribute("class", ANALYSIS_TABLE_PREDICTION_CLASS + " correct");
-    } else {
-      resultPredictionSpan.setAttribute("class", ANALYSIS_TABLE_PREDICTION_CLASS + " incorrect");
-    }
-
-    predictionsPopupDiv.appendChild(resultPredictionSpan);
+  const currentResults = currentModalCompareElements[1];
+  while (currentResults.firstChild) {
+    currentResults.removeChild(currentResults.firstChild);
   }
-
-  return predictionsPopupDiv;
 }
 
-// Methods for the correctness table
+function setCompareEventListeners(cell, result) {
+  let mouseoverElement = 0;
 
+  cell.addEventListener("mouseover", () => {
+    if (currentModalCompareElement < 3) {
+      mouseoverElement = currentModalCompareElement;
+      const currentModalCompareElements = modalCompareElements[currentModalCompareElement];
+
+      ui.draw(result.img, currentModalCompareElements[0]);
+
+      for (let i = 0; i < result.predictedLabels.length; i++) {
+        const currentLabel = result.predictedLabels[i];
+        const currentValue = result.predictedValues[i];
+
+        const resultPredictionSpan = document.createElement("span");
+        resultPredictionSpan.innerText = currentLabel + ": " + currentValue.toFixed(5);
+
+        if (currentLabel === result.actualLabel) {
+          resultPredictionSpan.setAttribute("class", ANALYSIS_TABLE_PREDICTION_CLASS + " correct");
+        } else {
+          resultPredictionSpan.setAttribute("class", ANALYSIS_TABLE_PREDICTION_CLASS + " incorrect");
+        }
+
+        currentModalCompareElements[1].appendChild(resultPredictionSpan);
+      }
+    }
+  });
+
+  cell.addEventListener("mouseout", () => {
+    if (mouseoverElement === currentModalCompareElement) {
+      clearCompareElements(currentModalCompareElement);
+    }
+  });
+
+  cell.addEventListener("click", () => {
+    let toIncrement = 1;
+
+    if (currentModalCompareElement == 1) {
+      if (secondModalCompareElementOn) {
+        toIncrement = 2;
+      }
+    } else if (currentModalCompareElement == 2) {
+      secondModalCompareElementOn = true;
+    } else {
+      toIncrement = 0;
+    }
+
+    currentModalCompareElement += toIncrement;
+  });
+}
+
+// Methods for setting up the correctness table
 function buildCorrectnessTable(labelNamesMapString) {
   const correctnessTableCellOuterClass = "analysis-table-cell-correctness-outer";
   const labelNamesMap = JSON.parse(labelNamesMapString);
@@ -171,8 +247,7 @@ function populateCorrectnessTable(resultsArray) {
   for (let i = 0; i < resultsArray.length; i++) {
     const currentResult = resultsArray[i];
     const tableCellInner = createTableCellCanvas(currentResult.img);
-    const predictionsPopup = createPredictionsPopup(currentResult);
-    tableCellInner.appendChild(predictionsPopup);
+    setCompareEventListeners(tableCellInner, currentResult);
 
     const correctnessSuffix = currentResult.predictedLabels[0] === currentResult.actualLabel ? "-correct" : "-incorrect";
     document.getElementById(currentResult.actualLabel + correctnessSuffix).appendChild(tableCellInner);
@@ -185,8 +260,7 @@ function setModalContentCorrectness(results) {
   populateCorrectnessTable(results.getAllResults());
 }
 
-// Methods for the error table
-
+// Methods for setting up the error table
 function buildErrorTable(labelNamesMapString) {
   const errorTableCellOuterClass = "analysis-table-cell-error-outer";
   const labelNamesMap = JSON.parse(labelNamesMapString);
@@ -259,8 +333,7 @@ function populateErrorTable(resultsArray) {
 
     if (actualLabel != predictedLabel) {
       const tableCellInner = createTableCellCanvas(currentResult.img);
-      const predictionsPopup = createPredictionsPopup(currentResult);
-      tableCellInner.appendChild(predictionsPopup);
+      setCompareEventListeners(tableCellInner, currentResult);
 
       document.getElementById(actualLabel + "-" + predictedLabel).appendChild(tableCellInner);
     }
@@ -273,8 +346,7 @@ function setModalContentError(results) {
   populateErrorTable(results.getAllResults());
 }
 
-// Methods for the confidence graph
-
+// Methods for setting up the confidence graph
 function setModalContentConfidence(results) {
   modalBody.innerHTML = "CONFIDENCE: " + results.getLabelNamesMap();
 }
