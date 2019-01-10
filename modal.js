@@ -39,6 +39,10 @@ modalCompareElements[2] = [modalCompareCanvas2, modalCompareResults2];
 let currentModalCompareElement = 1;
 let secondModalCompareElementOn = false;
 
+// Constants for the confidence graph
+const CONFIDENCE_START = 40;
+const CONFIDENCE_INTERVAL = 20;
+
 // Maps analysis button names to their corresponding handlers
 let toolTitleToContentFunction = {};
 
@@ -222,7 +226,7 @@ function buildCorrectnessTable(labelNamesMapString) {
       const labelIncorrectOuter = document.createElement("div");
 
       labelRow.setAttribute("class", ANALYSIS_TABLE_ROW_CLASS);
-      labelHeader.setAttribute("class", ANALYSIS_TABLE_HEADER_CLASS);
+      labelHeader.setAttribute("class", ANALYSIS_TABLE_HEADER_CLASS); 
       labelCorrect.setAttribute("class", ANALYSIS_TABLE_CELL_CLASS);
       labelIncorrect.setAttribute("class", ANALYSIS_TABLE_CELL_CLASS);
       labelCorrectOuter.setAttribute("class", correctnessTableCellOuterClass);
@@ -347,6 +351,131 @@ function setModalContentError(results) {
 }
 
 // Methods for setting up the confidence graph
+function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
+
+  // First, create the dropdown
+  const labelNamesMap = JSON.parse(labelNamesMapString);
+
+  const dropdownContainer = document.createElement("div");
+  const dropdownTitleSpan = document.createElement("span");
+  const dropdown = document.createElement("select");
+
+  dropdownContainer.setAttribute("class", "analysis-table-confidence-dropdown-outer");
+  dropdownTitleSpan.setAttribute("class", "analysis-table-confidence-dropdown-title");
+  dropdown.setAttribute("class", "analysis-table-confidence-dropdown");
+
+  dropdownTitleSpan.textContent = "Select a label to view: ";
+  dropdownContainer.appendChild(dropdownTitleSpan);
+  dropdownContainer.appendChild(dropdown);
+
+  for (let modelIndex in labelNamesMap) {
+    if (labelNamesMap.hasOwnProperty(modelIndex)) {
+      const labelName = labelNamesMap[modelIndex];
+
+      const dropdownOption = document.createElement("option");
+      dropdownOption.text = labelName;
+      dropdownOption.value = labelName;
+
+      dropdown.options.add(dropdownOption);
+    };
+  }
+
+  // Next, create the table
+  const confidenceGraphCellOuterClass = "analysis-table-cell-confidence-outer";
+
+  const table = document.createElement("table");
+  const contentRow = document.createElement("tr");
+  const headerRow = document.createElement("tr");
+
+  table.setAttribute("class", ANALYSIS_TABLE_CLASS);
+  contentRow.setAttribute("class", ANALYSIS_TABLE_ROW_CLASS);
+  contentRow.setAttribute("id", ANALYSIS_TABLE_ROW_CLASS + "-confidence-content");
+
+  for (let i = CONFIDENCE_START; i <= 100; i += CONFIDENCE_INTERVAL) {
+    // First, fill contentRow
+    const confidenceGraphCell = document.createElement("td");
+    const confidenceGraphCellOuter = document.createElement("div");
+
+    confidenceGraphCell.setAttribute("class", ANALYSIS_TABLE_CELL_CLASS);
+    confidenceGraphCellOuter.setAttribute("class", confidenceGraphCellOuterClass);
+    confidenceGraphCellOuter.setAttribute("id", "confidence-" + i);
+
+    confidenceGraphCell.appendChild(confidenceGraphCellOuter);
+    contentRow.appendChild(confidenceGraphCell);
+
+    // Next, fill headerRow
+    const confidenceGraphHeader = document.createElement("th");
+    confidenceGraphHeader.setAttribute("class", ANALYSIS_TABLE_HEADER_CLASS);
+    confidenceGraphHeader.textContent = i + "%";
+
+    headerRow.appendChild(confidenceGraphHeader);
+  }
+
+  table.appendChild(contentRow);
+  table.appendChild(headerRow);
+
+  modalBody.appendChild(dropdownContainer);
+  modalBody.appendChild(table);
+
+  // Finally, add functionality to the dropdown once all the elements are in place
+  dropdown.addEventListener("change", (event) => {
+    populateConfidenceGraph(event.target.value);
+  });
+
+  populateConfidenceGraph(dropdown.value);
+}
+
+function populateConfidenceGraphHelper(resultsArray) {
+
+  // hard coded values for now
+  function calculateBucket(value) {
+    if (value >= 0.9) {
+      return 100;
+    } else if (value >= 0.7) {
+      return 80;
+    } else if (value >= 0.5) {
+      return 60;
+    } else if (value >= 0.4) {
+      return 40;
+    } else {
+      return 0;
+    }
+  }
+
+  function clearBuckets() {
+    for (let i = CONFIDENCE_START; i <= 100; i += CONFIDENCE_INTERVAL) {
+      const currentBucketCell = document.getElementById("confidence-" + i);
+
+      while (currentBucketCell.firstChild) {
+        currentBucketCell.removeChild(currentBucketCell.firstChild);
+      }
+    }
+  }
+
+  return function(label) {
+    clearBuckets();
+
+    for (let i = 0; i < resultsArray.length; i++) {
+      const currentResult = resultsArray[i];
+      const labelIndex = currentResult.predictedLabels.indexOf(label);
+
+      if (labelIndex > -1) {
+        const predictedValue = currentResult.predictedValues[labelIndex];
+        const valueBucket = calculateBucket(predictedValue);
+
+        if (valueBucket > 0) {
+          const tableCellInner = createTableCellCanvas(currentResult.img);
+          setCompareEventListeners(tableCellInner, currentResult);
+
+          document.getElementById("confidence-" + valueBucket).appendChild(tableCellInner);
+        }
+      }
+    }
+  }
+}
+
 function setModalContentConfidence(results) {
-  modalBody.innerHTML = "CONFIDENCE: " + results.getLabelNamesMap();
+  removeBodyContent();
+  const populateConfidenceGraph = populateConfidenceGraphHelper(results.getAllResults());
+  buildConfidenceGraph(results.getLabelNamesMap(), populateConfidenceGraph);
 }

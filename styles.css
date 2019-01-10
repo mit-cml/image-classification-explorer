@@ -202,7 +202,7 @@ label {
   transform: translate(-50%, -50%);
   border: 1px solid #888;
   width: 50%;
-  height: 70%;
+  height: 90%;
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
   animation-name: fadein;
   animation-duration: 0.4s
@@ -234,13 +234,13 @@ label {
 
 .modal-body {
   padding: 2px 16px;
-  height: 80%;
+  height: 70%;
   overflow: auto;
 }
 
 .modal-footer {
   padding: 2px 16px;
-  height: 10%;
+  height: 20%;
 }
 
 .analysis-table-cell-inner {
@@ -274,8 +274,46 @@ label {
   display: flex;
   flex-flow: row wrap;
   height: 135px;
-  width: 150;
+  width: 150px;
   overflow: auto;
+}
+
+/* Styling for the confidence graph */
+.analysis-table-cell-confidence-outer {
+  display: flex;
+  flex-flow: column-reverse wrap;
+  height: 400px;
+  width: 150px;
+  overflow: auto;
+}
+
+/* Styling for the compare divs */
+
+.modal-compare-container {
+  display: flex;
+  justify-content: center;
+}
+
+.modal-compare-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-compare-canvas-inner {
+  border: 1px solid #585858;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  width: 66px;
+  align-self: flex-start;
+  position: relative;
+}
+
+.modal-compare-canvas {
+  height: 66px;
+  transform: scaleX(-1);
 }
 
 /* Styling for the predictions popup */
