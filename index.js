@@ -31,6 +31,8 @@ const BATCH_SIZE_FRACTION = 0.4;
 const EPOCHS = 20;
 const DENSE_UNITS = 100;
 
+const fetch = require('node-fetch');
+
 // Variables for containing the model datasets, prediction results,
 // the models themselves, and the webcam
 const trainingDataset = new Dataset();
@@ -42,6 +44,9 @@ let testingResults;
 let mobilenet;
 let model;
 
+// let mobilenet_original;
+// let squeezenet_original;
+
 const webcam = new Webcam(document.getElementById('webcam'));
 
 // Loads mobilenet and returns a model that returns the internal activation
@@ -49,16 +54,59 @@ const webcam = new Webcam(document.getElementById('webcam'));
 async function loadMobilenet() {
   const mobilenet = await tf.loadModel(
       'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
-
+  
   const layer = mobilenet.getLayer('conv_pw_13_relu');
   return tf.model({inputs: mobilenet.inputs, outputs: layer.output});
 }
+
+// Loads squeezenet and returns a model that returns the internal activation
+// we'll use as input to our classifier model.
+async function loadSqueezenet() {
+  // const squeezenet = await tf.loadModel('https://www.dropbox.com/s/wkytf1y39vy1bcs/model.json?dl=0');
+  // const squeezenet = await tf.loadModel('https://drive.google.com/uc?export=download&id=1ihab5WrjbO7_RZCcHI8ERytN0X-6toqC'); 
+  // const squeezenet = await tf.loadModel('file:///model.json')
+  // const squeezenet = await tf.loadModel('file:///model.json', {fetch: fetch});
+  // const squeezenet = await tf.loadModel('https://www.dropbox.com/s/d75ox80rlwwct0c/model-for-google-drive.json?dl=1', {'mode': 'no-cors'});
+  // const squeezenet = await tf.loadModel('localstorage://model.json')
+  // const squeezenet = await tf.loadModel('file:///squeezenet/model.json');
+  // const squeezenet = await tf.loadModel('file:///Users/yuriautsumi/image-classification-explorer/squeezenet/model.json');
+  const squeezenet = await tf.loadModel('http://127.0.0.1:8082/model.json'); // go to squeezenet folder, http-server . --cors -o
+
+  // const tf = require("@tensorflow/tfjs");
+  // const tfn = require("@tensorflow/tfjs-node");
+  // const handler = tfn.io.fileSystem("file:///model.json");
+  // const squeezenet = await tf.loadModel(handler);
+  return squeezenet;
+  // return tf.model({inputs: squeezenet.inputs, outputs: squeezenet.outputs});
+}
+
 
 // Methods for updating the dataset objects from the ui
 ui.setAddExampleHandler((labelId, datasetName) => {
   tf.tidy(async () => {
     const img = webcam.capture();
 
+    // // Yuria Edit 
+    // // if it's the first image, look at input from dropdown menu 
+    // if (trainingDataset == Dataset() && testingDataset == Dataset()) {
+    //   var selected_model = document.getElementById("choose-model-dropdown").value;
+    //   // var dropdown = document.getElementById("choose-model");
+    //   // var selected_model = dropdown.options[dropdown.selectedIndex].value;
+    //   console.log('Loading selected model!')
+    //   console.log(selected_model);
+  
+    //   if (selected_model == "MobileNet") {
+    //     mobilenet = mobilenet_original;
+    //     console.log("Loaded MobileNet!");
+    //   } else if (selected_model == "SqueezeNet") {
+    //     mobilenet = squeezenet_original; 
+    //     console.log("Loaded SqueezeNet!");
+    //   } else {
+    //     console.log("Model loading failed!");
+    //   }
+    // }
+    // // 
+    
     if (datasetName === "training") {
       trainingDataset.addExample(img, mobilenet.predict(img), labelId);
     } else {
@@ -325,15 +373,54 @@ modelUpload.addEventListener('change', async () => {
 // Initialize the application
 
 async function init() {
+  var selected_model = prompt("Please enter your training model (Mobilenet (default) or Squeezenet):");
+  console.log(selected_model);
+
   try {
     await webcam.setup();
   } catch (e) {
     document.getElementById('no-webcam').style.display = 'block';
   }
-  mobilenet = await loadMobilenet();
+
+  console.log(await tf.io.listModels()); 
+
+  // // look at input from dropdown menu 
+  // var selected_model = document.getElementById("choose-model-dropdown").value;
+  // // var dropdown = document.getElementById("choose-model");
+  // // var selected_model = dropdown.options[dropdown.selectedIndex].value;
+  // console.log(selected_model);
+
+  // if (selected_model == "MobileNet") {
+  //   mobilenet = await loadMobilenet();
+  //   console.log("Loaded MobileNet!");
+  // } else if (selected_model == "SqueezeNet") {
+  //   mobilenet = await loadSqueezenet(); 
+  //   console.log("Loaded SqueezeNet!");
+  // } else {
+  //   console.log("Model loading failed!");
+  // }
+  
+  if (selected_model == "Mobilenet") {
+    mobilenet = await loadMobilenet();
+    console.log("Loaded Mobilenet!"); 
+  } else if (selected_model == "Squeezenet") {
+    mobilenet = await loadSqueezenet(); 
+    console.log("Loaded Squeezenet!"); 
+  } else {
+    mobilenet = await loadMobilenet();
+    console.log("Model not specified. Loaded Mobilenet by default!")
+  }
+
+  // mobilenet = await loadMobilenet();
+  // squeezenet = await loadSqueezenet(); 
+  // console.log('Loaded initial models.')
+
+  // mobilenet = await loadMobilenet();
+  // mobilenet = await loadSqueezenet(); 
 
   // Warm up the model so that the first time we use it will be quick
   tf.tidy(() => mobilenet.predict(webcam.capture()));
+  // tf.tidy(() => squeezenet.predict(webcam.capture()));
 
   ui.init();
   modal.init();
