@@ -68,6 +68,20 @@ export class Dataset {
     }
   }
 
+  // Yuria Edit 
+  removeExamples() {
+    // for each label in label images, dispose corresponding tensor 
+    Object.values(this.labelImgs).forEach(img => {
+      img.dispose(); 
+    });
+    Object.values(this.labelXs).forEach(activ => {
+      activ.dispose(); 
+    })
+
+    this.labelImgs = {};
+    this.labelXs = {}; 
+  }
+
   getLabelNameFromModelPrediction(prediction) {
     return this.currentLabelNamesMap[prediction];
   }

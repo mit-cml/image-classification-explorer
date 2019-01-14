@@ -80,6 +80,11 @@ body {
   margin-top: 12px;
 }
 
+.choose-model {
+  text-align: right;
+  margin-top: 12px; 
+}
+
 .label-images-inner {   /* This has the same styling as the other canvas divs */
   border: 1px solid #585858;
   border-radius: 4px;

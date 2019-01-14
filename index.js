@@ -38,6 +38,9 @@ const fetch = require('node-fetch');
 const trainingDataset = new Dataset();
 const testingDataset = new Dataset();
 
+var trainingImgDict = {};
+var testingImgDict = {}; 
+
 let trainingResults;
 let testingResults;
 
@@ -70,7 +73,7 @@ async function loadSqueezenet() {
   // const squeezenet = await tf.loadModel('localstorage://model.json')
   // const squeezenet = await tf.loadModel('file:///squeezenet/model.json');
   // const squeezenet = await tf.loadModel('file:///Users/yuriautsumi/image-classification-explorer/squeezenet/model.json');
-  const squeezenet = await tf.loadModel('http://127.0.0.1:8082/model.json'); // go to squeezenet folder, http-server . --cors -o
+  const squeezenet = await tf.loadModel('http://127.0.0.1:8080/model.json'); // go to squeezenet folder, http-server . --cors -o
 
   // const tf = require("@tensorflow/tfjs");
   // const tfn = require("@tensorflow/tfjs-node");
@@ -86,31 +89,25 @@ ui.setAddExampleHandler((labelId, datasetName) => {
   tf.tidy(async () => {
     const img = webcam.capture();
 
-    // // Yuria Edit 
-    // // if it's the first image, look at input from dropdown menu 
-    // if (trainingDataset == Dataset() && testingDataset == Dataset()) {
-    //   var selected_model = document.getElementById("choose-model-dropdown").value;
-    //   // var dropdown = document.getElementById("choose-model");
-    //   // var selected_model = dropdown.options[dropdown.selectedIndex].value;
-    //   console.log('Loading selected model!')
-    //   console.log(selected_model);
-  
-    //   if (selected_model == "MobileNet") {
-    //     mobilenet = mobilenet_original;
-    //     console.log("Loaded MobileNet!");
-    //   } else if (selected_model == "SqueezeNet") {
-    //     mobilenet = squeezenet_original; 
-    //     console.log("Loaded SqueezeNet!");
-    //   } else {
-    //     console.log("Model loading failed!");
-    //   }
+    // stop doing this here 
+    // if (datasetName === "training") {
+    //   trainingDataset.addExample(img, mobilenet.predict(img), labelId); // here 
+    // } else {
+    //   testingDataset.addExample(img, mobilenet.predict(img), labelId); // here 
     // }
-    // // 
-    
-    if (datasetName === "training") {
-      trainingDataset.addExample(img, mobilenet.predict(img), labelId);
+
+    if (datasetName == "training") {
+      if (labelId in trainingImgDict) {
+        trainingImgDict[labelId].push(tf.keep(img)); 
+      } else {
+        trainingImgDict[labelId] = [tf.keep(img)]; 
+      }
     } else {
-      testingDataset.addExample(img, mobilenet.predict(img), labelId);
+      if (labelId in testingImgDict) {
+        testingImgDict[labelId].push(tf.keep(img));
+      } else {
+        testingImgDict[labelId] = [tf.keep(img)];
+      }
     }
 
     ui.drawThumb(img, datasetName, labelId);
@@ -122,6 +119,8 @@ ui.setAddLabelHandler(labelName => {
   return trainingDataset.addLabel(labelName);
 });
 ui.setRemoveLabelHandler(labelId => {
+  delete trainingImgDict[labelId]; 
+  delete testingImgDict[labelId]; 
   testingDataset.removeLabel(labelId);
   trainingDataset.removeLabel(labelId);
 });
@@ -137,8 +136,52 @@ modal.setGetResultsHandler(() => {
 
 // Sets up and trains the classifier
 async function train() {
-  if (trainingDataset.labelXs == {}) {
+  // if (trainingDataset.labelXs == {}) {
+  //   throw new Error('Add some examples before training!');
+  // }
+  if (Object.values(trainingImgDict) == []) {
     throw new Error('Add some examples before training!');
+  }
+
+  // TODO: check model input, load appropriate model, and create trainingData and testingData
+  // look at input from dropdown menu 
+  var selected_model = document.getElementById("choose-model-dropdown").value;
+  console.log(selected_model);
+
+  if (selected_model == "MobileNet") {
+    mobilenet = await loadMobilenet();
+    console.log("Loaded MobileNet!");
+  } else if (selected_model == "SqueezeNet") {
+    mobilenet = await loadSqueezenet(); 
+    console.log("Loaded SqueezeNet!");
+  } else {
+    console.log("Model loading failed!");
+  }
+
+  // TODO: create clear fxn that also gets rid of old tensors 
+  trainingDataset.removeExamples();
+  testingDataset.removeExamples();
+
+  console.log("raw training images"); 
+  console.log(trainingImgDict); 
+
+  console.log("raw testing  images");
+  console.log(testingImgDict); 
+
+  // loop over trainingImgDict and testingImgDict and process 
+  for (var label in trainingImgDict) {
+    for (var img in trainingImgDict[label]) {
+      console.log("current image");
+      console.log(trainingImgDict[label][img]); 
+      console.log("current label");
+      console.log(label); 
+      trainingDataset.addExample(trainingImgDict[label][img], mobilenet.predict(trainingImgDict[label][img]), label); 
+    }
+  }
+  for (var label in testingImgDict) {
+    for (var img in testingImgDict[label]) {
+      testingDataset.addExample(testingImgDict[label][img], mobilenet.predict(testingImgDict[label][img]), label); 
+    }
   }
 
   // Creates a 2-layer fully connected model. By creating a separate model,
@@ -373,8 +416,9 @@ modelUpload.addEventListener('change', async () => {
 // Initialize the application
 
 async function init() {
-  var selected_model = prompt("Please enter your training model (Mobilenet (default) or Squeezenet):");
-  console.log(selected_model);
+  // Initial prompt to select training model: 
+  // var selected_model = prompt("Please enter your training model (Mobilenet (default) or Squeezenet):");
+  // console.log(selected_model);
 
   try {
     await webcam.setup();
@@ -400,16 +444,16 @@ async function init() {
   //   console.log("Model loading failed!");
   // }
   
-  if (selected_model == "Mobilenet") {
-    mobilenet = await loadMobilenet();
-    console.log("Loaded Mobilenet!"); 
-  } else if (selected_model == "Squeezenet") {
-    mobilenet = await loadSqueezenet(); 
-    console.log("Loaded Squeezenet!"); 
-  } else {
-    mobilenet = await loadMobilenet();
-    console.log("Model not specified. Loaded Mobilenet by default!")
-  }
+  // if (selected_model == "Mobilenet") {
+  //   mobilenet = await loadMobilenet();
+  //   console.log("Loaded Mobilenet!"); 
+  // } else if (selected_model == "Squeezenet") {
+  //   mobilenet = await loadSqueezenet(); 
+  //   console.log("Loaded Squeezenet!"); 
+  // } else {
+  //   mobilenet = await loadMobilenet();
+  //   console.log("Model not specified. Loaded Mobilenet by default!")
+  // }
 
   // mobilenet = await loadMobilenet();
   // squeezenet = await loadSqueezenet(); 
@@ -419,7 +463,7 @@ async function init() {
   // mobilenet = await loadSqueezenet(); 
 
   // Warm up the model so that the first time we use it will be quick
-  tf.tidy(() => mobilenet.predict(webcam.capture()));
+  // tf.tidy(() => mobilenet.predict(webcam.capture()));
   // tf.tidy(() => squeezenet.predict(webcam.capture()));
 
   ui.init();
