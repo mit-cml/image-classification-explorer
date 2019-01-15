@@ -171,19 +171,30 @@ async function train() {
   // loop over trainingImgDict and testingImgDict and process 
   for (var label in trainingImgDict) {
     for (var img in trainingImgDict[label]) {
-      console.log("current image");
-      console.log(trainingImgDict[label][img]); 
-      console.log("current label");
-      console.log(label); 
+      console.log("current image - before predict");
+      console.log(trainingImgDict[label][img]["isDisposedInternal"]); 
       trainingDataset.addExample(trainingImgDict[label][img], mobilenet.predict(trainingImgDict[label][img]), label); 
+      console.log("current image - after predict");
+      console.log(trainingImgDict[label][img]["isDisposedInternal"]); 
+      trainingImgDict[label][img] = tf.keep(trainingImgDict[label][img]); // added 
     }
   }
-  for (var label in testingImgDict) {
-    for (var img in testingImgDict[label]) {
-      testingDataset.addExample(testingImgDict[label][img], mobilenet.predict(testingImgDict[label][img]), label); 
-    }
-  }
+  // for (var label in testingImgDict) {
+  //   for (var img in testingImgDict[label]) {
+  //     testingDataset.addExample(testingImgDict[label][img], mobilenet.predict(testingImgDict[label][img]), label); 
+  //   }
+  // }
 
+  console.log("checking isDisposedInternal status after adding examples...")
+  // loop over trainingImgDict and testingImgDict and process 
+  for (var label in trainingImgDict) {
+    for (var img in trainingImgDict[label]) {
+      console.log("current image - before predict");
+      console.log(trainingImgDict[label][img]["isDisposedInternal"]); 
+      console.log("current image - after predict");
+      console.log(trainingImgDict[label][img]["isDisposedInternal"]); 
+    }
+  }
   // Creates a 2-layer fully connected model. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
   // of the mobilenet model, and only train weights from the new model.
@@ -308,6 +319,43 @@ let resultsPrevButtonFunctionTesting = null;
 let resultsNextButtonFunctionTesting = null;
 
 document.getElementById('predict').addEventListener('click', async () => {
+
+  // TODO: create clear fxn that also gets rid of old tensors 
+  // trainingDataset.removeExamples();
+  // testingDataset.removeExamples();
+
+  console.log("raw training images"); 
+  console.log(trainingImgDict); 
+
+  console.log("raw testing  images");
+  console.log(testingImgDict); 
+
+  // added 
+  for (var label in testingImgDict) {
+    for (var img in testingImgDict[label]) {
+      console.log("testing image - before predict");
+      console.log(testingImgDict[label][img]);
+      // console.log(typeof testingImgDict[label][img]);
+      // console.log("label");
+      // console.log(label);
+      // console.log("model");
+      // console.log(mobilenet);
+      // console.log("prediction - datasync");
+      // console.log(mobilenet.predict(testingImgDict[label][img]).dataSync()); 
+      // console.log(mobilenet.predict(testingImgDict[label][img]).dataSync()[0]); 
+      // console.log("prediction");
+      // console.log(mobilenet.predict(testingImgDict[label][img])); 
+      testingDataset.addExample(testingImgDict[label][img], mobilenet.predict(testingImgDict[label][img]), label); 
+      console.log("testing image - after predict");
+      console.log(testingImgDict[label][img]);
+    }
+  }
+  for (var label in testingImgDict) {
+    for (var img in testingImgDict[label]) {
+      testingImgDict[label][img].dispose();
+    }
+  }
+  testingImgDict = {}; 
   testingResults = await predict(testingDataset, trainingDataset.getCurrentLabelNamesJson());
   ui.updateResult(testingResults.getNextResult(), "testing");
 
