@@ -33,7 +33,7 @@ const EPOCHS = 20;
 const DENSE_UNITS = 100;
 
 const SALIENCY_NUM_SAMPLES = 15;
-const SALIENCY_NOISE_STD = 0.05;
+const SALIENCY_NOISE_STD = 0.1;
 const SALIENCY_CLIP_PERCENT = 0.99;
 
 const fetch = require('node-fetch');
@@ -76,7 +76,7 @@ async function loadSqueezenet() {
   // const squeezenet = await tf.loadModel('localstorage://model.json')
   // const squeezenet = await tf.loadModel('file:///squeezenet/model.json');
   // const squeezenet = await tf.loadModel('file:///Users/yuriautsumi/image-classification-explorer/squeezenet/model.json');
-  const squeezenet = await tf.loadModel('http://127.0.0.1:8082/model.json'); // go to squeezenet folder, http-server . --cors -o
+  const squeezenet = await tf.loadModel('http://127.0.0.1:8080/model.json'); // go to squeezenet folder, http-server . --cors -o
 
   // const tf = require("@tensorflow/tfjs");
   // const tfn = require("@tensorflow/tfjs-node");
@@ -211,7 +211,9 @@ async function train() {
 
       onTrainEnd: () => {
         // Piece together the entire model
+
         let output = mobilenet.getLayer('conv_pw_13_relu').output;
+        // let output = mobilenet.getLayer('max_pooling2d_1').output;
 
         for (let i = 0; i < model.layers.length; i++) {
           const currentLayer = model.getLayer("filler", i);

@@ -46,9 +46,12 @@ let secondModalCompareElementOn = false;
 
 const currentCompareImgs = [null, null];
 
-// Constants for the confidence graph
+// Variables for the confidence graph
 const CONFIDENCE_START = 40;
+const CONFIDENCE_END = 80;
 const CONFIDENCE_INTERVAL = 20;
+
+const confidenceColumnMap = {40: "Medium", 60: "High", 80: "Very High"};
 
 // Maps analysis button names to their corresponding handlers
 let toolTitleToContentFunction = {};
@@ -386,6 +389,9 @@ function setModalContentError(results) {
 
 // Methods for setting up the confidence graph
 function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
+  // Overarching container for the dropdown and table
+  const confidenceGraphContainer = document.createElement("div");
+  confidenceGraphContainer.setAttribute("class", "analysis-table-confidence-graph-container");
 
   // First, create the dropdown
   const labelNamesMap = JSON.parse(labelNamesMapString);
@@ -425,7 +431,7 @@ function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
   contentRow.setAttribute("class", ANALYSIS_TABLE_ROW_CLASS);
   contentRow.setAttribute("id", ANALYSIS_TABLE_ROW_CLASS + "-confidence-content");
 
-  for (let i = CONFIDENCE_START; i <= 100; i += CONFIDENCE_INTERVAL) {
+  for (let i = CONFIDENCE_START; i <= CONFIDENCE_END; i += CONFIDENCE_INTERVAL) {
     // First, fill contentRow
     const confidenceGraphCell = document.createElement("td");
     const confidenceGraphCellOuter = document.createElement("div");
@@ -440,7 +446,7 @@ function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
     // Next, fill headerRow
     const confidenceGraphHeader = document.createElement("th");
     confidenceGraphHeader.setAttribute("class", ANALYSIS_TABLE_HEADER_CLASS);
-    confidenceGraphHeader.textContent = i + "%";
+    confidenceGraphHeader.textContent = confidenceColumnMap[i];
 
     headerRow.appendChild(confidenceGraphHeader);
   }
@@ -448,8 +454,10 @@ function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
   table.appendChild(contentRow);
   table.appendChild(headerRow);
 
-  modalBody.appendChild(dropdownContainer);
-  modalBody.appendChild(table);
+  confidenceGraphContainer.appendChild(dropdownContainer);
+  confidenceGraphContainer.appendChild(table);
+
+  modalBody.appendChild(confidenceGraphContainer);
 
   // Finally, add functionality to the dropdown once all the elements are in place
   dropdown.addEventListener("change", (event) => {
@@ -463,11 +471,9 @@ function populateConfidenceGraphHelper(resultsArray) {
 
   // hard coded values for now
   function calculateBucket(value) {
-    if (value >= 0.9) {
-      return 100;
-    } else if (value >= 0.7) {
+    if (value >= 0.8) {
       return 80;
-    } else if (value >= 0.5) {
+    } else if (value >= 0.6) {
       return 60;
     } else if (value >= 0.4) {
       return 40;
@@ -477,7 +483,7 @@ function populateConfidenceGraphHelper(resultsArray) {
   }
 
   function clearBuckets() {
-    for (let i = CONFIDENCE_START; i <= 100; i += CONFIDENCE_INTERVAL) {
+    for (let i = CONFIDENCE_START; i <= CONFIDENCE_END; i += CONFIDENCE_INTERVAL) {
       const currentBucketCell = document.getElementById("confidence-" + i);
 
       while (currentBucketCell.firstChild) {
