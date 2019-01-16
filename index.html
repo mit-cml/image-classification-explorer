@@ -63,40 +63,58 @@ limitations under the License.
 
           <div class="modal-compare-container">
 
-            <div class="modal-compare-inner">
+            <div class="modal-compare-outer">
 
-              <div class="modal-compare-canvas-inner">
-                <canvas class="modal-compare-canvas" id="modal-compare-canvas-1" width="224" height="224">
-                </canvas>
-              </div>
+              <div class="modal-compare-inner">
 
-              <div class="modal-compare-results-inner">
-                <div class="modal-compare-results" id="modal-compare-results-1">
+                <div class="modal-compare-canvas-inner">
+                  <canvas class="modal-compare-canvas" id="modal-compare-canvas-1" width="224" height="224">
+                  </canvas>
                 </div>
+
+                <div class="modal-compare-canvas-inner">
+                  <canvas class="modal-compare-canvas" id="modal-compare-saliency-1" width="224" height="224">
+                  </canvas>
+                </div>
+
+                <div class="modal-compare-results-inner">
+                  <div class="modal-compare-results" id="modal-compare-results-1">
+                  </div>
+                </div>
+
+                <div class="modal-compare-clear-inner">
+                  <button class="modal-compare-clear-button" id="modal-compare-clear-button-1"><span>Clear</span></button>
+                </div>
+
               </div>
 
-              <div class="modal-compare-clear-inner">
-                <button class="modal-compare-clear-button" id="modal-compare-clear-button-1"><span>Clear</span></button>
+              <div class="modal-compare-inner">
+
+                <div class="modal-compare-canvas-inner">
+                  <canvas class="modal-compare-canvas" id="modal-compare-canvas-2" width="224" height="224">
+                  </canvas>
+                </div>
+
+                <div class="modal-compare-canvas-inner">
+                  <canvas class="modal-compare-canvas" id="modal-compare-saliency-2" width="224" height="224">
+                  </canvas>
+                </div>
+
+                <div class="modal-compare-results-inner">
+                  <div class="modal-compare-results" id="modal-compare-results-2">
+                  </div>
+                </div>
+
+                <div class="modal-compare-clear-inner">
+                  <button class="modal-compare-clear-button" id="modal-compare-clear-button-2"><span>Clear</span></button>
+                </div>
+
               </div>
 
             </div>
 
-            <div class="modal-compare-inner">
-
-              <div class="modal-compare-canvas-inner">
-                <canvas class="modal-compare-canvas" id="modal-compare-canvas-2" width="224" height="224">
-                </canvas>
-              </div>
-
-              <div class="modal-compare-results-inner">
-                <div class="modal-compare-results" id="modal-compare-results-2">
-                </div>
-              </div>
-
-              <div class="modal-compare-clear-inner">
-                <button class="modal-compare-clear-button" id="modal-compare-clear-button-2"><span>Clear</span></button>
-              </div>
-
+            <div class="modal-compare-saliency-outer" style="display:none">
+              <button class="modal-compare-saliency-button"><span>Calculate Saliencies</span></button>
             </div>
 
           </div>

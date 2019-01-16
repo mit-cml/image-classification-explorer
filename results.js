@@ -46,9 +46,9 @@ export class Results {
     const result = {};
     const index = ((this.absoluteIndex % this.numResults) + this.numResults) % this.numResults;
 
-    // Get the corresponding image
-    const imgIndex = tf.tensor1d([index], 'int32');
-    result.img = this.imgs.gather(imgIndex);
+    // Get the corresponding image and activation
+    const tensorIndex = tf.tensor1d([index], 'int32');
+    result.img = this.imgs.gather(tensorIndex);
 
     // Get the actual label of the image
     result.actualLabel = this.labelNamesMap[this.actualIndices[index]];

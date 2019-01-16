@@ -23,6 +23,7 @@ import {Dataset} from './dataset';
 import {Results} from './results';
 import * as ui from './ui';
 import * as modal from './modal';
+import * as saliency from './saliency';
 import {Webcam} from './webcam';
 
 // Later, maybe allow users to pick these values themselves?
@@ -30,6 +31,10 @@ const LEARNING_RATE = 0.0001;
 const BATCH_SIZE_FRACTION = 0.4;
 const EPOCHS = 20;
 const DENSE_UNITS = 100;
+
+const SALIENCY_NUM_SAMPLES = 15;
+const SALIENCY_NOISE_STD = 0.05;
+const SALIENCY_CLIP_PERCENT = 0.99;
 
 const fetch = require('node-fetch');
 
@@ -43,6 +48,7 @@ let testingResults;
 
 let mobilenet;
 let model;
+let entireModel;
 
 // let mobilenet_original;
 // let squeezenet_original;
@@ -126,13 +132,17 @@ ui.setRemoveLabelHandler(labelId => {
   trainingDataset.removeLabel(labelId);
 });
 
-// Methods to supply results to the results modal
+// Methods to supply data to the results modal
 modal.setGetResultsHandler(() => {
   if (ui.getCurrentTab() == "training") {
     return trainingResults;
   } else {
     return testingResults;
   }
+});
+
+modal.setGetSaliencyHandler(async function(img) {
+  return await saliency.smoothGrad(img, SALIENCY_NUM_SAMPLES, SALIENCY_NOISE_STD, entireModel, SALIENCY_CLIP_PERCENT);
 });
 
 // Sets up and trains the classifier
@@ -197,6 +207,18 @@ async function train() {
     callbacks: {
       onBatchEnd: async (batch, logs) => {
         ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
+      },
+
+      onTrainEnd: () => {
+        // Piece together the entire model
+        let output = mobilenet.getLayer('conv_pw_13_relu').output;
+
+        for (let i = 0; i < model.layers.length; i++) {
+          const currentLayer = model.getLayer("filler", i);
+          output = currentLayer.apply(output);
+        }
+
+        entireModel = tf.model({inputs: mobilenet.inputs, outputs: output});
       }
     }
   });

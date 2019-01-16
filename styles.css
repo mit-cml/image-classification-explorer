@@ -291,12 +291,23 @@ label {
 
 .modal-compare-container {
   display: flex;
+  flex-direction: column;
+}
+
+.modal-compare-outer {
+  display: flex;
   justify-content: center;
 }
 
 .modal-compare-inner {
   display: flex;
+  align-items: center;
   flex-direction: column;
+}
+
+.modal-compare-saliency-outer {
+  display: flex;
+  justify-content: center;
 }
 
 .modal-compare-canvas-inner {

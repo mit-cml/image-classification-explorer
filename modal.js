@@ -29,15 +29,22 @@ const modalCompareClearButton1 = document.getElementById("modal-compare-clear-bu
 const modalCompareClearButton2 = document.getElementById("modal-compare-clear-button-2");
 const modalCompareCanvas1 = document.getElementById("modal-compare-canvas-1");
 const modalCompareCanvas2 = document.getElementById("modal-compare-canvas-2");
+const modalCompareSaliency1 = document.getElementById("modal-compare-saliency-1");
+const modalCompareSaliency2 = document.getElementById("modal-compare-saliency-2");
 const modalCompareResults1 = document.getElementById("modal-compare-results-1");
 const modalCompareResults2 = document.getElementById("modal-compare-results-2");
 
+const modalSaliencyBox = document.getElementsByClassName("modal-compare-saliency-outer")[0];
+const modalSaliencyButton = document.getElementsByClassName("modal-compare-saliency-button")[0];
+
 const modalCompareElements = {};
-modalCompareElements[1] = [modalCompareCanvas1, modalCompareResults1];
-modalCompareElements[2] = [modalCompareCanvas2, modalCompareResults2];
+modalCompareElements[1] = [modalCompareCanvas1, modalCompareSaliency1, modalCompareResults1];
+modalCompareElements[2] = [modalCompareCanvas2, modalCompareSaliency2, modalCompareResults2];
 
 let currentModalCompareElement = 1;
 let secondModalCompareElementOn = false;
+
+const currentCompareImgs = [null, null];
 
 // Constants for the confidence graph
 const CONFIDENCE_START = 40;
@@ -81,6 +88,8 @@ export function init() {
   modalCompareClearButton1.addEventListener("click", () => {
     clearCompareElements(1);
     currentModalCompareElement = 1;
+
+    modalSaliencyBox.style.display = 'none';
   });
 
   modalCompareClearButton2.addEventListener("click", () => {
@@ -89,13 +98,28 @@ export function init() {
     if (currentModalCompareElement > 1) {
       currentModalCompareElement = 2;
     }
+
+    modalSaliencyBox.style.display = 'none';
+  });
+
+  modalSaliencyButton.addEventListener("click", async () => {
+    const saliency1 = await getSaliencyHandler(currentCompareImgs[0]);
+    const saliency2 = await getSaliencyHandler(currentCompareImgs[1]);
+
+    await tf.toPixels(saliency1, modalCompareSaliency1);
+    await tf.toPixels(saliency2, modalCompareSaliency2);
   });
 }
 
 // This is set in index.js
-export let getResultsHandler;
+let getResultsHandler;
 export function setGetResultsHandler(handler) {
   getResultsHandler = handler;
+}
+
+let getSaliencyHandler;
+export function setGetSaliencyHandler(handler) {
+  getSaliencyHandler = handler;
 }
 
 // General helper methods for populating the modal
@@ -130,7 +154,11 @@ function clearCompareElements(i) {
   const canvasContext = currentCanvas.getContext('2d');
   canvasContext.clearRect(0, 0, currentCanvas.width, currentCanvas.height);
 
-  const currentResults = currentModalCompareElements[1];
+  const currentSaliency = currentModalCompareElements[1];
+  const saliencyContext = currentSaliency.getContext('2d');
+  saliencyContext.clearRect(0, 0, currentSaliency.width, currentSaliency.height);
+
+  const currentResults = currentModalCompareElements[2];
   while (currentResults.firstChild) {
     currentResults.removeChild(currentResults.firstChild);
   }
@@ -145,6 +173,7 @@ function setCompareEventListeners(cell, result) {
       const currentModalCompareElements = modalCompareElements[currentModalCompareElement];
 
       ui.draw(result.img, currentModalCompareElements[0]);
+      currentCompareImgs[currentModalCompareElement - 1] = result.img;
 
       for (let i = 0; i < result.predictedLabels.length; i++) {
         const currentLabel = result.predictedLabels[i];
@@ -159,7 +188,7 @@ function setCompareEventListeners(cell, result) {
           resultPredictionSpan.setAttribute("class", ANALYSIS_TABLE_PREDICTION_CLASS + " incorrect");
         }
 
-        currentModalCompareElements[1].appendChild(resultPredictionSpan);
+        currentModalCompareElements[2].appendChild(resultPredictionSpan);
       }
     }
   });
@@ -184,6 +213,11 @@ function setCompareEventListeners(cell, result) {
     }
 
     currentModalCompareElement += toIncrement;
+
+    if (currentModalCompareElement > 2) {
+      modalSaliencyBox.style.display = '';
+    }
+
   });
 }
 
