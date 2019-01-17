@@ -35,16 +35,16 @@ const fetch = require('node-fetch');
 
 // Variables for containing the model datasets, prediction results,
 // the models themselves, and the webcam
-const trainingDataset = new Dataset();
-const testingDataset = new Dataset();
-
-var trainingImgDict = {};
-var testingImgDict = {}; 
+const trainingDatasetMobilenet = new Dataset();
+const testingDatasetMobilenet = new Dataset();
+const trainingDatasetSqueezenet = new Dataset();
+const testingDatasetSqueezenet = new Dataset();
 
 let trainingResults;
 let testingResults;
 
 let mobilenet;
+let squeezenet; 
 let model;
 
 // let mobilenet_original;
@@ -65,64 +65,118 @@ async function loadMobilenet() {
 // Loads squeezenet and returns a model that returns the internal activation
 // we'll use as input to our classifier model.
 async function loadSqueezenet() {
-  // const squeezenet = await tf.loadModel('https://www.dropbox.com/s/wkytf1y39vy1bcs/model.json?dl=0');
-  // const squeezenet = await tf.loadModel('https://drive.google.com/uc?export=download&id=1ihab5WrjbO7_RZCcHI8ERytN0X-6toqC'); 
-  // const squeezenet = await tf.loadModel('file:///model.json')
-  // const squeezenet = await tf.loadModel('file:///model.json', {fetch: fetch});
-  // const squeezenet = await tf.loadModel('https://www.dropbox.com/s/d75ox80rlwwct0c/model-for-google-drive.json?dl=1', {'mode': 'no-cors'});
-  // const squeezenet = await tf.loadModel('localstorage://model.json')
-  // const squeezenet = await tf.loadModel('file:///squeezenet/model.json');
-  // const squeezenet = await tf.loadModel('file:///Users/yuriautsumi/image-classification-explorer/squeezenet/model.json');
   const squeezenet = await tf.loadModel('http://127.0.0.1:8080/model.json'); // go to squeezenet folder, http-server . --cors -o
-
-  // const tf = require("@tensorflow/tfjs");
-  // const tfn = require("@tensorflow/tfjs-node");
-  // const handler = tfn.io.fileSystem("file:///model.json");
-  // const squeezenet = await tf.loadModel(handler);
   return squeezenet;
-  // return tf.model({inputs: squeezenet.inputs, outputs: squeezenet.outputs});
 }
 
-
+// function cloneObject(obj) {
+//   var clone = {};
+//   for(var i in obj) {
+//       if(obj[i] != null &&  typeof(obj[i])=="object")
+//           clone[i] = cloneObject(obj[i]);
+//       else
+//           clone[i] = obj[i];
+//   }
+//   return clone;
+// }
+function cloneEvent(e) {
+  if (e===undefined || e===null) return undefined;
+  function ClonedEvent() {};  
+  let clone=new ClonedEvent();
+  for (let p in e) {
+      let d=Object.getOwnPropertyDescriptor(e, p);
+      if (d && (d.get || d.set)) Object.defineProperty(clone, p, d); else clone[p] = e[p];
+  }
+  Object.setPrototypeOf(clone, e);
+  return clone;
+}
 // Methods for updating the dataset objects from the ui
 ui.setAddExampleHandler((labelId, datasetName) => {
   tf.tidy(async () => {
-    const img = webcam.capture();
+    // const img = tf.keep(webcam.capture());
+    const img = webcam.capture(); // TODO: fix issue here.. for some reason it disposes the tensor once we start predicting... 
+    const img_copy = cloneEvent(img); 
 
-    // stop doing this here 
-    // if (datasetName === "training") {
-    //   trainingDataset.addExample(img, mobilenet.predict(img), labelId); // here 
-    // } else {
-    //   testingDataset.addExample(img, mobilenet.predict(img), labelId); // here 
-    // }
-
-    if (datasetName == "training") {
-      if (labelId in trainingImgDict) {
-        trainingImgDict[labelId].push(tf.keep(img)); 
-      } else {
-        trainingImgDict[labelId] = [tf.keep(img)]; 
-      }
+    // process and add activations for both models 
+    if (datasetName === "training") {
+      // let img_copy = {'e':JSON.parse(JSON.stringify(img))};
+      // let img_copy = cloneObject(img);
+      // let img_copy = cloneEvent(tf.keep(img)); 
+      var s = squeezenet.predict(img); 
+      // var m = mobilenet.predict(img_copy); 
+      console.log("squeezenet prediction");
+      console.log(s);
+      // console.log("mobilenet prediction");
+      // console.log(m);
+      console.log("img");
+      console.log(img);
+      console.log(typeof img);
+      console.log("img copy");
+      console.log(img_copy); 
+      console.log(typeof img_copy); 
+      // console.log("img status 2");
+      // console.log(img);
+      // console.log(img["isDisposedInternal"]);
+      // trainingDatasetMobilenet.addExample(img_copy, m, labelId); 
+      trainingDatasetSqueezenet.addExample(img, s, labelId); 
+      // console.log("img status 1");
+      // console.log(img); 
+      // console.log(img["isDisposedInternal"]);
+      // trainingDatasetMobilenet.addExample(img, m, labelId); 
+      ui.drawThumb(img, datasetName, labelId);
     } else {
-      if (labelId in testingImgDict) {
-        testingImgDict[labelId].push(tf.keep(img));
-      } else {
-        testingImgDict[labelId] = [tf.keep(img)];
-      }
+      testingDatasetMobilenet.addExample(img, mobilenet.predict(img), labelId); // here 
+      testingDatasetSqueezenet.addExample(img, squeezenet.predict(img), labelId); // here 
+      ui.drawThumb(img, datasetName, labelId);
+    }
+    if (datasetName === "training") {
+      // let img_copy = {'e':JSON.parse(JSON.stringify(img))};
+      // let img_copy = cloneObject(img);
+      // let img_copy = cloneEvent(tf.keep(img)); 
+      // var s = squeezenet.predict(img_copy); 
+      var m = mobilenet.predict(img_copy); 
+      // console.log("squeezenet prediction");
+      // console.log(s);
+      // console.log("mobilenet prediction");
+      // console.log(m);
+      // console.log("img");
+      // console.log(img);
+      // console.log(typeof img);
+      // console.log("img copy");
+      // console.log(img_copy); 
+      // console.log(typeof img_copy); 
+      // console.log("img status 2");
+      // console.log(img);
+      // console.log(img["isDisposedInternal"]);
+      trainingDatasetMobilenet.addExample(img_copy, m, labelId); 
+      // trainingDatasetSqueezenet.addExample(img_copy, s, labelId); 
+      // console.log("img status 1");
+      // console.log(img); 
+      // console.log(img["isDisposedInternal"]);
+      // trainingDatasetMobilenet.addExample(img, m, labelId); 
+      // ui.drawThumb(img_copy, datasetName, labelId);
+    } else {
+      testingDatasetMobilenet.addExample(img, mobilenet.predict(img), labelId); // here 
+      testingDatasetSqueezenet.addExample(img, squeezenet.predict(img), labelId); // here 
+      ui.drawThumb(img, datasetName, labelId);
     }
 
-    ui.drawThumb(img, datasetName, labelId);
+    // img.dispose();
+
   });
 });
 
 ui.setAddLabelHandler(labelName => {
-  testingDataset.addLabel(labelName);
-  return trainingDataset.addLabel(labelName);
+  testingDatasetMobilenet.addLabel(labelName);
+  testingDatasetSqueezenet.addLabel(labelName);
+  trainingDatasetMobilenet.addLabel(labelName);
+  return trainingDatasetSqueezenet.addLabel(labelName);
 });
 ui.setRemoveLabelHandler(labelId => {
-  delete trainingImgDict[labelId]; 
-  delete testingImgDict[labelId]; 
-  testingDataset.removeLabel(labelId);
-  trainingDataset.removeLabel(labelId);
+  testingDatasetMobilenet.removeLabel(labelId);
+  testingDatasetSqueezenet.removeLabel(labelId);
+  trainingDatasetMobilenet.removeLabel(labelId);
+  trainingDatasetSqueezenet.removeLabel(labelId);
 });
 
 // Methods to supply results to the results modal
@@ -136,91 +190,40 @@ modal.setGetResultsHandler(() => {
 
 // Sets up and trains the classifier
 async function train() {
-  // if (trainingDataset.labelXs == {}) {
-  //   throw new Error('Add some examples before training!');
-  // }
-  if (Object.values(trainingImgDict) == []) {
+  if ((trainingDatasetMobilenet.labelXs == {}) || (trainingDatasetSqueezenet.labelXs == {})) {
     throw new Error('Add some examples before training!');
   }
 
-  // TODO: check model input, load appropriate model, and create trainingData and testingData
-  // look at input from dropdown menu 
-  var selected_model = document.getElementById("choose-model-dropdown").value;
-  console.log(selected_model);
-
-  if (selected_model == "MobileNet") {
-    mobilenet = await loadMobilenet();
-    console.log("Loaded MobileNet!");
-  } else if (selected_model == "SqueezeNet") {
-    mobilenet = await loadSqueezenet(); 
-    console.log("Loaded SqueezeNet!");
-  } else {
-    console.log("Model loading failed!");
-  }
-
-  // TODO: create clear fxn that also gets rid of old tensors 
-  trainingDataset.removeExamples();
-  testingDataset.removeExamples();
-
-  console.log("raw training images"); 
-  console.log(trainingImgDict); 
-
-  console.log("raw testing  images");
-  console.log(testingImgDict); 
-
-  // loop over trainingImgDict and testingImgDict and process 
-  for (var label in trainingImgDict) {
-    for (var img in trainingImgDict[label]) {
-      console.log("current image - before predict");
-      console.log(trainingImgDict[label][img]["isDisposedInternal"]); 
-      trainingDataset.addExample(trainingImgDict[label][img], mobilenet.predict(trainingImgDict[label][img]), label); 
-      console.log("current image - after predict");
-      console.log(trainingImgDict[label][img]["isDisposedInternal"]); 
-      trainingImgDict[label][img] = tf.keep(trainingImgDict[label][img]); // added 
-    }
-  }
-  // for (var label in testingImgDict) {
-  //   for (var img in testingImgDict[label]) {
-  //     testingDataset.addExample(testingImgDict[label][img], mobilenet.predict(testingImgDict[label][img]), label); 
-  //   }
-  // }
-
-  console.log("checking isDisposedInternal status after adding examples...")
-  // loop over trainingImgDict and testingImgDict and process 
-  for (var label in trainingImgDict) {
-    for (var img in trainingImgDict[label]) {
-      console.log("current image - before predict");
-      console.log(trainingImgDict[label][img]["isDisposedInternal"]); 
-      console.log("current image - after predict");
-      console.log(trainingImgDict[label][img]["isDisposedInternal"]); 
-    }
-  }
   // Creates a 2-layer fully connected model. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
   // of the mobilenet model, and only train weights from the new model.
-  model = tf.sequential({
-    layers: [
-      // Flattens the input to a vector so we can use it in a dense layer. While
-      // technically a layer, this only performs a reshape (and has no training
-      // parameters).
-      tf.layers.flatten({inputShape: [7, 7, 256]}),
-      // Layer 1
-      tf.layers.dense({
-        units: DENSE_UNITS,
-        activation: 'relu',
-        kernelInitializer: 'varianceScaling',
-        useBias: true
-      }),
-      // Layer 2. The number of units of the last layer should correspond
-      // to the number of classes we want to predict.
-      tf.layers.dense({
-        units: trainingDataset.numLabels,
-        kernelInitializer: 'varianceScaling',
-        useBias: false,
-        activation: 'softmax'
-      })
-    ]
-  });
+  if (trainingDatasetMobilenet.numLabels == trainingDatasetSqueezenet.numLabels) {
+    model = tf.sequential({
+      layers: [
+        // Flattens the input to a vector so we can use it in a dense layer. While
+        // technically a layer, this only performs a reshape (and has no training
+        // parameters).
+        tf.layers.flatten({inputShape: [7, 7, 256]}),
+        // Layer 1
+        tf.layers.dense({
+          units: DENSE_UNITS,
+          activation: 'relu',
+          kernelInitializer: 'varianceScaling',
+          useBias: true
+        }),
+        // Layer 2. The number of units of the last layer should correspond
+        // to the number of classes we want to predict.
+        tf.layers.dense({
+          units: trainingDatasetMobilenet.numLabels,
+          kernelInitializer: 'varianceScaling',
+          useBias: false,
+          activation: 'softmax'
+        })
+      ]
+    });
+  } else {
+    throw new Error('Error with data collection! Please recollect data from scratch.')
+  }
 
   // We use categoricalCrossentropy which is the loss function we use for
   // categorical classification which measures the error between our predicted
@@ -229,9 +232,23 @@ async function train() {
   const optimizer = tf.train.adam(LEARNING_RATE);
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
+  // TODO: check model input, load appropriate model, and create trainingData and testingData
+  // look at input from dropdown menu 
+  var selected_model = document.getElementById("choose-model-dropdown").value;
+  console.log(selected_model);
+
   // Get data from the training dataset
   const trainingData = await tf.tidy(() => {
-    return trainingDataset.getData();
+    if (selected_model == "SqueezeNet") { 
+      console.log("Training on Squeezenet!"); 
+      return trainingDatasetSqueezenet.getData(); 
+    } else if (selected_model == "MobileNet") { 
+      console.log("Training on Mobilenet!"); 
+      return trainingDatasetMobilenet.getData(); 
+    } else {
+      console.log("Training on Mobilenet by default!"); 
+      return trainingDatasetMobilenet.getData(); 
+    }
   });
 
   // We parameterize batch size as a fraction of the entire dataset because the
@@ -319,44 +336,17 @@ let resultsPrevButtonFunctionTesting = null;
 let resultsNextButtonFunctionTesting = null;
 
 document.getElementById('predict').addEventListener('click', async () => {
-
-  // TODO: create clear fxn that also gets rid of old tensors 
-  // trainingDataset.removeExamples();
-  // testingDataset.removeExamples();
-
-  console.log("raw training images"); 
-  console.log(trainingImgDict); 
-
-  console.log("raw testing  images");
-  console.log(testingImgDict); 
-
-  // added 
-  for (var label in testingImgDict) {
-    for (var img in testingImgDict[label]) {
-      console.log("testing image - before predict");
-      console.log(testingImgDict[label][img]);
-      // console.log(typeof testingImgDict[label][img]);
-      // console.log("label");
-      // console.log(label);
-      // console.log("model");
-      // console.log(mobilenet);
-      // console.log("prediction - datasync");
-      // console.log(mobilenet.predict(testingImgDict[label][img]).dataSync()); 
-      // console.log(mobilenet.predict(testingImgDict[label][img]).dataSync()[0]); 
-      // console.log("prediction");
-      // console.log(mobilenet.predict(testingImgDict[label][img])); 
-      testingDataset.addExample(testingImgDict[label][img], mobilenet.predict(testingImgDict[label][img]), label); 
-      console.log("testing image - after predict");
-      console.log(testingImgDict[label][img]);
-    }
+  // xxxxxxxxx
+  if (selected_model == "SqueezeNet") { 
+    console.log("Testing on Squeezenet!"); 
+    testingResults = await predict(testingDatasetSqueezenet, trainingDatasetSqueezenet.getCurrentLabelNamesJson());
+  } else if (selected_model == "MobileNet") { 
+    console.log("Testing on Mobilenet!"); 
+    testingResults = await predict(testingDatasetMobilenet, trainingDatasetMobilenet.getCurrentLabelNamesJson());
+  } else {
+    console.log("Testing on Mobilenet by default!"); 
+    testingResults = await predict(testingDatasetMobilenet, trainingDatasetMobilenet.getCurrentLabelNamesJson());
   }
-  for (var label in testingImgDict) {
-    for (var img in testingImgDict[label]) {
-      testingImgDict[label][img].dispose();
-    }
-  }
-  testingImgDict = {}; 
-  testingResults = await predict(testingDataset, trainingDataset.getCurrentLabelNamesJson());
   ui.updateResult(testingResults.getNextResult(), "testing");
 
   const resultsPrevButton = document.getElementById("results-image-button-prev-testing");
@@ -464,10 +454,6 @@ modelUpload.addEventListener('change', async () => {
 // Initialize the application
 
 async function init() {
-  // Initial prompt to select training model: 
-  // var selected_model = prompt("Please enter your training model (Mobilenet (default) or Squeezenet):");
-  // console.log(selected_model);
-
   try {
     await webcam.setup();
   } catch (e) {
@@ -476,43 +462,13 @@ async function init() {
 
   console.log(await tf.io.listModels()); 
 
-  // // look at input from dropdown menu 
-  // var selected_model = document.getElementById("choose-model-dropdown").value;
-  // // var dropdown = document.getElementById("choose-model");
-  // // var selected_model = dropdown.options[dropdown.selectedIndex].value;
-  // console.log(selected_model);
+  mobilenet = await loadMobilenet();
+  squeezenet = await loadSqueezenet(); 
+  console.log('Loaded models.')
 
-  // if (selected_model == "MobileNet") {
-  //   mobilenet = await loadMobilenet();
-  //   console.log("Loaded MobileNet!");
-  // } else if (selected_model == "SqueezeNet") {
-  //   mobilenet = await loadSqueezenet(); 
-  //   console.log("Loaded SqueezeNet!");
-  // } else {
-  //   console.log("Model loading failed!");
-  // }
-  
-  // if (selected_model == "Mobilenet") {
-  //   mobilenet = await loadMobilenet();
-  //   console.log("Loaded Mobilenet!"); 
-  // } else if (selected_model == "Squeezenet") {
-  //   mobilenet = await loadSqueezenet(); 
-  //   console.log("Loaded Squeezenet!"); 
-  // } else {
-  //   mobilenet = await loadMobilenet();
-  //   console.log("Model not specified. Loaded Mobilenet by default!")
-  // }
-
-  // mobilenet = await loadMobilenet();
-  // squeezenet = await loadSqueezenet(); 
-  // console.log('Loaded initial models.')
-
-  // mobilenet = await loadMobilenet();
-  // mobilenet = await loadSqueezenet(); 
-
-  // Warm up the model so that the first time we use it will be quick
-  // tf.tidy(() => mobilenet.predict(webcam.capture()));
-  // tf.tidy(() => squeezenet.predict(webcam.capture()));
+  // Warm up the models so that the first time we use it will be quick
+  tf.tidy(() => mobilenet.predict(webcam.capture()));
+  tf.tidy(() => squeezenet.predict(webcam.capture()));
 
   ui.init();
   modal.init();
