@@ -20,6 +20,16 @@ import * as tf from '@tensorflow/tfjs';
  * A class representing results from a classifier
  */
 export class Results {
+
+  /**
+   * Creates a results object with the provided data.
+   *
+   * @param {Tensor} imgs - A tensor of the images that the predictions correspond to.
+   * @param {number[]} actualIndices - An array of the actual indices of the images.
+   * @param {number[]} predictedIndices - An array of the predicted indices of the images.
+   * @param {number[]} predictedValues - An array of the confidence values of the predictions.
+   * @param {object} labelNamesMap - A mapping of indices to label names.
+   */
   constructor(imgs, actualIndices, predictedIndices, predictedValues, labelNamesMap) {
     this.imgs = tf.keep(imgs);
     this.actualIndices = actualIndices;
@@ -32,18 +42,44 @@ export class Results {
     this.topK = predictedIndices.length / this.numResults;
   }
 
+  /**
+   * Gets the next result.
+   *
+   * @returns {object} An object containing data for the next result. Contains fields
+   *    'img', 'actualLabel', 'predictedLabels' and 'predictedValues' corresponding to
+   *    the result's corresponding image, its actual label, its top predicted labels, and
+   *    its confidence values for its top predictions, respectively.
+   */
   getNextResult() {
     this.absoluteIndex += 1;
     return this.getResult();
   }
 
+  /**
+   * Gets the previous result.
+   *
+   * @returns {object} An object containing data for the previous result. Contains fields
+   *    'img', 'actualLabel', 'predictedLabels' and 'predictedValues' corresponding to
+   *    the result's corresponding image, its actual label, its top predicted labels, and
+   *    its confidence values for its top predictions, respectively.
+   */
   getPreviousResult() {
     this.absoluteIndex -= 1;
     return this.getResult();
   }
 
+  /**
+   * Creates and returns the current result object.
+   *
+   * @returns {object} An object containing data for the current result. Contains fields
+   *    'img', 'actualLabel', 'predictedLabels' and 'predictedValues' corresponding to
+   *    the result's corresponding image, its actual label, its top predicted labels, and
+   *    its confidence values for its top predictions, respectively.
+   */
   getResult() {
     const result = {};
+
+    // Calculate what image we are currently on
     const index = ((this.absoluteIndex % this.numResults) + this.numResults) % this.numResults;
 
     // Get the corresponding image and activation
@@ -67,6 +103,14 @@ export class Results {
     return result;
   }
 
+  /**
+   * Gets all of the results in this results object.
+   *
+   * @returns {object[]} An array of objects for each result. Each object contains fields
+   *    'img', 'actualLabel', 'predictedLabels' and 'predictedValues' corresponding to
+   *    the result's corresponding image, its actual label, its top predicted labels, and
+   *    its confidence values for its top predictions, respectively.
+   */
   getAllResults() {
     const results = [];
     const oldAbsoluteIndex = this.absoluteIndex;
@@ -81,6 +125,11 @@ export class Results {
     return results;
   }
 
+  /**
+   * Gets the mapping of model predictions to label names.
+   *
+   * @returns {string} A JSON string of the object containing the mapping.
+   */
   getLabelNamesMap() {
     return JSON.stringify(this.labelNamesMap);
   }

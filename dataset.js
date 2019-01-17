@@ -17,10 +17,14 @@
 import * as tf from '@tensorflow/tfjs';
 
 /**
- * A class representing a dataset which allows the user to add example Tensors
- * for particular labels. This object will concat them into two large xs and ys.
+ * A class representing a dataset featuring methods for adding labels and
+ * examples, as well as for formatting them for training or predicting.
  */
 export class Dataset {
+
+  /**
+   * Creates an empty dataset.
+   */
   constructor() {
     // Current number of active labels
     this.numLabels = 0;
@@ -42,11 +46,11 @@ export class Dataset {
   }
 
   /**
-   * Adds an example to the controller dataset.
-   * @param {Tensor} image A tensor of the example image representing the example. It can be an image,
-   *     an activation, or any other type of Tensor.
-   * @param {Tensor} activation A tensor of an activation of image
-   * @param {number} label The label of the example. Should be a number.
+   * Adds an example to the dataset.
+   *
+   * @param {Tensor} image - A tensor of the example image.
+   * @param {Tensor} activation - A tensor of an activation of the example image that will be used for training or predicting.
+   * @param {number} labelId - The example's label's id.
    */
   addExample(image, activation, labelId) {
     if (!(labelId in this.labelImgs)) {
@@ -68,18 +72,42 @@ export class Dataset {
     }
   }
 
+  /**
+   * Gets the name of a label corresponding to a given model prediction.
+   *
+   * @param {number} prediction - The model's prediction.
+   *
+   * @returns {string} The corresponding label name.
+   */
   getLabelNameFromModelPrediction(prediction) {
     return this.currentLabelNamesMap[prediction];
   }
 
+  /**
+   * Gets the mapping of model predictions to label names.
+   *
+   * @returns {string} A JSON string of the object containing the mapping.
+   */
   getCurrentLabelNamesJson() {
     return JSON.stringify(this.currentLabelNamesMap);
   }
 
+  /**
+   * Sets the mapping of model predictions to label names.
+   *
+   * @param {string} labelNamesJsonString - A JSON string of the object containing the mapping.
+   */
   setCurrentLabelNames(labelNamesJsonString) {
     this.currentLabelNamesMap = JSON.parse(labelNamesJsonString);
   }
 
+  /**
+   * Adds a label to the dataset.
+   *
+   * @param {labelName} labelName - The name of the label to add.
+   *
+   * @returns {number} The id of the added label.
+   */
   addLabel(labelName) {
     this.activeLabels[this.totalNumLabelsAdded] = labelName;
     this.numLabels += 1;
@@ -88,15 +116,34 @@ export class Dataset {
     return this.totalNumLabelsAdded - 1;
   }
 
+  /**
+   * Removes a label from the dataset
+   *
+   * @param {number} labelId - The id of the label to remove.
+   */
   removeLabel(labelId) {
     delete this.activeLabels[labelId];
     this.numLabels -= 1;
   }
 
+  /**
+   * Gets the images corresponding to a given label id.
+   *
+   * @param {number} labelId - The id of the label to get images for.
+   *
+   * @returns {Tensor} A Tensor containing the images.
+   */
   getImages(labelId) {
     return this.labelImgs[labelId];
   }
 
+  /**
+   * Gets the data from the dataset for training or predicting.
+   *
+   * @returns {object} An object containing the dataset's data. Contains
+   *    fields 'xs', 'ys', and 'imgs', corresponding to the training data,
+   *    training labels, and their images respectively.
+   */
   getData() {
     const activeLabelIds = Object.keys(this.activeLabels);
 

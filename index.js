@@ -86,7 +86,6 @@ async function loadSqueezenet() {
   // return tf.model({inputs: squeezenet.inputs, outputs: squeezenet.outputs});
 }
 
-
 // Methods for updating the dataset objects from the ui
 ui.setAddExampleHandler((labelId, datasetName) => {
   tf.tidy(async () => {
@@ -212,7 +211,11 @@ async function train() {
       onTrainEnd: () => {
         // Piece together the entire model
 
+        // TODO: add logic to determine what model we're using
+        // For mobilenet
         let output = mobilenet.getLayer('conv_pw_13_relu').output;
+
+        // For squeezenet
         // let output = mobilenet.getLayer('max_pooling2d_1').output;
 
         for (let i = 0; i < model.layers.length; i++) {
@@ -228,15 +231,17 @@ async function train() {
 
 // Uses the classifier to classify examples
 async function predict(dataset, modelLabelsJson) {
+
+  // Gets the data from the dataset and predicts on it
   const datasetData = await tf.tidy(() => {
     return dataset.getData();
   });
 
   const predictedClass = tf.tidy(() => {
-    // Make predictions from the mobilenet activations of the dataset
     return model.predict(datasetData.xs);
   });
 
+  // Calculates the top k predictions for each image
   const labelNamesMap = JSON.parse(modelLabelsJson);
 
   const numPredictions = Math.min(3, Object.keys(labelNamesMap).length);
@@ -249,6 +254,7 @@ async function predict(dataset, modelLabelsJson) {
 
   predictedClass.dispose();
 
+  // Creates a results object to store all of the results
   return new Results(datasetData.imgs, actualIndices, predictedIndices, predictedValues, labelNamesMap);
 }
 
@@ -257,12 +263,16 @@ let resultsPrevButtonFunctionTraining = null;
 let resultsNextButtonFunctionTraining = null;
 
 document.getElementById('train').addEventListener('click', async () => {
+  // First, we train the model on the training dataset
   ui.trainStatus('Training...');
   await tf.nextFrame();
   await tf.nextFrame();
   await train();
 
+  // Then, we use the model we trained to make predictions on the training dataset
   trainingResults = await predict(trainingDataset, trainingDataset.getCurrentLabelNamesJson());
+
+  // Then, we update the results column of the interface with the results
   ui.updateResult(trainingResults.getNextResult(), "training");
 
   const resultsPrevButton = document.getElementById("results-image-button-prev-training");
@@ -273,6 +283,8 @@ document.getElementById('train').addEventListener('click', async () => {
     resultsNextButton.removeEventListener('click', resultsNextButtonFunctionTraining);
   }
 
+  // We store the methods to step through results so we can remove them from the buttons if
+  // we get new results
   resultsPrevButtonFunctionTraining = () => {
     ui.updateResult(trainingResults.getPreviousResult(), "training");
   }
@@ -289,7 +301,10 @@ let resultsPrevButtonFunctionTesting = null;
 let resultsNextButtonFunctionTesting = null;
 
 document.getElementById('predict').addEventListener('click', async () => {
+  // First, we use the model to make predicts on the testing dataset
   testingResults = await predict(testingDataset, trainingDataset.getCurrentLabelNamesJson());
+
+  // Then, we update the results column of the interface with the results
   ui.updateResult(testingResults.getNextResult(), "testing");
 
   const resultsPrevButton = document.getElementById("results-image-button-prev-testing");
@@ -300,6 +315,8 @@ document.getElementById('predict').addEventListener('click', async () => {
     resultsNextButton.removeEventListener('click', resultsNextButtonFunctionTesting);
   }
 
+  // We store the methods to step through results so we can remove them from the buttons if
+  // we get new results
   resultsPrevButtonFunctionTesting = () => {
     ui.updateResult(testingResults.getPreviousResult(), "testing");
   }
@@ -312,9 +329,12 @@ document.getElementById('predict').addEventListener('click', async () => {
   resultsNextButton.addEventListener('click', resultsNextButtonFunctionTesting);
 });
 
-// Download and upload button functionality.
-
+// Download button functionality
 document.getElementById('download-button').addEventListener('click', async () => {
+  // The TensorFlow.js save method doesn't work properly in Firefox, so we write
+  // our own. This methods zips up the model's topology file, weights files, and
+  // a json of the mapping of model predictions to label names. The resulting file
+  // is given the .mdl extension to prevent tampering with.
   const zipSaver = {save: function(modelSpecs) {
     const modelTopologyFileName = "model.json";
     const weightDataFileName = "model.weights.bin";
@@ -350,6 +370,8 @@ document.getElementById('download-button').addEventListener('click', async () =>
   const savedModel = await model.save(zipSaver);
 });
 
+// Helper method to convert a blob to an actual file, which TensorFlow.js requires
+// in order to load in the model
 function blobToFile(blob, fileName) {
   // A Blob() is almost a File() - it's just missing the two properties below which we will add
   blob.lastModifiedDate = new Date();
@@ -357,6 +379,7 @@ function blobToFile(blob, fileName) {
   return blob;
 }
 
+// Upload button functionality
 const modelUpload = document.getElementById('model-upload');
 
 document.getElementById('upload-button').addEventListener('click', async () => {
@@ -384,6 +407,7 @@ modelUpload.addEventListener('change', async () => {
 
   const modelLabelsJson = JSON.parse(modelLabelsText);
 
+  // After uploading the model, we update the ui to reflect the labels in the model
   ui.removeLabels();
   for (let labelNumber in modelLabelsJson) {
     if (modelLabelsJson.hasOwnProperty(labelNumber)) {

@@ -38,7 +38,7 @@ export function trainStatus(status) {
   trainStatusElement.innerText = status;
 }
 
-// These are set in index.js
+// Methods to set in index.js that will allow it to pass data to the ui.
 export let addExampleHandler;
 export function setAddExampleHandler(handler) {
   addExampleHandler = handler;
@@ -165,14 +165,17 @@ export function removeLabels() {
 export function updateResult(result, datasetName) {
   document.getElementById('results-container-' + datasetName).style.display = "";
 
+  // First, draw the image to the results canvas
   const resultCanvas = document.getElementById("results-image-canvas-" + datasetName);
   draw(result.img, resultCanvas);
 
+  // Then, remove the predictions from the previous result being displayed
   const resultPredictionsDiv = document.getElementById("results-image-predictions-inner-" + datasetName);
   while (resultPredictionsDiv.firstChild) {
     resultPredictionsDiv.removeChild(resultPredictionsDiv.firstChild);
   }
 
+  // Then, add the predictions for the new result
   for (let i = 0; i < result.predictedLabels.length; i++) {
     const currentLabel = result.predictedLabels[i];
     const currentValue = result.predictedValues[i];
@@ -190,7 +193,8 @@ export function updateResult(result, datasetName) {
   }
 }
 
-// Handlers for switching tabs between training and testing
+// Handlers for switching tabs between training and testing. Updates the internal state
+// in ui.js, updates the nav bar, and moves around the webcam.
 const trainingTabButton = document.getElementById("training-tab");
 const testingTabButton = document.getElementById("testing-tab");
 
