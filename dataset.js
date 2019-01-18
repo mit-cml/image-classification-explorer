@@ -49,9 +49,6 @@ export class Dataset {
    * @param {number} label The label of the example. Should be a number.
    */
   addExample(image, activation, labelId) {
-    console.log("inside add example");
-    console.log("img - before");
-    console.log(image["isDisposedInternal"]);
     if (!(labelId in this.labelImgs)) {
       // For the first example that gets added for each label, keep the image 
       // and its activation so that the Dataset owns the memory of 
@@ -66,14 +63,8 @@ export class Dataset {
       const oldXs = this.labelXs[labelId];
       this.labelXs[labelId] = tf.keep(oldXs.concat(activation, 0));
 
-      console.log("img - middle");
-      console.log(image["isDisposedInternal"]);      
-
       oldImgs.dispose();
       oldXs.dispose();
-
-      console.log("img - end");
-      console.log(image["isDisposedInternal"]);
     }
   }
 
