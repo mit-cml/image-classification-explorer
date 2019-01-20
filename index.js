@@ -23,6 +23,7 @@ import {Dataset} from './dataset';
 import {Results} from './results';
 import * as ui from './ui';
 import * as modal from './modal';
+import * as saliency from './saliency';
 import {Webcam} from './webcam';
 
 // Later, maybe allow users to pick these values themselves?
@@ -30,6 +31,12 @@ const LEARNING_RATE = 0.0001;
 const BATCH_SIZE_FRACTION = 0.4;
 const EPOCHS = 20;
 const DENSE_UNITS = 100;
+
+const SALIENCY_NUM_SAMPLES = 15;
+const SALIENCY_NOISE_STD = 0.1;
+const SALIENCY_CLIP_PERCENT = 0.99;
+
+const fetch = require('node-fetch');
 
 // Variables for containing the model datasets, prediction results,
 // the models themselves, and the webcam
@@ -42,19 +49,25 @@ var testingImgDict = {};
 let trainingResults;
 let testingResults;
 
-let mobilenet;
+let transferModel;
 let model;
+let entireModel;
 
 const webcam = new Webcam(document.getElementById('webcam'));
+
+// model state stuff
+// const modelNames = ["MobileNet", "SqueezeNet"];
+const modelLastLayers = {"MobileNet" : "conv_pw_13_relu", "SqueezeNet" : "max_pooling2d_1"};
+let currentModel = "MobileNet";
 
 // Loads mobilenet and returns a model that returns the internal activation
 // we'll use as input to our classifier model.
 async function loadMobilenet() {
-  const mobilenet = await tf.loadModel(
+  const transferModel = await tf.loadModel(
       'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
   
-  const layer = mobilenet.getLayer('conv_pw_13_relu');
-  return tf.model({inputs: mobilenet.inputs, outputs: layer.output});
+  const layer = transferModel.getLayer('conv_pw_13_relu');
+  return tf.model({inputs: transferModel.inputs, outputs: layer.output});
 }
 
 // Loads squeezenet and returns a model that returns the internal activation
@@ -98,13 +111,17 @@ ui.setRemoveLabelHandler(labelId => {
   trainingDataset.removeLabel(labelId);
 });
 
-// Methods to supply results to the results modal
+// Methods to supply data to the results modal
 modal.setGetResultsHandler(() => {
   if (ui.getCurrentTab() == "training") {
     return trainingResults;
   } else {
     return testingResults;
   }
+});
+
+modal.setGetSaliencyHandler(async function(img) {
+  return await saliency.smoothGrad(img, SALIENCY_NUM_SAMPLES, SALIENCY_NOISE_STD, entireModel, SALIENCY_CLIP_PERCENT);
 });
 
 // Sets up and trains the classifier
@@ -115,14 +132,14 @@ async function train() {
 
   // TODO: check model input, load appropriate model, and create trainingData and testingData
   // look at input from dropdown menu 
-  var selected_model = document.getElementById("choose-model-dropdown").value;
-  console.log(selected_model);
+  var currentModel = document.getElementById("choose-model-dropdown").value;
+  console.log(currentModel);
 
-  if (selected_model == "MobileNet") {
-    mobilenet = await loadMobilenet();
+  if (currentModel == "MobileNet") {
+    transferModel = await loadMobilenet();
     console.log("Loaded MobileNet!");
-  } else if (selected_model == "SqueezeNet") {
-    mobilenet = await loadSqueezenet(); 
+  } else if (currentModel == "SqueezeNet") {
+    transferModel = await loadSqueezenet(); 
     console.log("Loaded SqueezeNet!");
   } else {
     console.log("Model loading failed!");
@@ -135,7 +152,7 @@ async function train() {
   for (let label in trainingImgDict) {
     for (let img in trainingImgDict[label]) {
       const img_copy = tf.clone(trainingImgDict[label][img]); 
-      trainingDataset.addExample(trainingImgDict[label][img], mobilenet.predict(trainingImgDict[label][img]), label); 
+      trainingDataset.addExample(trainingImgDict[label][img], transferModel.predict(trainingImgDict[label][img]), label); 
       trainingImgDict[label][img] = tf.keep(img_copy); 
     }
   }
@@ -143,29 +160,66 @@ async function train() {
   // Creates a 2-layer fully connected model. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
   // of the mobilenet model, and only train weights from the new model.
-  model = tf.sequential({
-    layers: [
-      // Flattens the input to a vector so we can use it in a dense layer. While
-      // technically a layer, this only performs a reshape (and has no training
-      // parameters).
-      tf.layers.flatten({inputShape: [7, 7, 256]}),
-      // Layer 1
-      tf.layers.dense({
-        units: DENSE_UNITS,
-        activation: 'relu',
-        kernelInitializer: 'varianceScaling',
-        useBias: true
-      }),
-      // Layer 2. The number of units of the last layer should correspond
-      // to the number of classes we want to predict.
-      tf.layers.dense({
-        units: trainingDataset.numLabels,
-        kernelInitializer: 'varianceScaling',
-        useBias: false,
-        activation: 'softmax'
-      })
-    ]
-  });
+  // look at input from dropdown menu 
+  var currentModel2 = document.getElementById("choose-model-dropdown2").value;
+  console.log(currentModel2);
+
+  if (currentModel2 == "Model 1") {
+    model = tf.sequential({
+      layers: [
+        // Flattens the input to a vector so we can use it in a dense layer. While
+        // technically a layer, this only performs a reshape (and has no training
+        // parameters).
+        tf.layers.flatten({inputShape: [7, 7, 256]}),
+        // Layer 1
+        tf.layers.dense({
+          units: DENSE_UNITS,
+          activation: 'relu',
+          kernelInitializer: 'varianceScaling',
+          useBias: true
+        }),
+        // Layer 2. The number of units of the last layer should correspond
+        // to the number of classes we want to predict.
+        tf.layers.dense({
+          units: trainingDataset.numLabels,
+          kernelInitializer: 'varianceScaling',
+          useBias: false,
+          activation: 'softmax'
+        })
+      ]
+    });
+  } else {
+    model = tf.sequential({
+      layers: [
+        // Flattens the input to a vector so we can use it in a dense layer. While
+        // technically a layer, this only performs a reshape (and has no training
+        // parameters).
+        tf.layers.flatten({inputShape: [7, 7, 256]}),
+        // Layer 1
+        tf.layers.dense({
+          units: DENSE_UNITS,
+          activation: 'relu',
+          kernelInitializer: 'varianceScaling',
+          useBias: true
+        }),
+        // Layer 2
+        tf.layers.dense({
+          units: DENSE_UNITS,
+          activation: 'relu',
+          kernelInitializer: 'varianceScaling',
+          useBias: true
+        }),
+        // Layer 3. The number of units of the last layer should correspond
+        // to the number of classes we want to predict.
+        tf.layers.dense({
+          units: trainingDataset.numLabels,
+          kernelInitializer: 'varianceScaling',
+          useBias: false,
+          activation: 'softmax'
+        })
+      ]
+    });
+  }
 
   // We use categoricalCrossentropy which is the loss function we use for
   // categorical classification which measures the error between our predicted
@@ -196,6 +250,21 @@ async function train() {
     callbacks: {
       onBatchEnd: async (batch, logs) => {
         ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
+      },
+
+      onTrainEnd: () => {
+        // Piece together the entire model
+
+        // TODO: add logic to determine what model we're using
+        // For mobilenet
+        let output = transferModel.getLayer(modelLastLayers[currentModel]).output; 
+
+        for (let i = 0; i < model.layers.length; i++) {
+          const currentLayer = model.getLayer("filler", i);
+          output = currentLayer.apply(output);
+        }
+
+        entireModel = tf.model({inputs: transferModel.inputs, outputs: output});
       }
     }
   });
@@ -203,15 +272,17 @@ async function train() {
 
 // Uses the classifier to classify examples
 async function predict(dataset, modelLabelsJson) {
+
+  // Gets the data from the dataset and predicts on it
   const datasetData = await tf.tidy(() => {
     return dataset.getData();
   });
 
   const predictedClass = tf.tidy(() => {
-    // Make predictions from the mobilenet activations of the dataset
     return model.predict(datasetData.xs);
   });
 
+  // Calculates the top k predictions for each image
   const labelNamesMap = JSON.parse(modelLabelsJson);
 
   const numPredictions = Math.min(3, Object.keys(labelNamesMap).length);
@@ -224,6 +295,7 @@ async function predict(dataset, modelLabelsJson) {
 
   predictedClass.dispose();
 
+  // Creates a results object to store all of the results
   return new Results(datasetData.imgs, actualIndices, predictedIndices, predictedValues, labelNamesMap);
 }
 
@@ -232,12 +304,16 @@ let resultsPrevButtonFunctionTraining = null;
 let resultsNextButtonFunctionTraining = null;
 
 document.getElementById('train').addEventListener('click', async () => {
+  // First, we train the model on the training dataset
   ui.trainStatus('Training...');
   await tf.nextFrame();
   await tf.nextFrame();
   await train();
 
+  // Then, we use the model we trained to make predictions on the training dataset
   trainingResults = await predict(trainingDataset, trainingDataset.getCurrentLabelNamesJson());
+
+  // Then, we update the results column of the interface with the results
   ui.updateResult(trainingResults.getNextResult(), "training");
 
   const resultsPrevButton = document.getElementById("results-image-button-prev-training");
@@ -248,6 +324,8 @@ document.getElementById('train').addEventListener('click', async () => {
     resultsNextButton.removeEventListener('click', resultsNextButtonFunctionTraining);
   }
 
+  // We store the methods to step through results so we can remove them from the buttons if
+  // we get new results
   resultsPrevButtonFunctionTraining = () => {
     ui.updateResult(trainingResults.getPreviousResult(), "training");
   }
@@ -275,12 +353,14 @@ document.getElementById('predict').addEventListener('click', async () => {
   for (let label in testingImgDict) {
     for (let img in testingImgDict[label]) {
       const img_copy = tf.clone(testingImgDict[label][img]); 
-      testingDataset.addExample(testingImgDict[label][img], mobilenet.predict(testingImgDict[label][img]), label); 
+      testingDataset.addExample(testingImgDict[label][img], transferModel.predict(testingImgDict[label][img]), label); 
       testingImgDict[label][img] = tf.keep(img_copy); 
     }
   }
 
   testingResults = await predict(testingDataset, trainingDataset.getCurrentLabelNamesJson());
+
+  // Then, we update the results column of the interface with the results
   ui.updateResult(testingResults.getNextResult(), "testing");
 
   const resultsPrevButton = document.getElementById("results-image-button-prev-testing");
@@ -291,6 +371,8 @@ document.getElementById('predict').addEventListener('click', async () => {
     resultsNextButton.removeEventListener('click', resultsNextButtonFunctionTesting);
   }
 
+  // We store the methods to step through results so we can remove them from the buttons if
+  // we get new results
   resultsPrevButtonFunctionTesting = () => {
     ui.updateResult(testingResults.getPreviousResult(), "testing");
   }
@@ -303,9 +385,12 @@ document.getElementById('predict').addEventListener('click', async () => {
   resultsNextButton.addEventListener('click', resultsNextButtonFunctionTesting);
 });
 
-// Download and upload button functionality.
-
+// Download button functionality
 document.getElementById('download-button').addEventListener('click', async () => {
+  // The TensorFlow.js save method doesn't work properly in Firefox, so we write
+  // our own. This methods zips up the model's topology file, weights files, and
+  // a json of the mapping of model predictions to label names. The resulting file
+  // is given the .mdl extension to prevent tampering with.
   const zipSaver = {save: function(modelSpecs) {
     const modelTopologyFileName = "model.json";
     const weightDataFileName = "model.weights.bin";
@@ -341,6 +426,8 @@ document.getElementById('download-button').addEventListener('click', async () =>
   const savedModel = await model.save(zipSaver);
 });
 
+// Helper method to convert a blob to an actual file, which TensorFlow.js requires
+// in order to load in the model
 function blobToFile(blob, fileName) {
   // A Blob() is almost a File() - it's just missing the two properties below which we will add
   blob.lastModifiedDate = new Date();
@@ -348,6 +435,7 @@ function blobToFile(blob, fileName) {
   return blob;
 }
 
+// Upload button functionality
 const modelUpload = document.getElementById('model-upload');
 
 document.getElementById('upload-button').addEventListener('click', async () => {
@@ -375,6 +463,7 @@ modelUpload.addEventListener('change', async () => {
 
   const modelLabelsJson = JSON.parse(modelLabelsText);
 
+  // After uploading the model, we update the ui to reflect the labels in the model
   ui.removeLabels();
   for (let labelNumber in modelLabelsJson) {
     if (modelLabelsJson.hasOwnProperty(labelNumber)) {

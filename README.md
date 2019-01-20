@@ -8,5 +8,3 @@ cd image-classification-explorer
 yarn
 yarn watch
 ```
-
-It runs locally on port 1234.

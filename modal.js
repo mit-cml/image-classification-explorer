@@ -29,19 +29,30 @@ const modalCompareClearButton1 = document.getElementById("modal-compare-clear-bu
 const modalCompareClearButton2 = document.getElementById("modal-compare-clear-button-2");
 const modalCompareCanvas1 = document.getElementById("modal-compare-canvas-1");
 const modalCompareCanvas2 = document.getElementById("modal-compare-canvas-2");
+const modalCompareSaliency1 = document.getElementById("modal-compare-saliency-1");
+const modalCompareSaliency2 = document.getElementById("modal-compare-saliency-2");
 const modalCompareResults1 = document.getElementById("modal-compare-results-1");
 const modalCompareResults2 = document.getElementById("modal-compare-results-2");
 
+const modalSaliencyBox = document.getElementsByClassName("modal-compare-saliency-outer")[0];
+const modalSaliencyButton = document.getElementsByClassName("modal-compare-saliency-button")[0];
+
+// Variables for keeping the state of the image compare divs
 const modalCompareElements = {};
-modalCompareElements[1] = [modalCompareCanvas1, modalCompareResults1];
-modalCompareElements[2] = [modalCompareCanvas2, modalCompareResults2];
+modalCompareElements[1] = [modalCompareCanvas1, modalCompareSaliency1, modalCompareResults1];
+modalCompareElements[2] = [modalCompareCanvas2, modalCompareSaliency2, modalCompareResults2];
 
 let currentModalCompareElement = 1;
 let secondModalCompareElementOn = false;
 
-// Constants for the confidence graph
+const currentCompareImgs = [null, null];
+
+// Variables for the confidence graph
 const CONFIDENCE_START = 40;
+const CONFIDENCE_END = 80;
 const CONFIDENCE_INTERVAL = 20;
+
+const confidenceColumnMap = {40: "Medium", 60: "High", 80: "Very High"};
 
 // Maps analysis button names to their corresponding handlers
 let toolTitleToContentFunction = {};
@@ -65,6 +76,7 @@ export function init() {
     }
   }
 
+  // Adds functionality to the analysis tool buttons on the interface
   const analysisToolsButtons = document.getElementsByClassName('analysis-tools-button');
   for (let i = 0; i < analysisToolsButtons.length; i++) {
     analysisToolsButtons[i].addEventListener('click', (event) => {
@@ -78,9 +90,12 @@ export function init() {
     });
   }
 
+  // Methods for clearing the image compare divs
   modalCompareClearButton1.addEventListener("click", () => {
     clearCompareElements(1);
     currentModalCompareElement = 1;
+
+    modalSaliencyBox.style.display = 'none';
   });
 
   modalCompareClearButton2.addEventListener("click", () => {
@@ -89,16 +104,32 @@ export function init() {
     if (currentModalCompareElement > 1) {
       currentModalCompareElement = 2;
     }
+
+    modalSaliencyBox.style.display = 'none';
+  });
+
+  // Method for getting the saliencies of the images in the image compare divs
+  modalSaliencyButton.addEventListener("click", async () => {
+    const saliency1 = await getSaliencyHandler(currentCompareImgs[0]);
+    const saliency2 = await getSaliencyHandler(currentCompareImgs[1]);
+
+    await tf.toPixels(saliency1, modalCompareSaliency1);
+    await tf.toPixels(saliency2, modalCompareSaliency2);
   });
 }
 
-// This is set in index.js
-export let getResultsHandler;
+// Methods to set in index.js that will allow it to pass data to the modal.
+let getResultsHandler;
 export function setGetResultsHandler(handler) {
   getResultsHandler = handler;
 }
 
-// General helper methods for populating the modal
+let getSaliencyHandler;
+export function setGetSaliencyHandler(handler) {
+  getSaliencyHandler = handler;
+}
+
+// General helper methods for populating and cleaning up the modal
 function removeBodyContent() {
   while (modalBody.firstChild) {
     modalBody.removeChild(modalBody.firstChild);
@@ -130,7 +161,11 @@ function clearCompareElements(i) {
   const canvasContext = currentCanvas.getContext('2d');
   canvasContext.clearRect(0, 0, currentCanvas.width, currentCanvas.height);
 
-  const currentResults = currentModalCompareElements[1];
+  const currentSaliency = currentModalCompareElements[1];
+  const saliencyContext = currentSaliency.getContext('2d');
+  saliencyContext.clearRect(0, 0, currentSaliency.width, currentSaliency.height);
+
+  const currentResults = currentModalCompareElements[2];
   while (currentResults.firstChild) {
     currentResults.removeChild(currentResults.firstChild);
   }
@@ -139,12 +174,14 @@ function clearCompareElements(i) {
 function setCompareEventListeners(cell, result) {
   let mouseoverElement = 0;
 
+  // Keeps track of and draws the image into the compare cell and write its corresponding results
   cell.addEventListener("mouseover", () => {
     if (currentModalCompareElement < 3) {
       mouseoverElement = currentModalCompareElement;
       const currentModalCompareElements = modalCompareElements[currentModalCompareElement];
 
       ui.draw(result.img, currentModalCompareElements[0]);
+      currentCompareImgs[currentModalCompareElement - 1] = result.img;
 
       for (let i = 0; i < result.predictedLabels.length; i++) {
         const currentLabel = result.predictedLabels[i];
@@ -159,17 +196,19 @@ function setCompareEventListeners(cell, result) {
           resultPredictionSpan.setAttribute("class", ANALYSIS_TABLE_PREDICTION_CLASS + " incorrect");
         }
 
-        currentModalCompareElements[1].appendChild(resultPredictionSpan);
+        currentModalCompareElements[2].appendChild(resultPredictionSpan);
       }
     }
   });
 
+  // If we haven't clicked on the cell, remove the image from the compare div
   cell.addEventListener("mouseout", () => {
     if (mouseoverElement === currentModalCompareElement) {
       clearCompareElements(currentModalCompareElement);
     }
   });
 
+  // If we click on the cell, keep the image and update the state of the compare divs
   cell.addEventListener("click", () => {
     let toIncrement = 1;
 
@@ -184,6 +223,11 @@ function setCompareEventListeners(cell, result) {
     }
 
     currentModalCompareElement += toIncrement;
+
+    if (currentModalCompareElement > 2) {
+      modalSaliencyBox.style.display = '';
+    }
+
   });
 }
 
@@ -192,6 +236,7 @@ function buildCorrectnessTable(labelNamesMapString) {
   const correctnessTableCellOuterClass = "analysis-table-cell-correctness-outer";
   const labelNamesMap = JSON.parse(labelNamesMapString);
 
+  // First, create the header row for the table
   const table = document.createElement("table");
   const headerRow = document.createElement("tr");
   const headerFiller = document.createElement("th");
@@ -212,6 +257,7 @@ function buildCorrectnessTable(labelNamesMapString) {
   headerRow.appendChild(headerIncorrect);
   table.appendChild(headerRow);
 
+  // Then, we can create a row for each label that we have
   for (let modelIndex in labelNamesMap) {
     if (labelNamesMap.hasOwnProperty(modelIndex)) {
       const labelName = labelNamesMap[modelIndex];
@@ -248,6 +294,8 @@ function buildCorrectnessTable(labelNamesMapString) {
 }
 
 function populateCorrectnessTable(resultsArray) {
+  // For the correctness table, we just iterate through the results and place
+  // all images in a cell depending on if they were classified correctly or not
   for (let i = 0; i < resultsArray.length; i++) {
     const currentResult = resultsArray[i];
     const tableCellInner = createTableCellCanvas(currentResult.img);
@@ -281,6 +329,7 @@ function buildErrorTable(labelNamesMapString) {
 
   const validLabels = [];
 
+  // First, create the header row, with one column per label
   for (let modelIndex in labelNamesMap) {
     if (labelNamesMap.hasOwnProperty(modelIndex)) {
       const labelName = labelNamesMap[modelIndex];
@@ -296,6 +345,7 @@ function buildErrorTable(labelNamesMapString) {
 
   table.appendChild(headerRow);
 
+  // Then, create the rest of the rows, with one row per label
   for (let i = 0; i < validLabels.length; i++) {
     const rowLabelName = validLabels[i];
 
@@ -308,6 +358,7 @@ function buildErrorTable(labelNamesMapString) {
     labelHeader.textContent = rowLabelName;
     labelRow.appendChild(labelHeader);
 
+    // Inner loop since each cell in this table respresents a label-label pair
     for (let j = 0; j < validLabels.length; j++) {
       const colLabelName = validLabels[j];
 
@@ -329,6 +380,8 @@ function buildErrorTable(labelNamesMapString) {
 }
 
 function populateErrorTable(resultsArray) {
+  // For the error table, we iterate through the results and only add images to
+  // the table if they were incorrectly classified
   for (let i = 0; i < resultsArray.length; i++) {
     const currentResult = resultsArray[i];
 
@@ -352,8 +405,11 @@ function setModalContentError(results) {
 
 // Methods for setting up the confidence graph
 function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
+  // Overarching container for the dropdown and table
+  const confidenceGraphContainer = document.createElement("div");
+  confidenceGraphContainer.setAttribute("class", "analysis-table-confidence-graph-container");
 
-  // First, create the dropdown
+  // First, create the dropdown for switching between labels
   const labelNamesMap = JSON.parse(labelNamesMapString);
 
   const dropdownContainer = document.createElement("div");
@@ -391,8 +447,8 @@ function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
   contentRow.setAttribute("class", ANALYSIS_TABLE_ROW_CLASS);
   contentRow.setAttribute("id", ANALYSIS_TABLE_ROW_CLASS + "-confidence-content");
 
-  for (let i = CONFIDENCE_START; i <= 100; i += CONFIDENCE_INTERVAL) {
-    // First, fill contentRow
+  for (let i = CONFIDENCE_START; i <= CONFIDENCE_END; i += CONFIDENCE_INTERVAL) {
+    // First, create the row that will actually contain all the images
     const confidenceGraphCell = document.createElement("td");
     const confidenceGraphCellOuter = document.createElement("div");
 
@@ -403,10 +459,10 @@ function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
     confidenceGraphCell.appendChild(confidenceGraphCellOuter);
     contentRow.appendChild(confidenceGraphCell);
 
-    // Next, fill headerRow
+    // Next, create the header row (the x-axis of the graph)
     const confidenceGraphHeader = document.createElement("th");
     confidenceGraphHeader.setAttribute("class", ANALYSIS_TABLE_HEADER_CLASS);
-    confidenceGraphHeader.textContent = i + "%";
+    confidenceGraphHeader.textContent = confidenceColumnMap[i];
 
     headerRow.appendChild(confidenceGraphHeader);
   }
@@ -414,10 +470,13 @@ function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
   table.appendChild(contentRow);
   table.appendChild(headerRow);
 
-  modalBody.appendChild(dropdownContainer);
-  modalBody.appendChild(table);
+  confidenceGraphContainer.appendChild(dropdownContainer);
+  confidenceGraphContainer.appendChild(table);
+
+  modalBody.appendChild(confidenceGraphContainer);
 
   // Finally, add functionality to the dropdown once all the elements are in place
+  // and initialize the graph with the first label
   dropdown.addEventListener("change", (event) => {
     populateConfidenceGraph(event.target.value);
   });
@@ -426,14 +485,16 @@ function buildConfidenceGraph(labelNamesMapString, populateConfidenceGraph) {
 }
 
 function populateConfidenceGraphHelper(resultsArray) {
+  // Unlike for the correctness and error tables, this method actually returns another
+  // method that has access to all of the methods/data within the scope of this one.
+  // The returned method is the one actually responsible for filling the graph and is
+  // intended to be called whenever a label is selected from the dropdown.
 
-  // hard coded values for now
+  // Calculates the correct bucket to place the image in. Values are hard coded for now.
   function calculateBucket(value) {
-    if (value >= 0.9) {
-      return 100;
-    } else if (value >= 0.7) {
+    if (value >= 0.8) {
       return 80;
-    } else if (value >= 0.5) {
+    } else if (value >= 0.6) {
       return 60;
     } else if (value >= 0.4) {
       return 40;
@@ -442,8 +503,9 @@ function populateConfidenceGraphHelper(resultsArray) {
     }
   }
 
+  // Clears the graph when labels are being switched.
   function clearBuckets() {
-    for (let i = CONFIDENCE_START; i <= 100; i += CONFIDENCE_INTERVAL) {
+    for (let i = CONFIDENCE_START; i <= CONFIDENCE_END; i += CONFIDENCE_INTERVAL) {
       const currentBucketCell = document.getElementById("confidence-" + i);
 
       while (currentBucketCell.firstChild) {
@@ -452,6 +514,8 @@ function populateConfidenceGraphHelper(resultsArray) {
     }
   }
 
+  // Given a label, fills the confidence graph with images that were classified as
+  // that label. Images are placed in buckets based on classification confidence.
   return function(label) {
     clearBuckets();
 

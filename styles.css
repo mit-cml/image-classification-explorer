@@ -241,6 +241,8 @@ label {
   padding: 2px 16px;
   height: 70%;
   overflow: auto;
+  display: flex;
+  justify-content: center;
 }
 
 .modal-footer {
@@ -284,11 +286,17 @@ label {
 }
 
 /* Styling for the confidence graph */
+.analysis-table-confidence-graph-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .analysis-table-cell-confidence-outer {
   display: flex;
   flex-flow: column-reverse wrap;
   height: 400px;
-  width: 150px;
+  width: 200px;
   overflow: auto;
 }
 
@@ -296,12 +304,23 @@ label {
 
 .modal-compare-container {
   display: flex;
+  flex-direction: column;
+}
+
+.modal-compare-outer {
+  display: flex;
   justify-content: center;
 }
 
 .modal-compare-inner {
   display: flex;
+  align-items: center;
   flex-direction: column;
+}
+
+.modal-compare-saliency-outer {
+  display: flex;
+  justify-content: center;
 }
 
 .modal-compare-canvas-inner {
