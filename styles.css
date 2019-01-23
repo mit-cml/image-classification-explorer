@@ -367,3 +367,7 @@ label {
 .analysis-table-cell-inner:hover .analysis-table-predictions-popup {
   visibility: visible;
 }
+
+.train-time {
+  display:inline-block;
+}

@@ -73,7 +73,7 @@ async function loadMobilenet() {
 // Loads squeezenet and returns a model that returns the internal activation
 // we'll use as input to our classifier model.
 async function loadSqueezenet() {
-  const squeezenet = await tf.loadModel('http://127.0.0.1:8080/model.json'); 
+  const squeezenet = await tf.loadModel('http://127.0.0.1:8080/model.json'); // Go to squeezenet folder & run http-server . --cors -o
   return squeezenet;
 }
 
@@ -191,34 +191,25 @@ async function train() {
   } else {
     model = tf.sequential({
       layers: [
-        // Flattens the input to a vector so we can use it in a dense layer. While
-        // technically a layer, this only performs a reshape (and has no training
-        // parameters).
-        tf.layers.flatten({inputShape: [7, 7, 256]}),
-        // Layer 1
-        tf.layers.dense({
-          units: DENSE_UNITS,
+        tf.layers.conv2d({
+          inputShape: [7, 7, 256],
+          kernelSize: 5,
+          filters: 32, 
+          strides: 1, 
           activation: 'relu',
-          kernelInitializer: 'varianceScaling',
-          useBias: true
+          kernelInitializer: 'varianceScaling'
         }),
-        // Layer 2
+        tf.layers.flatten(),
         tf.layers.dense({
-          units: DENSE_UNITS,
-          activation: 'relu',
-          kernelInitializer: 'varianceScaling',
-          useBias: true
-        }),
-        // Layer 3. The number of units of the last layer should correspond
-        // to the number of classes we want to predict.
-        tf.layers.dense({
-          units: trainingDataset.numLabels,
-          kernelInitializer: 'varianceScaling',
-          useBias: false,
+          units: trainingDataset.numLabels, 
+          kernelInitializer: 'varianceScaling', 
+          useBias: false, 
           activation: 'softmax'
         })
       ]
-    });
+    }); 
+
+    
   }
 
   // We use categoricalCrossentropy which is the loss function we use for
@@ -308,7 +299,42 @@ document.getElementById('train').addEventListener('click', async () => {
   ui.trainStatus('Training...');
   await tf.nextFrame();
   await tf.nextFrame();
+
+  /**
+   * Updates HTML timer 
+   */
+  function clockRunning(){
+    var currentTime = new Date()
+        , timeElapsed = new Date(currentTime - timeBegan - stoppedDuration)
+        , hour = timeElapsed.getUTCHours()
+        , min = timeElapsed.getUTCMinutes()
+        , sec = timeElapsed.getUTCSeconds()
+        , ms = timeElapsed.getUTCMilliseconds();
+
+    document.getElementById("display-area").innerHTML = 
+        (hour > 9 ? hour : "0" + hour) + ":" + 
+        (min > 9 ? min : "0" + min) + ":" + 
+        (sec > 9 ? sec : "0" + sec) + "." + 
+        (ms > 99 ? ms : ms > 9 ? "0" + ms : "00" + ms);
+  };
+
+  // measuring training time as sanity check.. 
+  let startTime = new Date().getTime();
+
+  // reset & start 
+  let stoppedDuration = 0
+  document.getElementById("display-area").innerHTML = "00:00:00.000";
+  let timeBegan = new Date();
+  let started = setInterval(clockRunning, 10); 
+
   await train();
+
+  // stop 
+  clearInterval(started);
+
+  let endTime = new Date().getTime();
+  console.log("The training took: " + (endTime - startTime) + "ms.");
+  console.log("The training took: " + (endTime - startTime)/1000 + "s.");
 
   // Then, we use the model we trained to make predictions on the training dataset
   trainingResults = await predict(trainingDataset, trainingDataset.getCurrentLabelNamesJson());
