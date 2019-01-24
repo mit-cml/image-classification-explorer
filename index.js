@@ -57,24 +57,16 @@ const webcam = new Webcam(document.getElementById('webcam'));
 
 // model state stuff
 // const modelNames = ["MobileNet", "SqueezeNet"];
-const modelLastLayers = {"MobileNet" : "conv_pw_13_relu", "SqueezeNet" : "max_pooling2d_1"};
-let currentModel = "MobileNet";
+const modelInfo = {"0": {"name": "MobileNet", "last-layer": "conv_pw_13_relu", "url": "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json"},
+                    "1": {"name": "SqueezeNet", "last-layer": "max_pooling2d_1", "url": "http://127.0.0.1:8080/model.json"}}
+let currentModel = modelInfo["0"]; // default current model to MobileNet 
 
-// Loads mobilenet and returns a model that returns the internal activation
-// we'll use as input to our classifier model.
-async function loadMobilenet() {
-  const transferModel = await tf.loadModel(
-      'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
-  
-  const layer = transferModel.getLayer('conv_pw_13_relu');
+// Loads transfer model and returns a model that returns the internal activation 
+// we'll use as input to our classifier model. 
+async function loadTransferModel() {
+  const transferModel = await tf.loadModel(currentModel["url"]);
+  const layer = transferModel.getLayer(currentModel["last-layer"]);
   return tf.model({inputs: transferModel.inputs, outputs: layer.output});
-}
-
-// Loads squeezenet and returns a model that returns the internal activation
-// we'll use as input to our classifier model.
-async function loadSqueezenet() {
-  const squeezenet = await tf.loadModel('http://127.0.0.1:8080/model.json'); // Go to squeezenet folder & run http-server . --cors -o
-  return squeezenet;
 }
 
 // Methods for updating the dataset objects from the ui
@@ -132,18 +124,10 @@ async function train() {
 
   // TODO: check model input, load appropriate model, and create trainingData and testingData
   // look at input from dropdown menu 
-  var currentModel = document.getElementById("choose-model-dropdown").value;
-  console.log(currentModel);
-
-  if (currentModel == "MobileNet") {
-    transferModel = await loadMobilenet();
-    console.log("Loaded MobileNet!");
-  } else if (currentModel == "SqueezeNet") {
-    transferModel = await loadSqueezenet(); 
-    console.log("Loaded SqueezeNet!");
-  } else {
-    console.log("Model loading failed!");
-  }
+  let currentModelIdx = document.getElementById("choose-model-dropdown").value;
+  console.log(currentModelIdx);
+  currentModel = modelInfo[currentModelIdx]; // dictionary obj of model info 
+  transferModel = await loadTransferModel(); 
 
   // TODO: create clear fxn that also gets rid of old tensors 
   trainingDataset.removeExamples();
@@ -248,7 +232,7 @@ async function train() {
 
         // TODO: add logic to determine what model we're using
         // For mobilenet
-        let output = transferModel.getLayer(modelLastLayers[currentModel]).output; 
+        let output = transferModel.getLayer(currentModel["last-layer"]).output; 
 
         for (let i = 0; i < model.layers.length; i++) {
           const currentLayer = model.getLayer("filler", i);
