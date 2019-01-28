@@ -55,16 +55,17 @@ let entireModel;
 
 const webcam = new Webcam(document.getElementById('webcam'));
 
-// Model Information Dictionary 
-const modelInfo = {"0": {"name": "MobileNet", "last-layer": "conv_pw_13_relu", "url": "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json"},
-                    "1": {"name": "SqueezeNet", "last-layer": "max_pooling2d_1", "url": "http://127.0.0.1:8080/model.json"}}
+// model state stuff
+// const modelNames = ["MobileNet", "SqueezeNet"];
+const modelInfo = {"0": {"name": "mobilenet", "lastLayer": "conv_pw_13_relu", "url": "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json"},
+                    "1": {"name": "squeezenet", "lastLayer": "max_pooling2d_1", "url": "http://127.0.0.1:8080/model.json"}}
 let currentModel = modelInfo["0"]; // default current model to MobileNet 
 
 // Loads transfer model and returns a model that returns the internal activation 
 // we'll use as input to our classifier model. 
 async function loadTransferModel() {
   const transferModel = await tf.loadModel(currentModel["url"]);
-  const layer = transferModel.getLayer(currentModel["last-layer"]);
+  const layer = transferModel.getLayer(currentModel["lastLayer"]);
   return tf.model({inputs: transferModel.inputs, outputs: layer.output});
 }
 
@@ -251,8 +252,8 @@ async function train() {
         `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
   }
 
+  // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
   try {
-    // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
     await model.fit(trainingData.xs, trainingData.ys, {
       batchSize,
       epochs: EPOCHS,
@@ -260,23 +261,21 @@ async function train() {
         onBatchEnd: async (batch, logs) => {
           ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
         },
-
+  
         onTrainEnd: () => {
           // Piece together the entire model
-
+  
           // TODO: add logic to determine what model we're using
           // For mobilenet
-          let output = transferModel.getLayer(currentModel["last-layer"]).output; 
-
+          let output = transferModel.getLayer(currentModel["lastLayer"]).output; 
+  
           for (let i = 0; i < model.layers.length; i++) {
             const currentLayer = model.getLayer("filler", i);
             output = currentLayer.apply(output);
           }
-
-          entireModel = tf.model({inputs: transferModel.inputs, outputs: output});
         }
       }
-    });
+    }); 
   } catch (e) {
     throw new Error('Model failed! Please edit model.');
   }
@@ -442,6 +441,7 @@ document.getElementById('download-button').addEventListener('click', async () =>
     const modelTopologyFileName = "model.json";
     const weightDataFileName = "model.weights.bin";
     const modelLabelsName = "model_labels.json";
+    const transferModelInfoName = "transfer_model.json";
     const modelZipName = "model.mdl";
 
     const weightsBlob = new Blob(
@@ -463,6 +463,7 @@ document.getElementById('download-button').addEventListener('click', async () =>
     zip.file(modelTopologyFileName, modelTopologyAndWeightManifestBlob);
     zip.file(weightDataFileName, weightsBlob);
     zip.file(modelLabelsName, trainingDataset.getCurrentLabelNamesJson());
+    zip.file(transferModelInfoName, JSON.stringify(currentModel));
 
     zip.generateAsync({type:"blob"})
       .then(function (blob) {
