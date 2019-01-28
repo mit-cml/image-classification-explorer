@@ -24,7 +24,7 @@ export function init() {
 }
 
 // Trackers for the current state of the explorer (training or testing)
-const tabNames = ["training", "testing"];
+const tabNames = ["training", "testing", "model-editing"];
 let currentTab = tabNames[0];
 
 // Elements dealing with adding labels to the model
@@ -68,7 +68,7 @@ export function addLabel(newLabelName) {
   const labelBoxTesting = document.createElement("div");
   const labelBoxes = [labelBoxTraining, labelBoxTesting];
 
-  for (let i = 0; i < tabNames.length; i++) {
+  for (let i = 0; i < (tabNames.length-1); i++) {
     const datasetName = tabNames[i];
     const labelsOuter = document.getElementById("labels-container-" + datasetName);
 
@@ -197,9 +197,11 @@ export function updateResult(result, datasetName) {
 // in ui.js, updates the nav bar, and moves around the webcam.
 const trainingTabButton = document.getElementById("training-tab");
 const testingTabButton = document.getElementById("testing-tab");
+const modelEditingTabButton = document.getElementById("model-editing-tab"); 
 
 const trainingContainer = document.getElementById("training");
 const testingContainer = document.getElementById("testing");
+const modelEditingContainer = document.getElementById("model-editing"); 
 
 const webcam = document.getElementById("webcam");
 const webcamBoxTraining = document.getElementById("webcam-box-inner-training");
@@ -208,9 +210,11 @@ const webcamBoxTesting = document.getElementById("webcam-box-inner-testing")
 trainingTabButton.addEventListener('click', () => {
   trainingContainer.style.display = "";
   testingContainer.style.display = "none";
+  modelEditingContainer.style.display = "none"; 
 
   trainingTabButton.className += " active";
   testingTabButton.className = testingTabButton.className.replace(" active", "");
+  modelEditingTabButton.className = modelEditingTabButton.className.replace(" active", "");
 
   webcam.parentNode.removeChild(webcam);
   webcamBoxTraining.appendChild(webcam);
@@ -221,14 +225,28 @@ trainingTabButton.addEventListener('click', () => {
 testingTabButton.addEventListener('click', () => {
   trainingContainer.style.display = "none";
   testingContainer.style.display = "";
+  modelEditingContainer.style.display = "none"; 
 
   trainingTabButton.className = trainingTabButton.className.replace(" active", "");
   testingTabButton.className += " active";
+  modelEditingTabButton.className = modelEditingTabButton.className.replace(" active", "");
 
   webcam.parentNode.removeChild(webcam);
   webcamBoxTesting.appendChild(webcam);
 
   currentTab = tabNames[1];
+});
+
+modelEditingTabButton.addEventListener('click', () => {
+  trainingContainer.style.display = "none";
+  testingContainer.style.display = "none";
+  modelEditingContainer.style.display = ""; 
+
+  trainingTabButton.className = trainingTabButton.className.replace(" active", "");
+  testingTabButton.className = testingTabButton.className.replace(" active", ""); 
+  modelEditingTabButton.className += " active"; 
+
+  currentTab = tabNames[2]; 
 });
 
 export function getCurrentTab() {

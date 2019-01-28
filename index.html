@@ -41,6 +41,7 @@ limitations under the License.
     <div class="tab-container">
       <button class="tab-button" id="training-tab">Training</button>
       <button class="tab-button" id="testing-tab">Testing</button>
+      <button class="tab-button" id="model-editing-tab">Model Editing</button> 
 
       <input name="model-upload" id="model-upload" type="file" style="display:none"/>
       <button class="tab-button download-upload-button" id="upload-button">Upload Model</button>
@@ -132,20 +133,6 @@ limitations under the License.
     <div class="explorer-data-container" id="training">
 
       <div class="content-column">
-
-        <!-- Yuria Edit -->
-        <div id="choose-model">
-          Choose Model: 
-          <select id="choose-model-dropdown">
-            <option value="0">MobileNet</option>
-            <option value="1">SqueezeNet</option>
-          </select>
-          <select id="choose-model-dropdown2">
-            <option value="Model 1">Model 1</option>
-            <option value="Model 2">Model 2</option>
-          </select>
-        </div>
-        <!-- Yuria Edit -->
 
         <div class="add-labels-container">
           <div class="add-labels-name">
@@ -294,6 +281,39 @@ limitations under the License.
       </div>
     </div>
 
+
+    <!-- MODEL TAB -->
+
+    <div class="explorer-data-container" id="model-editing">
+        <!-- Yuria Edit -->
+        <div id="choose-model">
+          Choose Model: 
+          <select id="choose-model-dropdown">
+            <option value="0">MobileNet</option>
+            <option value="1">SqueezeNet</option>
+          </select>
+        </div>
+
+        <div id="create-model">
+        Create Model:
+        <div id="model-editor">
+          <div id="inputWrapper-0">
+            <select id="select-0">
+              <option value="conv-0">Convolution</option>
+              <option value="flat-0">Flatten</option>
+            </select>
+          </div>
+          
+          <div id="inputWrapper-final">
+            <select id="select-final">
+              <option value="fc-final">Fully Connected</option>
+            </select>
+          </div>
+        </div>
+        <button id="add">Add Layer</button>
+        </div>
+        <!-- Yuria Edit -->
+    </div> 
 
   </div>
 

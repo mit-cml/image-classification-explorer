@@ -55,8 +55,7 @@ let entireModel;
 
 const webcam = new Webcam(document.getElementById('webcam'));
 
-// model state stuff
-// const modelNames = ["MobileNet", "SqueezeNet"];
+// Model Information Dictionary 
 const modelInfo = {"0": {"name": "MobileNet", "last-layer": "conv_pw_13_relu", "url": "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json"},
                     "1": {"name": "SqueezeNet", "last-layer": "max_pooling2d_1", "url": "http://127.0.0.1:8080/model.json"}}
 let currentModel = modelInfo["0"]; // default current model to MobileNet 
@@ -103,6 +102,43 @@ ui.setRemoveLabelHandler(labelId => {
   trainingDataset.removeLabel(labelId);
 });
 
+// Methods for adding layers to the model 
+const addButton = document.getElementById("add");
+const modelWrapper = document.getElementById("inputWrapper-0");
+let i = 0
+addButton.addEventListener("click", add);
+
+function add(){
+	i = i + 1
+  const inputWrapper = document.createElement('div');
+  inputWrapper.id = `inputWrapper-${i}` ;
+  const dropdown_text = ["Fully Connected", "Convolution", "Max Pool", "Flatten"];
+  const dropdown_values = ["fc", "conv", "maxpool", "flat"];
+  const input = document.createElement('select');
+  input.id = `select-${i}` ;
+  
+  // create and append options 
+  for (let i = 0; i < dropdown_text.length; i++) {
+  	let option = document.createElement("option");
+    option.value = dropdown_values[i];
+    option.text = dropdown_text[i];
+    input.appendChild(option); 
+  }
+  
+  
+  input.placeholder = "More hobbies";
+  inputWrapper.appendChild(input)
+  
+  const removeButton = document.createElement('button');
+  removeButton.innerHTML = 'Remove Layer';
+  removeButton.onclick = () => { 
+  	modelWrapper.removeChild(inputWrapper)
+  }
+  
+  inputWrapper.appendChild(removeButton);
+  modelWrapper.appendChild(inputWrapper);
+}
+
 // Methods to supply data to the results modal
 modal.setGetResultsHandler(() => {
   if (ui.getCurrentTab() == "training") {
@@ -141,60 +177,57 @@ async function train() {
     }
   }
 
-  // Creates a 2-layer fully connected model. By creating a separate model,
+  // Creates a model based on layer inputs. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
   // of the mobilenet model, and only train weights from the new model.
-  // look at input from dropdown menu 
-  var currentModel2 = document.getElementById("choose-model-dropdown2").value;
-  console.log(currentModel2);
+  // look at inputs from dropdown menu and create model 
 
-  if (currentModel2 == "Model 1") {
-    model = tf.sequential({
-      layers: [
-        // Flattens the input to a vector so we can use it in a dense layer. While
-        // technically a layer, this only performs a reshape (and has no training
-        // parameters).
-        tf.layers.flatten({inputShape: [7, 7, 256]}),
-        // Layer 1
-        tf.layers.dense({
-          units: DENSE_UNITS,
-          activation: 'relu',
-          kernelInitializer: 'varianceScaling',
-          useBias: true
-        }),
-        // Layer 2. The number of units of the last layer should correspond
-        // to the number of classes we want to predict.
-        tf.layers.dense({
-          units: trainingDataset.numLabels,
-          kernelInitializer: 'varianceScaling',
-          useBias: false,
-          activation: 'softmax'
-        })
-      ]
-    });
-  } else {
-    model = tf.sequential({
-      layers: [
-        tf.layers.conv2d({
-          inputShape: [7, 7, 256],
-          kernelSize: 5,
-          filters: 32, 
-          strides: 1, 
-          activation: 'relu',
-          kernelInitializer: 'varianceScaling'
-        }),
-        tf.layers.flatten(),
-        tf.layers.dense({
-          units: trainingDataset.numLabels, 
-          kernelInitializer: 'varianceScaling', 
-          useBias: false, 
-          activation: 'softmax'
-        })
-      ]
-    }); 
+  // Layer Information Dictionary 
+  // Note: Here b/c trainingDataset.numLabels doesn't register otherwise 
+  let layerInfo =   {"conv-0": tf.layers.conv2d({ 
+    inputShape: [7, 7, 256],
+    kernelSize: 5,
+    filters: 32, 
+    strides: 1, 
+    activation: 'relu',
+    kernelInitializer: 'varianceScaling'}),
+  "flat-0": tf.layers.flatten({inputShape: [7, 7, 256]}),
+  "fc-final": tf.layers.dense({
+    units: trainingDataset.numLabels,
+    // units: 2,
+    kernelInitializer: 'varianceScaling',
+    useBias: false,
+    activation: 'softmax'}),
+  "fc": tf.layers.dense({
+    units: 24, 
+    kernelInitializer: 'varianceScaling', 
+    useBias: true,
+    activation: 'relu'}),
+  "conv": tf.layers.conv2d({
+    kernelSize: 5,
+    filters: 32,
+    strides: 1,
+    activation: 'relu',
+    kernelInitializer: 'varianceScaling'}),
+  "maxpool": tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}),
+  "flat": tf.layers.flatten()}; 
 
-    
-  }
+  // get all select id's inside model-editor 
+  let modelLayers = document.querySelectorAll("#model-editor select");
+  
+  model = tf.sequential();
+
+  for (let i = 0; i < modelLayers.length; i++) {
+    try {
+      let layerValue = document.getElementById(modelLayers[i].id).value;
+      model.add(layerInfo[layerValue]); 
+    } catch (e) {
+      throw new Error('Model building failed! Please edit model.');
+    }
+  }; 
+
+  console.log("Model summary");
+  console.log(model.summary());
 
   // We use categoricalCrossentropy which is the loss function we use for
   // categorical classification which measures the error between our predicted
@@ -218,31 +251,35 @@ async function train() {
         `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
   }
 
-  // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
-  await model.fit(trainingData.xs, trainingData.ys, {
-    batchSize,
-    epochs: EPOCHS,
-    callbacks: {
-      onBatchEnd: async (batch, logs) => {
-        ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
-      },
+  try {
+    // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
+    await model.fit(trainingData.xs, trainingData.ys, {
+      batchSize,
+      epochs: EPOCHS,
+      callbacks: {
+        onBatchEnd: async (batch, logs) => {
+          ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
+        },
 
-      onTrainEnd: () => {
-        // Piece together the entire model
+        onTrainEnd: () => {
+          // Piece together the entire model
 
-        // TODO: add logic to determine what model we're using
-        // For mobilenet
-        let output = transferModel.getLayer(currentModel["last-layer"]).output; 
+          // TODO: add logic to determine what model we're using
+          // For mobilenet
+          let output = transferModel.getLayer(currentModel["last-layer"]).output; 
 
-        for (let i = 0; i < model.layers.length; i++) {
-          const currentLayer = model.getLayer("filler", i);
-          output = currentLayer.apply(output);
+          for (let i = 0; i < model.layers.length; i++) {
+            const currentLayer = model.getLayer("filler", i);
+            output = currentLayer.apply(output);
+          }
+
+          entireModel = tf.model({inputs: transferModel.inputs, outputs: output});
         }
-
-        entireModel = tf.model({inputs: transferModel.inputs, outputs: output});
       }
-    }
-  });
+    });
+  } catch (e) {
+    throw new Error('Model failed! Please edit model.');
+  }
 }
 
 // Uses the classifier to classify examples
