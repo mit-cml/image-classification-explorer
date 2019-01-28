@@ -171,6 +171,10 @@ limitations under the License.
               <output id="display-area">00:00:00.000</output>
           </div>
 
+          <!-- Training Error Message Div -->
+          <div id="train-error">
+          </div>
+
         </div>
 
       </div>
@@ -312,6 +316,45 @@ limitations under the License.
         </div>
         <button id="add">Add Layer</button>
         </div>
+
+        <!-- Model Error Message Div -->
+        <div id="model-error">
+        </div>
+
+        <!-- Edit Parameters Div -->
+        <!--
+        <div class="parameters" id="hyperparameters">
+        Hyperparameters: 
+          <p> - Learning Rate: <input type="number" id="learning-rate" min="0.0001" max="1" step="0.0001" value="0.0001"> </p>
+          <p> - Epochs: <input type="number" id="epochs" min="1" max="100" step="1" value="20"> </p>
+          <p> - Training Data Fraction: <input type="number" id="training-data-fraction" min="0" max="1" step=".01" value="0.4"> </p>
+          <p> - Optimizer: <select id="optimizer"> 
+                              <option value="0"> Adam </option> 
+                              <option value="1"> Adadelta </option>
+                              <option value="2"> Adagrad </option>
+                              <option value="3"> SGD </option>
+                            </select>
+          </p>
+        </div> --> 
+
+        <div class="parameters" id="convolution"> 
+        Convolution Layer: 
+          <p> - Kernel Size: <input type="number" id="conv-kernel-size" min="1" max="100" step="1" value="5"> </p>
+          <p> - Filters: <input type="number" id="conv-filters" min="1" max="100" step="1" value="5"> </p>
+          <p> - Strides: <input type="number" id="conv-strides" min="1" max="100" step="1" value="5"> </p> 
+        </div> 
+
+        <div class="parameters" id="max-pool">
+        Max Pool Layer: 
+          <p> - Pool Size: <input type="number" id="max-pool-size" min="1" max="20" step="1" value="5"> </p> 
+          <p> - Strides: <input type="number" id="max-strides" min="1" max="20" step="1" value="5"> </p> 
+        </div>
+
+        <div class="parameters" id="fully-connected">
+        Fully Connected Layer:
+          <p> - Hidden Units: <input type="number" id="fcn-units" min="1" max="300" step="1" value="100"> </p>
+        </div> 
+
         <!-- Yuria Edit -->
     </div> 
 
