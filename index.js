@@ -27,10 +27,10 @@ import * as saliency from './saliency';
 import {Webcam} from './webcam';
 
 // Later, maybe allow users to pick these values themselves?
-const LEARNING_RATE = 0.0001;
-const BATCH_SIZE_FRACTION = 0.4;
-const EPOCHS = 20;
-const DENSE_UNITS = 100;
+// const LEARNING_RATE = 0.0001;
+// const BATCH_SIZE_FRACTION = 0.4;
+// const EPOCHS = 20;
+// const DENSE_UNITS = 100;
 // let LEARNING_RATE = 0.0001;
 // let BATCH_SIZE_FRACTION = 0.4;
 // let EPOCHS = 20;
@@ -93,6 +93,9 @@ let layerInfo =   {"conv-0": tf.layers.conv2d({
   kernelInitializer: 'varianceScaling'}),
 "maxpool": tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}),
 "flat": tf.layers.flatten()}; 
+
+// Optimizer Function Dictionary 
+const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
 
 // Loads transfer model and returns a model that returns the internal activation 
 // we'll use as input to our classifier model. 
@@ -240,9 +243,12 @@ async function train() {
   model = tf.sequential();
 
   for (let i = 0; i < modelLayers.length; i++) {
+    console.log(i);
     try {
       let layerValue = document.getElementById(modelLayers[i].id).value;
+      console.log(layerValue);
       model.add(layerInfo[layerValue]); 
+      console.log(model.summary());
     } catch (e) {
       // print error message, stop & reset timer 
       document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
@@ -259,7 +265,10 @@ async function train() {
   // categorical classification which measures the error between our predicted
   // probability distribution over classes (probability that an input is of each
   // class), versus the label (100% probability in the true class)>
-  const optimizer = tf.train.adam(LEARNING_RATE);
+  // get optimizer and learning rates  
+  let optimizerIdx = document.getElementById("optimizer").value;
+  let learningRate = document.getElementById("learning-rate").value;
+  const optimizer = optimizerFunctions[optimizerIdx](learningRate);
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
   // Get data from the training dataset
@@ -270,8 +279,9 @@ async function train() {
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends on how many examples the user
   // collects. This allows us to have a flexible batch size.
+  let batchSizeFraction = document.getElementById("training-data-fraction").value;
   const batchSize =
-      Math.floor(trainingData.xs.shape[0] * BATCH_SIZE_FRACTION);
+      Math.floor(trainingData.xs.shape[0] * batchSizeFraction);
   if (!(batchSize > 0)) {
     // print error message, stop & reset timer 
     document.getElementById("train-error").innerHTML = "Batch size is 0 or NaN. Please choose a non-zero fraction.";
@@ -282,10 +292,12 @@ async function train() {
   }
 
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
+  // Get epochs 
+  let epochs = document.getElementById("epochs").value;
   try {
     await model.fit(trainingData.xs, trainingData.ys, {
       batchSize,
-      epochs: EPOCHS,
+      epochs: epochs,
       callbacks: {
         onBatchEnd: async (batch, logs) => {
           ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
@@ -353,7 +365,8 @@ document.getElementById('train').addEventListener('click', async () => {
   document.getElementById("model-error").innerHTML = "";
 
   // First, verify we have examples 
-  if (Object.values(trainingImgDict) == []) {
+  // if (Object.values(trainingImgDict) == []) {
+  if (Object.values(trainingImgDict).length == 0) {
     document.getElementById("train-error").innerHTML = "Add some examples before training!";
     throw new Error('Add some examples before training!');
   }
