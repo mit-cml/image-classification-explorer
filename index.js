@@ -219,14 +219,14 @@ async function train() {
   layerInfo["fc-final"].units = trainingDataset.numLabels; 
 
   // edit model layer attributes based on user input 
-  let convKernelSize = document.getElementById("conv-kernel-size").value;
-  let convFilters = document.getElementById("conv-filters").value; 
-  let convStrides = document.getElementById("conv-strides").value;
+  let convKernelSize = Number(document.getElementById("conv-kernel-size").value);
+  let convFilters = Number(document.getElementById("conv-filters").value); 
+  let convStrides = Number(document.getElementById("conv-strides").value);
 
-  let maxPoolSize = document.getElementById("max-pool-size").value;
-  let maxStrides = document.getElementById("max-strides").value;
+  let maxPoolSize = Number(document.getElementById("max-pool-size").value);
+  let maxStrides = Number(document.getElementById("max-strides").value);
 
-  let fcnUnits = document.getElementById("fcn-units").value; 
+  let fcnUnits = Number(document.getElementById("fcn-units").value); 
 
   layerInfo["conv-0"].kernelSize = [convKernelSize, convKernelSize]; 
   layerInfo["conv-0"].filters = convFilters; 
@@ -247,6 +247,7 @@ async function train() {
     try {
       let layerValue = document.getElementById(modelLayers[i].id).value;
       console.log(layerValue);
+      console.log(layerInfo[layerValue]);
       model.add(layerInfo[layerValue]); 
       console.log(model.summary());
     } catch (e) {
@@ -267,7 +268,7 @@ async function train() {
   // class), versus the label (100% probability in the true class)>
   // get optimizer and learning rates  
   let optimizerIdx = document.getElementById("optimizer").value;
-  let learningRate = document.getElementById("learning-rate").value;
+  let learningRate = parseFloat(document.getElementById("learning-rate").value);
   const optimizer = optimizerFunctions[optimizerIdx](learningRate);
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
@@ -279,7 +280,7 @@ async function train() {
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends on how many examples the user
   // collects. This allows us to have a flexible batch size.
-  let batchSizeFraction = document.getElementById("training-data-fraction").value;
+  let batchSizeFraction = parseFloat(document.getElementById("training-data-fraction").value);
   const batchSize =
       Math.floor(trainingData.xs.shape[0] * batchSizeFraction);
   if (!(batchSize > 0)) {
@@ -293,7 +294,7 @@ async function train() {
 
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
   // Get epochs 
-  let epochs = document.getElementById("epochs").value;
+  let epochs = Number(document.getElementById("epochs").value);
   try {
     await model.fit(trainingData.xs, trainingData.ys, {
       batchSize,
