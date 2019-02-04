@@ -25,6 +25,7 @@ import * as ui from './ui';
 import * as modal from './modal';
 import * as saliency from './saliency';
 import {Webcam} from './webcam';
+import cloneDeep from 'lodash/cloneDeep';
 
 // Later, maybe allow users to pick these values themselves?
 // const LEARNING_RATE = 0.0001;
@@ -243,13 +244,10 @@ async function train() {
   model = tf.sequential();
 
   for (let i = 0; i < modelLayers.length; i++) {
-    console.log(i);
     try {
       let layerValue = document.getElementById(modelLayers[i].id).value;
-      console.log(layerValue);
-      console.log(layerInfo[layerValue]);
-      model.add(layerInfo[layerValue]); 
-      console.log(model.summary());
+      let layerCopy = cloneDeep(layerInfo[layerValue]);
+      model.add(layerCopy);
     } catch (e) {
       // print error message, stop & reset timer 
       document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
@@ -306,8 +304,7 @@ async function train() {
   
         onTrainEnd: () => {
           // Piece together the entire model
-  
-          // TODO: add logic to determine what model we're using
+
           // For mobilenet
           let output = transferModel.getLayer(currentModel["lastLayer"]).output; 
   
@@ -315,6 +312,8 @@ async function train() {
             const currentLayer = model.getLayer("filler", i);
             output = currentLayer.apply(output);
           }
+
+          entireModel = tf.model({inputs: transferModel.inputs, outputs: output});
         }
       }
     }); 
