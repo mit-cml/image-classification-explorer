@@ -27,16 +27,6 @@ import * as saliency from './saliency';
 import {Webcam} from './webcam';
 import cloneDeep from 'lodash/cloneDeep';
 
-// Later, maybe allow users to pick these values themselves?
-// const LEARNING_RATE = 0.0001;
-// const BATCH_SIZE_FRACTION = 0.4;
-// const EPOCHS = 20;
-// const DENSE_UNITS = 100;
-// let LEARNING_RATE = 0.0001;
-// let BATCH_SIZE_FRACTION = 0.4;
-// let EPOCHS = 20;
-// let DENSE_UNITS = 100;
-
 const SALIENCY_NUM_SAMPLES = 15;
 const SALIENCY_NOISE_STD = 0.1;
 const SALIENCY_CLIP_PERCENT = 0.99;
@@ -98,6 +88,52 @@ let layerInfo =   {"conv-0": tf.layers.conv2d({
 // Optimizer Function Dictionary 
 const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
 
+// Layer Parameter Input Function Dictionary 
+const layerParameterFunctions = {"fc": addFc, "conv": addConv, "maxpool": addMaxPool};
+
+// Methods for adding user input for layer parameters 
+function addFc(inputWrapper, i) {
+  const unit_input = document.createElement("input");
+  unit_input.type = "number"; 
+  unit_input.id = `fcn-units-${i}`;
+  unit_input.min = 1;
+  unit_input.max = 300;
+  unit_input.step = 1;
+  unit_input.value = 100;
+  inputWrapper.appendChild(unit_input); 
+}
+
+function addConv(inputWrapper, i) {
+  const kernel_input = document.createElement("input");
+  const filter_input = document.createElement("input");
+  const stride_input = document.createElement("input");
+  kernel_input.type = filter_input.type = stride_input.type = "number"; 
+  kernel_input.id = `conv-kernel-size-${i}`;
+  filter_input.id = `conv-filters-${i}`;
+  stride_input.id = `conv-strides-${i}`;
+  kernel_input.min = filter_input.min = stride_input.min = 1;
+  kernel_input.max = filter_input.max = stride_input.max = 100;
+  kernel_input.step = filter_input.step = stride_input.step = 1;
+  kernel_input.value = filter_input.value = stride_input.value = 5;
+  inputWrapper.appendChild(kernel_input);
+  inputWrapper.appendChild(filter_input);
+  inputWrapper.appendChild(stride_input);
+}
+
+function addMaxPool(inputWrapper) {
+  const pool_input = document.createElement("input");
+  const stride_input = document.createElement("input");
+  pool_input.type = stride_input.type = "number"; 
+  pool_input.id = `max-pool-size-${i}`;
+  stride_input.id = `max-strides-${i}`;
+  pool_input.min = stride_input.min = 1;
+  pool_input.max = stride_input.max = 20;
+  pool_input.step = stride_input.step = 1;
+  pool_input.value = stride_input.value = 5; 
+  inputWrapper.appendChild(pool_input);
+  inputWrapper.appendChild(stride_input);
+}
+
 // Loads transfer model and returns a model that returns the internal activation 
 // we'll use as input to our classifier model. 
 async function loadTransferModel() {
@@ -146,6 +182,45 @@ const modelWrapper = document.getElementById("inputWrapper-0");
 let i = 0
 addButton.addEventListener("click", add);
 
+// Checks selected layer and displays corresponding input boxes accordingly 
+function layerSelectCheck(i) {
+  console.log("Select ID");
+  console.log(`select-${i}`);
+  let selectedLayer = document.getElementById(`select-${i}`).value;
+  console.log("Selected layer");
+  console.log(selectedLayer);
+
+  if (selectedLayer == "fc") { 
+    document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
+    document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+    document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+    document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+    document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+    document.getElementById(`max-strides-${i}`).style.display = "none"; 
+  } else if (selectedLayer == "conv") {
+    document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+    document.getElementById(`conv-kernel-size-${i}`).style.display = "inline"; 
+    document.getElementById(`conv-filters-${i}`).style.display = "inline"; 
+    document.getElementById(`conv-strides-${i}`).style.display = "inline"; 
+    document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+    document.getElementById(`max-strides-${i}`).style.display = "none"; 
+  } else if (selectedLayer == "maxpool") {
+    document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+    document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+    document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+    document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+    document.getElementById(`max-pool-size-${i}`).style.display = "inline"; 
+    document.getElementById(`max-strides-${i}`).style.display = "inline"; 
+  } else {
+    document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+    document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+    document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+    document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+    document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+    document.getElementById(`max-strides-${i}`).style.display = "none"; 
+  }
+}
+
 function add(){
 	i = i + 1
   const inputWrapper = document.createElement('div');
@@ -163,18 +238,33 @@ function add(){
     input.appendChild(option); 
   }
   
-  
-  input.placeholder = "More hobbies";
-  inputWrapper.appendChild(input)
+  inputWrapper.appendChild(input);
   
   const removeButton = document.createElement('button');
   removeButton.innerHTML = 'Remove Layer';
   removeButton.onclick = () => { 
   	modelWrapper.removeChild(inputWrapper)
   }
-  
+
+  // add layer input options 
+  layerParameterFunctions["fc"](inputWrapper, i);
+  layerParameterFunctions["conv"](inputWrapper, i);
+  layerParameterFunctions["maxpool"](inputWrapper, i);
+
   inputWrapper.appendChild(removeButton);
   modelWrapper.appendChild(inputWrapper);
+  
+
+  // function func () {console.log("OnChange Activated!!"); layerSelectCheck(i);}
+  input.onchange = layerSelectCheck(i);
+  // input.addEventListener("click", layerSelectCheck(i), true);
+
+  // function fxn () {
+  //   console.log("onchange ACTIVATED!!");
+  //   layerSelectCheck(i);
+  // }
+  // input.onchange = fxn;
+  // input.onchange = alert('Content changed'); 
 }
 
 // Methods to supply data to the results modal
