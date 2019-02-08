@@ -315,25 +315,6 @@ async function train() {
   // set final fully connected layer units 
   layerInfo["fc-final"].units = trainingDataset.numLabels; 
 
-  // edit model layer attributes based on user input 
-  let convKernelSize = Number(document.getElementById("conv-kernel-size").value);
-  let convFilters = Number(document.getElementById("conv-filters").value); 
-  let convStrides = Number(document.getElementById("conv-strides").value);
-
-  let maxPoolSize = Number(document.getElementById("max-pool-size").value);
-  let maxStrides = Number(document.getElementById("max-strides").value);
-
-  let fcnUnits = Number(document.getElementById("fcn-units").value); 
-
-  layerInfo["conv-0"].kernelSize = [convKernelSize, convKernelSize]; 
-  layerInfo["conv-0"].filters = convFilters; 
-  layerInfo["conv-0"].strides = [convStrides, convStrides]; 
-
-  layerInfo["maxpool"].poolSize = [maxPoolSize, maxPoolSize]; 
-  layerInfo["maxpool"].strides = [maxStrides, maxStrides]; 
-
-  layerInfo["fc"].units = fcnUnits; 
-
   // get all select id's inside model-editor 
   let modelLayers = document.querySelectorAll("#model-editor select");
 
