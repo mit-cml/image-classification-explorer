@@ -88,9 +88,6 @@ let layerInfo =   {"conv-0": tf.layers.conv2d({
 // Optimizer Function Dictionary 
 const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
 
-// Layer Parameter Input Function Dictionary 
-const layerParameterFunctions = {"fc": addFc, "conv": addConv, "maxpool": addMaxPool};
-
 // Methods for adding user input for layer parameters 
 function addFc(inputWrapper, i) {
   const unit_input = document.createElement("input");
@@ -184,40 +181,51 @@ addButton.addEventListener("click", add);
 
 // Checks selected layer and displays corresponding input boxes accordingly 
 function layerSelectCheck(i) {
-  console.log("Select ID");
-  console.log(`select-${i}`);
-  let selectedLayer = document.getElementById(`select-${i}`).value;
-  console.log("Selected layer");
-  console.log(selectedLayer);
 
-  if (selectedLayer == "fc") { 
-    document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
-    document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-    document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-    document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-    document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-    document.getElementById(`max-strides-${i}`).style.display = "none"; 
-  } else if (selectedLayer == "conv") {
-    document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-    document.getElementById(`conv-kernel-size-${i}`).style.display = "inline"; 
-    document.getElementById(`conv-filters-${i}`).style.display = "inline"; 
-    document.getElementById(`conv-strides-${i}`).style.display = "inline"; 
-    document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-    document.getElementById(`max-strides-${i}`).style.display = "none"; 
-  } else if (selectedLayer == "maxpool") {
-    document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-    document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-    document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-    document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-    document.getElementById(`max-pool-size-${i}`).style.display = "inline"; 
-    document.getElementById(`max-strides-${i}`).style.display = "inline"; 
-  } else {
-    document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-    document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-    document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-    document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-    document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-    document.getElementById(`max-strides-${i}`).style.display = "none"; 
+  return function() {
+    console.log("Select ID");
+    console.log(`select-${i}`);
+    let selectedLayer = document.getElementById(`select-${i}`).value;
+    console.log("Selected layer");
+    console.log(selectedLayer);
+
+    if (selectedLayer == "fc") { 
+      document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
+      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+      document.getElementById(`max-strides-${i}`).style.display = "none"; 
+    } else if (selectedLayer == "conv") {
+      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+      document.getElementById(`conv-kernel-size-${i}`).style.display = "inline"; 
+      document.getElementById(`conv-filters-${i}`).style.display = "inline"; 
+      document.getElementById(`conv-strides-${i}`).style.display = "inline"; 
+      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+      document.getElementById(`max-strides-${i}`).style.display = "none"; 
+    } else if (selectedLayer == "maxpool") {
+      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+      document.getElementById(`max-pool-size-${i}`).style.display = "inline"; 
+      document.getElementById(`max-strides-${i}`).style.display = "inline"; 
+    } else if (selectedLayer == "conv-0") {
+      document.getElementById("conv-kernel-size-0").style.display = "inline";
+      document.getElementById("conv-filters-0").style.display = "inline";
+      document.getElementById("conv-strides-0").style.display = "inline";
+    } else if (selectedLayer == "flat-0") {
+      document.getElementById("conv-kernel-size-0").style.display = "none";
+      document.getElementById("conv-filters-0").style.display = "none";
+      document.getElementById("conv-strides-0").style.display = "none";
+    } else {
+      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+      document.getElementById(`max-strides-${i}`).style.display = "none"; 
+    }
   }
 }
 
@@ -247,24 +255,22 @@ function add(){
   }
 
   // add layer input options 
-  layerParameterFunctions["fc"](inputWrapper, i);
-  layerParameterFunctions["conv"](inputWrapper, i);
-  layerParameterFunctions["maxpool"](inputWrapper, i);
+  addFc(inputWrapper, i);
+  addConv(inputWrapper, i);
+  addMaxPool(inputWrapper, i);
 
   inputWrapper.appendChild(removeButton);
   modelWrapper.appendChild(inputWrapper);
   
+  // display fully connected inputs only 
+  document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
+  document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+  document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+  document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+  document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+  document.getElementById(`max-strides-${i}`).style.display = "none"; 
 
-  // function func () {console.log("OnChange Activated!!"); layerSelectCheck(i);}
   input.onchange = layerSelectCheck(i);
-  // input.addEventListener("click", layerSelectCheck(i), true);
-
-  // function fxn () {
-  //   console.log("onchange ACTIVATED!!");
-  //   layerSelectCheck(i);
-  // }
-  // input.onchange = fxn;
-  // input.onchange = alert('Content changed'); 
 }
 
 // Methods to supply data to the results modal
@@ -337,6 +343,36 @@ async function train() {
     try {
       let layerValue = document.getElementById(modelLayers[i].id).value;
       let layerCopy = cloneDeep(layerInfo[layerValue]);
+
+      console.log("Layer!");
+      console.log(layerValue);
+      
+      let idx = Number(modelLayers[i].id.substr(-1));
+      
+
+      // get layer parameters and set parameters 
+      if (layerValue == "fc") {
+        let fcnUnits = Number(document.getElementById(`fcn-units-${idx}`).value);
+        layerCopy.units = fcnUnits;
+        console.log("Successfully set fcn units!!");
+      } else if (layerValue == "maxpool") {
+        let maxPoolSize = Number(document.getElementById(`max-pool-size-${idx}`).value);
+        let maxStrides = Number(document.getElementById(`max-strides-${idx}`).value);
+        layerCopy.poolSize = [maxPoolSize, maxPoolSize];
+        layerCopy.strides = [maxStrides, maxStrides];
+        console.log("Successfully set max pool params!!");
+      } else if (layerValue == "conv" || layerValue == "conv-0") {
+        let convKernelSize = Number(document.getElementById(`conv-kernel-size-${idx}`).value);
+        let convFilters = Number(document.getElementById(`conv-filters-${idx}`).value); 
+        let convStrides = Number(document.getElementById(`conv-strides-${idx}`).value);
+        layerCopy.kernelSize = [convKernelSize, convKernelSize];
+        layerCopy.filters = convFilters;
+        layerCopy.strides = [convStrides, convStrides];
+        console.log("Successfully set convolution params!!");
+      } else {
+        console.log("flatten or final layer..");
+      }
+
       model.add(layerCopy);
     } catch (e) {
       // print error message, stop & reset timer 
@@ -718,6 +754,9 @@ async function init() {
 
   ui.init();
   modal.init();
+
+  let select0 = document.getElementById('select-0');
+  select0.onchange = layerSelectCheck(0);
 }
 
 init();
