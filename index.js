@@ -95,6 +95,7 @@ function addFc(inputWrapper, i) {
   const unit_input = document.createElement("input");
   unit_input.type = "number"; 
   unit_input.id = `fcn-units-${i}`;
+  unit_input.onchange = layerSelectCheck(i);
   unit_input.min = 1;
   unit_input.max = 300;
   unit_input.step = 1;
@@ -110,6 +111,9 @@ function addConv(inputWrapper, i) {
   kernel_input.id = `conv-kernel-size-${i}`;
   filter_input.id = `conv-filters-${i}`;
   stride_input.id = `conv-strides-${i}`;
+  kernel_input.onchange = layerSelectCheck(i);
+  filter_input.onchange = layerSelectCheck(i);
+  stride_input.onchange = layerSelectCheck(i);
   kernel_input.min = filter_input.min = stride_input.min = 1;
   kernel_input.max = filter_input.max = stride_input.max = 100;
   kernel_input.step = filter_input.step = stride_input.step = 1;
@@ -125,6 +129,8 @@ function addMaxPool(inputWrapper) {
   pool_input.type = stride_input.type = "number"; 
   pool_input.id = `max-pool-size-${i}`;
   stride_input.id = `max-strides-${i}`;
+  pool_input.onchange = layerSelectCheck(i);
+  stride_input.onchange = layerSelectCheck(i);
   pool_input.min = stride_input.min = 1;
   pool_input.max = stride_input.max = 20;
   pool_input.step = stride_input.step = 1;
@@ -193,6 +199,8 @@ function layerSelectCheck(i) {
     console.log(selectedLayer);
 
     // update dimensions 
+    document.getElementById("model-error").innerHTML = "";
+    document.getElementById("dim-error").innerHTML = "";
     updateDimensions();
 
     if (selectedLayer == "fc") { 
@@ -233,6 +241,11 @@ function layerSelectCheck(i) {
       document.getElementById(`max-strides-${i}`).style.display = "none"; 
     }
   }
+}
+
+// Checks if n is an integer 
+function isInt(n) {
+  return n % 1 == 0;
 }
 
 // TODO: Edit this so we also recompute input and output dimensions 
@@ -317,7 +330,7 @@ function updateDimensions(){
     if (i != modelLayers.length-1) {
       document.getElementById(`dimensions-${idx}`).innerHTML = dimList[dimList.length-2] + " --> " + dimList[dimList.length-1];
     } else {
-      document.getElementById("dimensions-final").innerHTML = dimList[dimList.length-2] + " --> " + dimList[dimList.length-1];
+      document.getElementById("dimensions-final").innerHTML = dimList[dimList.length-1] + " --> " + ["Number of Labels"];
     }
   }; 
 
@@ -325,6 +338,34 @@ function updateDimensions(){
 
   console.log("DIMENSIONS LIST: ");
   console.log(dimList);
+
+  // check for invalid dimensions 
+  for (let i=0; i<dimList.length-1; i++) {
+    let dim = dimList[i];
+    for (let j=0; j<dim.length; j++) {
+      let d = dim[j];
+      if (d < 0 || !isInt(d)){
+        document.getElementById("dim-error").innerHTML = "Invalid Dimensions! Fix layer parameters.";
+        throw new Error("Invalid Dimensions! Fix layer parameters.");
+        // break; 
+      }
+    }
+  }
+
+  // for (let dim in dimList.slice(0,-1)) {
+  //   console.log("dim");
+  //   console.log(dim);
+  //   for (let d in dim) {
+  //     console.log("d");
+  //     console.log(d);
+  //     console.log(d%1);
+  //     console.log(d%1==0);
+  //     if (d < 0 || !isInt(d)){
+  //       document.getElementById("dim-error").innerHTML = "Invalid Dimensions! Fix layer parameters.";
+  //       throw new Error("Invalid Dimensions! Fix layer parameters.");
+  //     }
+  //   }
+  // }
 }
 
 function add(){
@@ -840,7 +881,14 @@ async function init() {
   modal.init();
 
   let select0 = document.getElementById('select-0');
+  let convKernelSize0 = document.getElementById('conv-kernel-size-0');
+  let convFilters0 = document.getElementById('conv-filters-0');
+  let convStrides0 = document.getElementById('conv-strides-0');
+
   select0.onchange = layerSelectCheck(0);
+  convKernelSize0.onchange = layerSelectCheck(0);
+  convFilters0.onchange = layerSelectCheck(0);
+  convStrides0.onchange = layerSelectCheck(0);
 }
 
 init();
