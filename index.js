@@ -180,6 +180,7 @@ let i = 0
 addButton.addEventListener("click", add);
 
 // Checks selected layer and displays corresponding input boxes accordingly 
+// TODO: Edit this so we also recompute input and output dimensions 
 function layerSelectCheck(i) {
 
   return function() {
@@ -261,6 +262,12 @@ function add(){
 
   inputWrapper.appendChild(removeButton);
   modelWrapper.appendChild(inputWrapper);
+
+  // add span for layer input/output display
+  var layerDimsDisplay = document.createElement('span')
+  layerDimsDisplay.id = `dimensions-${i}`;
+  layerDimsDisplay.innerHTML = "[input] --> [output]";
+  inputWrapper.appendChild(layerDimsDisplay);
   
   // display fully connected inputs only 
   document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
@@ -288,14 +295,13 @@ modal.setGetSaliencyHandler(async function(img) {
 
 // Sets up and trains the classifier
 async function train() {
-  // TODO: check model input, load appropriate model, and create trainingData and testingData
   // look at input from dropdown menu 
   let currentModelIdx = document.getElementById("choose-model-dropdown").value;
   console.log(currentModelIdx);
   currentModel = modelInfo[currentModelIdx]; // dictionary obj of model info 
   transferModel = await loadTransferModel(); 
 
-  // TODO: create clear fxn that also gets rid of old tensors 
+  // gets rid of old tensors 
   trainingDataset.removeExamples();
 
   // loop over trainingImgDict and testingImgDict and process 
@@ -329,7 +335,6 @@ async function train() {
       console.log(layerValue);
       
       let idx = Number(modelLayers[i].id.substr(-1));
-      
 
       // get layer parameters and set parameters 
       if (layerValue == "fc") {
@@ -589,7 +594,7 @@ let resultsNextButtonFunctionTesting = null;
 
 document.getElementById('predict').addEventListener('click', async () => {
 
-  // TODO: create clear fxn that also gets rid of old tensors 
+  // gets rid of old tensors 
   testingDataset.removeExamples();
 
   console.log("raw testing  images");

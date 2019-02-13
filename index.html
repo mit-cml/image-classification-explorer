@@ -309,12 +309,14 @@ limitations under the License.
             <input type="number" id="conv-kernel-size-0" min="1" max="100" step="1" value="5"> 
             <input type="number" id="conv-filters-0" min="1" max="100" step="1" value="5"> 
             <input type="number" id="conv-strides-0" min="1" max="100" step="1" value="5">
+            <span id="dimensions-0"> [7,7,256] --> [1,1,1] </span>
           </div>
           
           <div id="inputWrapper-final">
             <select id="select-final">
               <option value="fc-final">Fully Connected</option>
             </select>
+            <span id="dimensions-final"> [48] --> [num_labels] </span>
           </div>
         </div>
         <button id="add">Add Layer</button>
