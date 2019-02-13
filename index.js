@@ -198,11 +198,6 @@ function layerSelectCheck(i) {
     console.log("Selected layer");
     console.log(selectedLayer);
 
-    // update dimensions 
-    document.getElementById("model-error").innerHTML = "";
-    document.getElementById("dim-error").innerHTML = "";
-    updateDimensions();
-
     if (selectedLayer == "fc") { 
       document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
       document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
@@ -240,6 +235,11 @@ function layerSelectCheck(i) {
       document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
       document.getElementById(`max-strides-${i}`).style.display = "none"; 
     }
+
+    // update dimensions 
+    document.getElementById("model-error").innerHTML = "";
+    document.getElementById("dim-error").innerHTML = "";
+    updateDimensions();
   }
 }
 
