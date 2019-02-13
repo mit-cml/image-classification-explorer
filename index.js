@@ -48,6 +48,8 @@ let transferModel;
 let model;
 let entireModel;
 
+let dimList;
+
 let started; 
 
 const webcam = new Webcam(document.getElementById('webcam'));
@@ -190,6 +192,9 @@ function layerSelectCheck(i) {
     console.log("Selected layer");
     console.log(selectedLayer);
 
+    // update dimensions 
+    updateDimensions();
+
     if (selectedLayer == "fc") { 
       document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
       document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
@@ -228,6 +233,98 @@ function layerSelectCheck(i) {
       document.getElementById(`max-strides-${i}`).style.display = "none"; 
     }
   }
+}
+
+// TODO: Edit this so we also recompute input and output dimensions 
+function updateDimensions(){
+  // get all select id's inside model-editor 
+  let modelLayers = document.querySelectorAll("#model-editor select");
+  dimList = [[7,7,256]]; 
+
+  for (let i = 0; i < modelLayers.length; i++) {
+    let layerValue = document.getElementById(modelLayers[i].id).value;
+
+    console.log("Layer!");
+    console.log(layerValue);
+    
+    let idx = Number(modelLayers[i].id.substr(-1));
+
+    // get layer parameters and set parameters 
+    if (layerValue == "fc") {
+      // if input is not a 1D tensor, raise error 
+      if (dimList[dimList.length-1].length != 1) {
+        document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
+        throw new Error("Invalid Model! Must have flatten before fully connected.");
+      }
+      let fcnUnits = Number(document.getElementById(`fcn-units-${idx}`).value);
+      
+      // compute and push output dimensions 
+      let nextDims = [];
+      nextDims.push(fcnUnits);
+      dimList.push(nextDims);
+    } else if (layerValue == "maxpool") {
+      // if input is not a 3D image, raise error 
+      if (dimList[dimList.length-1].length != 3) {
+        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have max pool after flatten.";
+        throw new Error("Invalid Model! Cannot have max pool after flatten.");
+      }
+      let maxPoolSize = Number(document.getElementById(`max-pool-size-${idx}`).value);
+      let maxStrides = Number(document.getElementById(`max-strides-${idx}`).value);
+
+      // compute and push output dimensions 
+      let lastDims = dimList[dimList.length-1];
+      let nextDims = [];
+      nextDims.push((lastDims[0]-maxPoolSize)/maxStrides+1);
+      nextDims.push((lastDims[1]-maxPoolSize)/maxStrides+1);
+      nextDims.push(lastDims[2]);
+      dimList.push(nextDims);
+    } else if (layerValue == "conv" || layerValue == "conv-0") {
+      // if input is not a 3D image, raise error 
+      if (dimList[dimList.length-1].length != 3) {
+        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have convolution after flatten.";
+        throw new Error("Invalid Model! Cannot have convolution after flatten.");
+      }
+      let convKernelSize = Number(document.getElementById(`conv-kernel-size-${idx}`).value);
+      let convFilters = Number(document.getElementById(`conv-filters-${idx}`).value); 
+      let convStrides = Number(document.getElementById(`conv-strides-${idx}`).value);
+      
+      // compute and push output dimensions 
+      let lastDims = dimList[dimList.length-1];
+      let nextDims = [];
+      nextDims.push((lastDims[0]-convKernelSize)/convStrides+1);
+      nextDims.push((lastDims[1]-convKernelSize)/convStrides+1);
+      nextDims.push(convFilters);
+      dimList.push(nextDims);
+    } else if (layerValue == "fc-final") {
+      // if input is not a 1D tensor, raise error 
+      if (dimList[dimList.length-1].length != 1) {
+        document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
+        throw new Error("Invalid Model! Must have flatten before fully connected.");
+      }
+    } else {
+      // if input is not a 3D tensor, raise error 
+      if (dimList[dimList.length-1].length != 3) {
+        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have multiple flatten layers.";
+        throw new Error("Invalid Model! Cannot have multiple flatten layers.");
+      }
+
+      // compute and push output dimensions 
+      let lastDims = dimList[dimList.length-1];
+      let nextDims = [];
+      nextDims.push(lastDims[0]*lastDims[1]*lastDims[2]);
+      dimList.push(nextDims);
+    }
+    if (i != modelLayers.length-1) {
+      document.getElementById(`dimensions-${idx}`).innerHTML = dimList[dimList.length-2] + " --> " + dimList[dimList.length-1];
+    } else {
+      document.getElementById("dimensions-final").innerHTML = dimList[dimList.length-2] + " --> " + dimList[dimList.length-1];
+    }
+  }; 
+
+  dimList.push(["Number of Labels"]);
+
+  console.log("DIMENSIONS LIST: ");
+  console.log(dimList);
 }
 
 function add(){
@@ -277,6 +374,7 @@ function add(){
   document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
   document.getElementById(`max-strides-${i}`).style.display = "none"; 
 
+  // updateDimensions();
   input.onchange = layerSelectCheck(i);
 }
 
