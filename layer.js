@@ -128,11 +128,18 @@ export class LayerNode {
     document.getElementById(`max-pool-size-${this.id}`).style.display = "none"; 
     document.getElementById(`max-strides-${this.id}`).style.display = "none"; 
     
+    let self = this; 
+    let id_ref = self.id;
+    input.onchange = self.layerSelectCheck(id_ref);
+    // input.onchange = () => {
+    //   console.log("Entered onchange");
+    //   self.layerSelectCheck(id_ref)();
+    // }; 
+
     // this.updateDimensions();
     if (!this.isFirst) {
       this.updateDimensions();
     }
-    input.onchange = this.layerSelectCheck(this.id);
   }
 
   updateDimensions(){
@@ -146,7 +153,12 @@ export class LayerNode {
       console.log("Layer!");
       console.log(layerValue);
       
-      let idx = Number(modelLayers[j].id.substr(-1));
+      let idx;
+      if (this.isFinal) {
+        idx = "final";
+      } else {
+        idx = this.id_val;
+      }
 
       // get layer parameters and set parameters 
       if (layerValue == "fc") {
@@ -155,6 +167,9 @@ export class LayerNode {
           document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
           throw new Error("Invalid Model! Must have flatten before fully connected.");
         }
+
+        console.log("ERROR HERE...");
+        console.log(idx); 
         let fcnUnits = Number(document.getElementById(`fcn-units-${idx}`).value);
         
         // compute and push output dimensions 
@@ -248,10 +263,12 @@ export class LayerNode {
 
   // Methods for adding user input for layer parameters 
   addFc(inputWrapper, i) {
+    let self = this; 
+
     const unit_input = document.createElement("input");
     unit_input.type = "number"; 
     unit_input.id = `fcn-units-${i}`;
-    unit_input.onchange = this.layerSelectCheck(i);
+    unit_input.onchange = self.layerSelectCheck(self.id);
     unit_input.min = 1;
     unit_input.max = 300;
     unit_input.step = 1;
@@ -260,6 +277,8 @@ export class LayerNode {
   }
 
   addConv(inputWrapper, i) {
+    let self = this; 
+
     const kernel_input = document.createElement("input");
     const filter_input = document.createElement("input");
     const stride_input = document.createElement("input");
@@ -267,9 +286,9 @@ export class LayerNode {
     kernel_input.id = `conv-kernel-size-${i}`;
     filter_input.id = `conv-filters-${i}`;
     stride_input.id = `conv-strides-${i}`;
-    kernel_input.onchange = this.layerSelectCheck(i);
-    filter_input.onchange = this.layerSelectCheck(i);
-    stride_input.onchange = this.layerSelectCheck(i);
+    kernel_input.onchange = self.layerSelectCheck(self.id);
+    filter_input.onchange = self.layerSelectCheck(self.id);
+    stride_input.onchange = self.layerSelectCheck(self.id);
     kernel_input.min = filter_input.min = stride_input.min = 1;
     kernel_input.max = filter_input.max = stride_input.max = 100;
     kernel_input.step = filter_input.step = stride_input.step = 1;
@@ -280,13 +299,15 @@ export class LayerNode {
   }
 
   addMaxPool(inputWrapper, i) {
+    let self = this; 
+
     const pool_input = document.createElement("input");
     const stride_input = document.createElement("input");
     pool_input.type = stride_input.type = "number"; 
     pool_input.id = `max-pool-size-${i}`;
     stride_input.id = `max-strides-${i}`;
-    pool_input.onchange = this.layerSelectCheck(i);
-    stride_input.onchange = this.layerSelectCheck(i);
+    pool_input.onchange = self.layerSelectCheck(self.id);
+    stride_input.onchange = self.layerSelectCheck(self.id);
     pool_input.min = stride_input.min = 1;
     pool_input.max = stride_input.max = 20;
     pool_input.step = stride_input.step = 1;
