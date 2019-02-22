@@ -26,6 +26,8 @@ import * as modal from './modal';
 import * as saliency from './saliency';
 import {Webcam} from './webcam';
 import cloneDeep from 'lodash/cloneDeep';
+import {LayerList, LayerNode} from './layer';
+import { Layer } from '@tensorflow/tfjs-layers/dist/exports_layers';
 
 const SALIENCY_NUM_SAMPLES = 15;
 const SALIENCY_NOISE_STD = 0.1;
@@ -47,6 +49,8 @@ let testingResults;
 let transferModel;
 let model;
 let entireModel;
+
+let layerLinkedList;
 
 let dimList;
 
@@ -89,55 +93,6 @@ let layerInfo =   {"conv-0": tf.layers.conv2d({
 
 // Optimizer Function Dictionary 
 const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
-
-// Methods for adding user input for layer parameters 
-function addFc(inputWrapper, i) {
-  const unit_input = document.createElement("input");
-  unit_input.type = "number"; 
-  unit_input.id = `fcn-units-${i}`;
-  unit_input.onchange = layerSelectCheck(i);
-  unit_input.min = 1;
-  unit_input.max = 300;
-  unit_input.step = 1;
-  unit_input.value = 100;
-  inputWrapper.appendChild(unit_input); 
-}
-
-function addConv(inputWrapper, i) {
-  const kernel_input = document.createElement("input");
-  const filter_input = document.createElement("input");
-  const stride_input = document.createElement("input");
-  kernel_input.type = filter_input.type = stride_input.type = "number"; 
-  kernel_input.id = `conv-kernel-size-${i}`;
-  filter_input.id = `conv-filters-${i}`;
-  stride_input.id = `conv-strides-${i}`;
-  kernel_input.onchange = layerSelectCheck(i);
-  filter_input.onchange = layerSelectCheck(i);
-  stride_input.onchange = layerSelectCheck(i);
-  kernel_input.min = filter_input.min = stride_input.min = 1;
-  kernel_input.max = filter_input.max = stride_input.max = 100;
-  kernel_input.step = filter_input.step = stride_input.step = 1;
-  kernel_input.value = filter_input.value = stride_input.value = 5;
-  inputWrapper.appendChild(kernel_input);
-  inputWrapper.appendChild(filter_input);
-  inputWrapper.appendChild(stride_input);
-}
-
-function addMaxPool(inputWrapper) {
-  const pool_input = document.createElement("input");
-  const stride_input = document.createElement("input");
-  pool_input.type = stride_input.type = "number"; 
-  pool_input.id = `max-pool-size-${i}`;
-  stride_input.id = `max-strides-${i}`;
-  pool_input.onchange = layerSelectCheck(i);
-  stride_input.onchange = layerSelectCheck(i);
-  pool_input.min = stride_input.min = 1;
-  pool_input.max = stride_input.max = 20;
-  pool_input.step = stride_input.step = 1;
-  pool_input.value = stride_input.value = 5; 
-  inputWrapper.appendChild(pool_input);
-  inputWrapper.appendChild(stride_input);
-}
 
 // Loads transfer model and returns a model that returns the internal activation 
 // we'll use as input to our classifier model. 
@@ -187,236 +142,14 @@ const modelWrapper = document.getElementById("inputWrapper-0");
 let i = 0
 addButton.addEventListener("click", add);
 
-// Checks selected layer and displays corresponding input boxes accordingly 
-// TODO: Edit this so we also recompute input and output dimensions 
-function layerSelectCheck(i) {
-
-  return function() {
-    console.log("Select ID");
-    console.log(`select-${i}`);
-    let selectedLayer = document.getElementById(`select-${i}`).value;
-    console.log("Selected layer");
-    console.log(selectedLayer);
-
-    if (selectedLayer == "fc") { 
-      document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
-      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-      document.getElementById(`max-strides-${i}`).style.display = "none"; 
-    } else if (selectedLayer == "conv") {
-      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-      document.getElementById(`conv-kernel-size-${i}`).style.display = "inline"; 
-      document.getElementById(`conv-filters-${i}`).style.display = "inline"; 
-      document.getElementById(`conv-strides-${i}`).style.display = "inline"; 
-      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-      document.getElementById(`max-strides-${i}`).style.display = "none"; 
-    } else if (selectedLayer == "maxpool") {
-      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-      document.getElementById(`max-pool-size-${i}`).style.display = "inline"; 
-      document.getElementById(`max-strides-${i}`).style.display = "inline"; 
-    } else if (selectedLayer == "conv-0") {
-      document.getElementById("conv-kernel-size-0").style.display = "inline";
-      document.getElementById("conv-filters-0").style.display = "inline";
-      document.getElementById("conv-strides-0").style.display = "inline";
-    } else if (selectedLayer == "flat-0") {
-      document.getElementById("conv-kernel-size-0").style.display = "none";
-      document.getElementById("conv-filters-0").style.display = "none";
-      document.getElementById("conv-strides-0").style.display = "none";
-    } else {
-      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-      document.getElementById(`max-strides-${i}`).style.display = "none"; 
-    }
-
-    // update dimensions 
-    document.getElementById("model-error").innerHTML = "";
-    document.getElementById("dim-error").innerHTML = "";
-    updateDimensions();
-  }
-}
-
-// Checks if n is an integer 
-function isInt(n) {
-  return n % 1 == 0;
-}
-
-// TODO: Edit this so we also recompute input and output dimensions 
-function updateDimensions(){
-  // get all select id's inside model-editor 
-  let modelLayers = document.querySelectorAll("#model-editor select");
-  dimList = [[7,7,256]]; 
-
-  for (let i = 0; i < modelLayers.length; i++) {
-    let layerValue = document.getElementById(modelLayers[i].id).value;
-
-    console.log("Layer!");
-    console.log(layerValue);
-    
-    let idx = Number(modelLayers[i].id.substr(-1));
-
-    // get layer parameters and set parameters 
-    if (layerValue == "fc") {
-      // if input is not a 1D tensor, raise error 
-      if (dimList[dimList.length-1].length != 1) {
-        document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
-        throw new Error("Invalid Model! Must have flatten before fully connected.");
-      }
-      let fcnUnits = Number(document.getElementById(`fcn-units-${idx}`).value);
-      
-      // compute and push output dimensions 
-      let nextDims = [];
-      nextDims.push(fcnUnits);
-      dimList.push(nextDims);
-    } else if (layerValue == "maxpool") {
-      // if input is not a 3D image, raise error 
-      if (dimList[dimList.length-1].length != 3) {
-        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have max pool after flatten.";
-        throw new Error("Invalid Model! Cannot have max pool after flatten.");
-      }
-      let maxPoolSize = Number(document.getElementById(`max-pool-size-${idx}`).value);
-      let maxStrides = Number(document.getElementById(`max-strides-${idx}`).value);
-
-      // compute and push output dimensions 
-      let lastDims = dimList[dimList.length-1];
-      let nextDims = [];
-      nextDims.push((lastDims[0]-maxPoolSize)/maxStrides+1);
-      nextDims.push((lastDims[1]-maxPoolSize)/maxStrides+1);
-      nextDims.push(lastDims[2]);
-      dimList.push(nextDims);
-    } else if (layerValue == "conv" || layerValue == "conv-0") {
-      // if input is not a 3D image, raise error 
-      if (dimList[dimList.length-1].length != 3) {
-        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have convolution after flatten.";
-        throw new Error("Invalid Model! Cannot have convolution after flatten.");
-      }
-      let convKernelSize = Number(document.getElementById(`conv-kernel-size-${idx}`).value);
-      let convFilters = Number(document.getElementById(`conv-filters-${idx}`).value); 
-      let convStrides = Number(document.getElementById(`conv-strides-${idx}`).value);
-      
-      // compute and push output dimensions 
-      let lastDims = dimList[dimList.length-1];
-      let nextDims = [];
-      nextDims.push((lastDims[0]-convKernelSize)/convStrides+1);
-      nextDims.push((lastDims[1]-convKernelSize)/convStrides+1);
-      nextDims.push(convFilters);
-      dimList.push(nextDims);
-    } else if (layerValue == "fc-final") {
-      // if input is not a 1D tensor, raise error 
-      if (dimList[dimList.length-1].length != 1) {
-        document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
-        throw new Error("Invalid Model! Must have flatten before fully connected.");
-      }
-    } else {
-      // if input is not a 3D tensor, raise error 
-      if (dimList[dimList.length-1].length != 3) {
-        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have multiple flatten layers.";
-        throw new Error("Invalid Model! Cannot have multiple flatten layers.");
-      }
-
-      // compute and push output dimensions 
-      let lastDims = dimList[dimList.length-1];
-      let nextDims = [];
-      nextDims.push(lastDims[0]*lastDims[1]*lastDims[2]);
-      dimList.push(nextDims);
-    }
-    if (i != modelLayers.length-1) {
-      document.getElementById(`dimensions-${idx}`).innerHTML = dimList[dimList.length-2] + " --> " + dimList[dimList.length-1];
-    } else {
-      document.getElementById("dimensions-final").innerHTML = dimList[dimList.length-1] + " --> " + ["Number of Labels"];
-    }
-  }; 
-
-  dimList.push(["Number of Labels"]);
-
-  console.log("DIMENSIONS LIST: ");
-  console.log(dimList);
-
-  // check for invalid dimensions 
-  for (let i=0; i<dimList.length-1; i++) {
-    let dim = dimList[i];
-    for (let j=0; j<dim.length; j++) {
-      let d = dim[j];
-      if (d < 0 || !isInt(d)){
-        document.getElementById("dim-error").innerHTML = "Invalid Dimensions! Fix layer parameters.";
-        throw new Error("Invalid Dimensions! Fix layer parameters.");
-        // break; 
-      }
-    }
-  }
-
-  // for (let dim in dimList.slice(0,-1)) {
-  //   console.log("dim");
-  //   console.log(dim);
-  //   for (let d in dim) {
-  //     console.log("d");
-  //     console.log(d);
-  //     console.log(d%1);
-  //     console.log(d%1==0);
-  //     if (d < 0 || !isInt(d)){
-  //       document.getElementById("dim-error").innerHTML = "Invalid Dimensions! Fix layer parameters.";
-  //       throw new Error("Invalid Dimensions! Fix layer parameters.");
-  //     }
-  //   }
-  // }
-}
-
 function add(){
-	i = i + 1
-  const inputWrapper = document.createElement('div');
-  inputWrapper.id = `inputWrapper-${i}` ;
-  const dropdown_text = ["Fully Connected", "Convolution", "Max Pool", "Flatten"];
-  const dropdown_values = ["fc", "conv", "maxpool", "flat"];
-  const input = document.createElement('select');
-  input.id = `select-${i}` ;
-  
-  // create and append options 
-  for (let i = 0; i < dropdown_text.length; i++) {
-  	let option = document.createElement("option");
-    option.value = dropdown_values[i];
-    option.text = dropdown_text[i];
-    input.appendChild(option); 
-  }
-  
-  inputWrapper.appendChild(input);
-  
-  const removeButton = document.createElement('button');
-  removeButton.innerHTML = 'Remove Layer';
-  removeButton.onclick = () => { 
-  	modelWrapper.removeChild(inputWrapper)
-  }
+  i = i+1; 
 
-  // add layer input options 
-  addFc(inputWrapper, i);
-  addConv(inputWrapper, i);
-  addMaxPool(inputWrapper, i);
+  // create new node 
+  let newLayer = new LayerNode(i);
 
-  inputWrapper.appendChild(removeButton);
-  modelWrapper.appendChild(inputWrapper);
-
-  // add span for layer input/output display
-  var layerDimsDisplay = document.createElement('span')
-  layerDimsDisplay.id = `dimensions-${i}`;
-  layerDimsDisplay.innerHTML = "[input] --> [output]";
-  inputWrapper.appendChild(layerDimsDisplay);
-  
-  // display fully connected inputs only 
-  document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
-  document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-  document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-  document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-  document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-  document.getElementById(`max-strides-${i}`).style.display = "none"; 
-
-  // updateDimensions();
-  input.onchange = layerSelectCheck(i);
+  // add to linked layer list 
+  layerLinkedList.addLayer(newLayer);
 }
 
 // Methods to supply data to the results modal
@@ -880,15 +613,22 @@ async function init() {
   ui.init();
   modal.init();
 
-  let select0 = document.getElementById('select-0');
-  let convKernelSize0 = document.getElementById('conv-kernel-size-0');
-  let convFilters0 = document.getElementById('conv-filters-0');
-  let convStrides0 = document.getElementById('conv-strides-0');
+  console.log("CREATING FIRST LAYER!");
+  const firstLayer = new LayerNode("0");
+  console.log("CREATING LAST LAYER!");
+  const lastLayer = new LayerNode("final");
 
-  select0.onchange = layerSelectCheck(0);
-  convKernelSize0.onchange = layerSelectCheck(0);
-  convFilters0.onchange = layerSelectCheck(0);
-  convStrides0.onchange = layerSelectCheck(0);
+  layerLinkedList = new LayerList(firstLayer, lastLayer);
+
+  // let select0 = document.getElementById('select-0');
+  // let convKernelSize0 = document.getElementById('conv-kernel-size-0');
+  // let convFilters0 = document.getElementById('conv-filters-0');
+  // let convStrides0 = document.getElementById('conv-strides-0');
+
+  // select0.onchange = layerSelectCheck(0);
+  // convKernelSize0.onchange = layerSelectCheck(0);
+  // convFilters0.onchange = layerSelectCheck(0);
+  // convStrides0.onchange = layerSelectCheck(0);
 }
 
 init();

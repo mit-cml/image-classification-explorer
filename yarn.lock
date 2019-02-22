@@ -1003,6 +1003,20 @@ caniuse-lite@^1.0.30000792, caniuse-lite@^1.0.30000844:
   version "1.0.30000929"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000929.tgz#7b391b781a9c3097ecc39ea053301aea8ea16317"
 
+canvas-prebuilt@1.6.11:
+  version "1.6.11"
+  resolved "https://registry.yarnpkg.com/canvas-prebuilt/-/canvas-prebuilt-1.6.11.tgz#9b37071aa0ddd4f7c2b4a9e279b63fb2dc30db9b"
+  integrity sha512-ayBAayYLgFbGBX+cwtOzM4iEQP4XB5DuBbtjgvAwQ66/FMzSR7DhlCqtDZIq9UBbpFCb1QpyDgUNVclHDdBixg==
+  dependencies:
+    node-pre-gyp "^0.10.0"
+
+canvas@^1.6.13:
+  version "1.6.13"
+  resolved "https://registry.yarnpkg.com/canvas/-/canvas-1.6.13.tgz#8cb4e9abbea9e615a377890ffac50277a1167c73"
+  integrity sha512-XAfzfEOHZ3JIPjEV+WSI6PpISgUta3dgmndWbsajotz+0TQOX/jDpp2kawjRERatOGv9sMMzk5auB3GKEKA6hg==
+  dependencies:
+    nan "^2.10.0"
+
 chalk@^1.1.3:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-1.1.3.tgz#a8115c55e4a702fe4d150abd3872822a7e09fc98"
@@ -2804,7 +2818,7 @@ ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
 
-nan@^2.9.2:
+nan@^2.10.0, nan@^2.9.2:
   version "2.12.1"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.12.1.tgz#7b1aa193e9aa86057e3c7bbd0ac448e770925552"
 
@@ -4542,7 +4556,7 @@ vega-hierarchy@^3.1.0:
     vega-dataflow "^4.0.4"
     vega-util "^1.7.0"
 
-vega-lib@^4.4.0:
+vega-lib@4.4.0, vega-lib@^4.4.0:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/vega-lib/-/vega-lib-4.4.0.tgz#37d99514c5496a0ce001033bdacb504361ef6880"
   dependencies:
@@ -4595,7 +4609,7 @@ vega-loader@^3.0.1, vega-loader@^3.1.0:
     topojson-client "^3.0.0"
     vega-util "^1.7.0"
 
-vega-parser@^3.9.0:
+vega-parser@3.9.0, vega-parser@^3.9.0:
   version "3.9.0"
   resolved "https://registry.yarnpkg.com/vega-parser/-/vega-parser-3.9.0.tgz#a7bbe380c5ae70ddd501163302a948f25aadd686"
   dependencies:
@@ -4725,6 +4739,19 @@ vega-wordcloud@^3.0.0:
     vega-statistics "^1.2.1"
     vega-util "^1.7.0"
 
+vega@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/vega/-/vega-4.4.0.tgz#e27051278061da635e08478d94ef9299dd6923ec"
+  integrity sha512-siNRf6F3Ihoku0T9LebtaguWd88SVcf8yWJmHQUO5ZcZKREjTYO0LmLHUOH1plSEQSqHBAQPtAjQ3xZYQKgSdQ==
+  dependencies:
+    vega-lib "4.4.0"
+    vega-parser "3.9.0"
+    vega-typings "*"
+    yargs "12"
+  optionalDependencies:
+    canvas "^1.6.13"
+    canvas-prebuilt "1.6.11"
+
 vendors@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/vendors/-/vendors-1.0.2.tgz#7fcb5eef9f5623b156bcea89ec37d63676f21801"
@@ -4833,7 +4860,7 @@ yargs-parser@^5.0.0:
   dependencies:
     camelcase "^3.0.0"
 
-yargs@^12.0.5:
+yargs@12, yargs@^12.0.5:
   version "12.0.5"
   resolved "https://registry.yarnpkg.com/yargs/-/yargs-12.0.5.tgz#05f5997b609647b64f66b81e3b4b10a368e7ad13"
   dependencies:
