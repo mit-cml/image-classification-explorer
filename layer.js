@@ -7,110 +7,6 @@
   // call onchange/onclick all the time 
 // updateLayerDims function that computes and updates layer parameters starting at Layer 
 
-// Methods for adding user input for layer parameters 
-function addFc(inputWrapper, i) {
-  const unit_input = document.createElement("input");
-  unit_input.type = "number"; 
-  unit_input.id = `fcn-units-${i}`;
-  unit_input.onchange = layerSelectCheck(i);
-  unit_input.min = 1;
-  unit_input.max = 300;
-  unit_input.step = 1;
-  unit_input.value = 100;
-  inputWrapper.appendChild(unit_input); 
-}
-
-function addConv(inputWrapper, i) {
-  const kernel_input = document.createElement("input");
-  const filter_input = document.createElement("input");
-  const stride_input = document.createElement("input");
-  kernel_input.type = filter_input.type = stride_input.type = "number"; 
-  kernel_input.id = `conv-kernel-size-${i}`;
-  filter_input.id = `conv-filters-${i}`;
-  stride_input.id = `conv-strides-${i}`;
-  kernel_input.onchange = layerSelectCheck(i);
-  filter_input.onchange = layerSelectCheck(i);
-  stride_input.onchange = layerSelectCheck(i);
-  kernel_input.min = filter_input.min = stride_input.min = 1;
-  kernel_input.max = filter_input.max = stride_input.max = 100;
-  kernel_input.step = filter_input.step = stride_input.step = 1;
-  kernel_input.value = filter_input.value = stride_input.value = 5;
-  inputWrapper.appendChild(kernel_input);
-  inputWrapper.appendChild(filter_input);
-  inputWrapper.appendChild(stride_input);
-}
-
-function addMaxPool(inputWrapper, i) {
-  const pool_input = document.createElement("input");
-  const stride_input = document.createElement("input");
-  pool_input.type = stride_input.type = "number"; 
-  pool_input.id = `max-pool-size-${i}`;
-  stride_input.id = `max-strides-${i}`;
-  pool_input.onchange = layerSelectCheck(i);
-  stride_input.onchange = layerSelectCheck(i);
-  pool_input.min = stride_input.min = 1;
-  pool_input.max = stride_input.max = 20;
-  pool_input.step = stride_input.step = 1;
-  pool_input.value = stride_input.value = 5; 
-  inputWrapper.appendChild(pool_input);
-  inputWrapper.appendChild(stride_input);
-}
-
-// Checks selected layer and displays corresponding input boxes accordingly 
-function layerSelectCheck(i) {
-
-  return function() {
-    console.log("Select ID");
-    console.log(`select-${i}`);
-    let selectedLayer = document.getElementById(`select-${i}`).value;
-    console.log("Selected layer");
-    console.log(selectedLayer);
-
-    if (selectedLayer == "fc") { 
-      document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
-      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-      document.getElementById(`max-strides-${i}`).style.display = "none"; 
-    } else if (selectedLayer == "conv") {
-      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-      document.getElementById(`conv-kernel-size-${i}`).style.display = "inline"; 
-      document.getElementById(`conv-filters-${i}`).style.display = "inline"; 
-      document.getElementById(`conv-strides-${i}`).style.display = "inline"; 
-      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-      document.getElementById(`max-strides-${i}`).style.display = "none"; 
-    } else if (selectedLayer == "maxpool") {
-      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-      document.getElementById(`max-pool-size-${i}`).style.display = "inline"; 
-      document.getElementById(`max-strides-${i}`).style.display = "inline"; 
-    } else if (selectedLayer == "conv-0") {
-      document.getElementById("conv-kernel-size-0").style.display = "inline";
-      document.getElementById("conv-filters-0").style.display = "inline";
-      document.getElementById("conv-strides-0").style.display = "inline";
-    } else if (selectedLayer == "flat-0") {
-      document.getElementById("conv-kernel-size-0").style.display = "none";
-      document.getElementById("conv-filters-0").style.display = "none";
-      document.getElementById("conv-strides-0").style.display = "none";
-    } else {
-      document.getElementById(`fcn-units-${i}`).style.display = "none"; 
-      document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
-      document.getElementById(`conv-filters-${i}`).style.display = "none"; 
-      document.getElementById(`conv-strides-${i}`).style.display = "none"; 
-      document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
-      document.getElementById(`max-strides-${i}`).style.display = "none"; 
-    }
-
-    // update dimensions 
-    document.getElementById("model-error").innerHTML = "";
-    document.getElementById("dim-error").innerHTML = "";
-    this.updateDimensions();
-  }
-}
-
 // Checks if n is an integer 
 function isInt(n) {
   return n % 1 == 0;
@@ -205,9 +101,9 @@ export class LayerNode {
     }
   
     // add layer input options 
-    addFc(inputWrapper, this.id);
-    addConv(inputWrapper, this.id);
-    addMaxPool(inputWrapper, this.id);
+    this.addFc(inputWrapper, this.id);
+    this.addConv(inputWrapper, this.id);
+    this.addMaxPool(inputWrapper, this.id);
     
     // if (!this.isFirst || !this.isFinal) {
     //   inputWrapper.appendChild(removeButton);
@@ -238,7 +134,7 @@ export class LayerNode {
     if (!this.isFirst) {
       this.updateDimensions();
     }
-    input.onchange = layerSelectCheck(this.id);
+    input.onchange = this.layerSelectCheck(this.id);
   }
 
   updateDimensions(){
@@ -349,6 +245,112 @@ export class LayerNode {
           throw new Error("Invalid Dimensions! Fix layer parameters.");
         }
       }
+    }
+  }
+
+  // Methods for adding user input for layer parameters 
+  addFc(inputWrapper, i) {
+    const unit_input = document.createElement("input");
+    unit_input.type = "number"; 
+    unit_input.id = `fcn-units-${i}`;
+    unit_input.onchange = this.layerSelectCheck(i);
+    unit_input.min = 1;
+    unit_input.max = 300;
+    unit_input.step = 1;
+    unit_input.value = 100;
+    inputWrapper.appendChild(unit_input); 
+  }
+
+  addConv(inputWrapper, i) {
+    const kernel_input = document.createElement("input");
+    const filter_input = document.createElement("input");
+    const stride_input = document.createElement("input");
+    kernel_input.type = filter_input.type = stride_input.type = "number"; 
+    kernel_input.id = `conv-kernel-size-${i}`;
+    filter_input.id = `conv-filters-${i}`;
+    stride_input.id = `conv-strides-${i}`;
+    kernel_input.onchange = this.layerSelectCheck(i);
+    filter_input.onchange = this.layerSelectCheck(i);
+    stride_input.onchange = this.layerSelectCheck(i);
+    kernel_input.min = filter_input.min = stride_input.min = 1;
+    kernel_input.max = filter_input.max = stride_input.max = 100;
+    kernel_input.step = filter_input.step = stride_input.step = 1;
+    kernel_input.value = filter_input.value = stride_input.value = 5;
+    inputWrapper.appendChild(kernel_input);
+    inputWrapper.appendChild(filter_input);
+    inputWrapper.appendChild(stride_input);
+  }
+
+  addMaxPool(inputWrapper, i) {
+    const pool_input = document.createElement("input");
+    const stride_input = document.createElement("input");
+    pool_input.type = stride_input.type = "number"; 
+    pool_input.id = `max-pool-size-${i}`;
+    stride_input.id = `max-strides-${i}`;
+    pool_input.onchange = this.layerSelectCheck(i);
+    stride_input.onchange = this.layerSelectCheck(i);
+    pool_input.min = stride_input.min = 1;
+    pool_input.max = stride_input.max = 20;
+    pool_input.step = stride_input.step = 1;
+    pool_input.value = stride_input.value = 5; 
+    inputWrapper.appendChild(pool_input);
+    inputWrapper.appendChild(stride_input);
+  }
+
+  // Checks selected layer and displays corresponding input boxes accordingly 
+  layerSelectCheck(i) {
+    let self = this;
+
+    return function() {
+      console.log("Select ID");
+      console.log(`select-${i}`);
+      let selectedLayer = document.getElementById(`select-${i}`).value;
+      console.log("Selected layer");
+      console.log(selectedLayer);
+
+      if (selectedLayer == "fc") { 
+        document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
+        document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+        document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+        document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+        document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+        document.getElementById(`max-strides-${i}`).style.display = "none"; 
+      } else if (selectedLayer == "conv") {
+        document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+        document.getElementById(`conv-kernel-size-${i}`).style.display = "inline"; 
+        document.getElementById(`conv-filters-${i}`).style.display = "inline"; 
+        document.getElementById(`conv-strides-${i}`).style.display = "inline"; 
+        document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+        document.getElementById(`max-strides-${i}`).style.display = "none"; 
+      } else if (selectedLayer == "maxpool") {
+        document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+        document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+        document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+        document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+        document.getElementById(`max-pool-size-${i}`).style.display = "inline"; 
+        document.getElementById(`max-strides-${i}`).style.display = "inline"; 
+      } else if (selectedLayer == "conv-0") {
+        document.getElementById("conv-kernel-size-0").style.display = "inline";
+        document.getElementById("conv-filters-0").style.display = "inline";
+        document.getElementById("conv-strides-0").style.display = "inline";
+      } else if (selectedLayer == "flat-0") {
+        document.getElementById("conv-kernel-size-0").style.display = "none";
+        document.getElementById("conv-filters-0").style.display = "none";
+        document.getElementById("conv-strides-0").style.display = "none";
+      } else {
+        document.getElementById(`fcn-units-${i}`).style.display = "none"; 
+        document.getElementById(`conv-kernel-size-${i}`).style.display = "none"; 
+        document.getElementById(`conv-filters-${i}`).style.display = "none"; 
+        document.getElementById(`conv-strides-${i}`).style.display = "none"; 
+        document.getElementById(`max-pool-size-${i}`).style.display = "none"; 
+        document.getElementById(`max-strides-${i}`).style.display = "none"; 
+      }
+
+      // update dimensions 
+      document.getElementById("model-error").innerHTML = "";
+      document.getElementById("dim-error").innerHTML = "";
+      // this.updateDimensions();
+      self.updateDimensions();
     }
   }
 }
