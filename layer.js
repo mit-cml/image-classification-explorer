@@ -12,6 +12,7 @@ function isInt(n) {
   return n % 1 == 0;
 }
 
+
 // TODO: create Layer subclass for first layer (different add method)
 // TODO: create Layer subclass for final layer 
 
@@ -32,7 +33,6 @@ export class LayerNode {
       this.id_val = Number(i);
     }
     
-
     this.previous = null; 
     this.next = null; 
 
@@ -46,6 +46,8 @@ export class LayerNode {
 
     this.inputDims = null; 
     this.outputDims = null; 
+
+    // this.removeButton = null;
 
     // call function to create layer/parameter input(s) and associated div elements  
     this.createLayer();
@@ -91,12 +93,13 @@ export class LayerNode {
     
     inputWrapper.appendChild(input);
     
-    if (!this.isFirst || !this.isFinal) {
-      const removeButton = document.createElement('button');
+    let removeButton;
+    if (!this.isFirst && !this.isFinal) {
+      removeButton = document.createElement('button');
       removeButton.innerHTML = 'Remove Layer';
       removeButton.onclick = () => { 
         // TODO: remove from linkedLayerList ? 
-        modelWrapper.removeChild(inputWrapper)
+        modelWrapper.removeChild(inputWrapper);
       }
     }
   
@@ -105,13 +108,8 @@ export class LayerNode {
     this.addConv(inputWrapper, this.id);
     this.addMaxPool(inputWrapper, this.id);
     
-    // if (!this.isFirst || !this.isFinal) {
-    //   inputWrapper.appendChild(removeButton);
-    // }
-    try {
+    if (!this.isFirst && !this.isFinal) {
       inputWrapper.appendChild(removeButton);
-    } catch (e) {
-      console.log("could not append remove button!");
     }
 
     modelWrapper.appendChild(inputWrapper);
