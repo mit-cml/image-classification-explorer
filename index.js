@@ -52,8 +52,6 @@ let entireModel;
 
 let layerLinkedList;
 
-let dimList;
-
 let started; 
 
 const webcam = new Webcam(document.getElementById('webcam'));
@@ -139,7 +137,7 @@ ui.setRemoveLabelHandler(labelId => {
 // Methods for adding layers to the model 
 const addButton = document.getElementById("add");
 const modelWrapper = document.getElementById("inputWrapper-0");
-let i = 1;
+let i = 2;
 addButton.addEventListener("click", add);
 
 function add(){
@@ -619,13 +617,8 @@ async function init() {
   ui.init();
   modal.init();
 
-
-  // let layerLinkedList = new LayerList();
-
-  // console.log("Created empty layer list: " + layerLinkedList);
-
   console.log("CREATING FIRST LAYER!");
-  const firstLayer = new LayerNode("0", null, false);
+  const firstLayer = new LayerNode("0", null, false, "conv");
   console.log("CREATING LAST LAYER!");
   const lastLayer = new LayerNode("final", null, false);
 
@@ -637,12 +630,19 @@ async function init() {
   firstLayer.layerList = layerLinkedList;
   lastLayer.layerList = layerLinkedList;
 
-  const fcnLayer = new LayerNode("1", layerLinkedList, false);
-  layerLinkedList.addLayer(fcnLayer);
+  const flattenLayer = new LayerNode("1", layerLinkedList, false, "flat");
+  const fcLayer = new LayerNode("2", layerLinkedList, false, "fc");
+  layerLinkedList.addLayer(flattenLayer, false);
+  layerLinkedList.addLayer(fcLayer, false);
 
-  // now set layer dimensions 
-  firstLayer.outputDims = fcnLayer.inputDims = [3,3,5];
-  fcnLayer.outputDims = lastLayer.inputDims = [45];
+  // TODO: do this more elegantly 
+  // adjust display for flat layer 
+  document.getElementById(`fcn-units-${flattenLayer.id}`).style.display = "none"; 
+
+  // now set layer dimensions & update display 
+  firstLayer.outputDims = flattenLayer.inputDims = [3,3,5];
+  flattenLayer.outputDims = fcLayer.inputDims = [45];
+  fcLayer.outputDims = lastLayer.inputDims = [100];
 
   layerLinkedList.updateDimensionDisplay(firstLayer);
 }
