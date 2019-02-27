@@ -58,7 +58,7 @@ const webcam = new Webcam(document.getElementById('webcam'));
 
 // Model Information 
 const modelInfo = {"0": {"name": "mobilenet", "lastLayer": "conv_pw_13_relu", "url": "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json"},
-                    "1": {"name": "squeezenet", "lastLayer": "max_pooling2d_1", "url": "http://127.0.0.1:8080/model.json"}}
+                    "1": {"name": "squeezenet", "lastLayer": "max_pooling2d_1", "url": "http://127.0.0.1:8081/model.json"}}
 // run http-server . --cors -o in squeezenet folder 
 let currentModel = modelInfo["0"]; // default current model to MobileNet 
 
@@ -92,11 +92,30 @@ let layerInfo =   {"conv-0": tf.layers.conv2d({
 // Optimizer Function Dictionary 
 const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
 
+// ////////
+// function loadTransferModelFunc() { 
+//   const mobilenet = tf.loadModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+//   const layer = mobilenet.getLayer('conv_pw_13_relu');
+//   console.log("INSIDE NON-ASYNC LOAD TRANSFER MODEL");
+//   console.log(mobilenet);
+//   console.log(layer);
+//   return tf.model({inputs: mobilenet.inputs, outputs: layer.output});
+// }
+
 // Loads transfer model and returns a model that returns the internal activation 
 // we'll use as input to our classifier model. 
 async function loadTransferModel() {
-  const transferModel = await tf.loadModel(currentModel["url"]);
-  const layer = transferModel.getLayer(currentModel["lastLayer"]);
+  console.log("INSIDE ASYNC LOAD TRANSFER MODEL");
+  // const transferModel = await tf.loadModel(currentModel["url"]);
+  const transferModel = await tf.loadModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+  console.log("Model");
+  console.log(transferModel);
+  // const layer = transferModel.getLayer(currentModel["lastLayer"]);
+  const layer = transferModel.getLayer('conv_pw_13_relu');
+  console.log("inside loadTransferModel: model, inputs, output ");
+  console.log(transferModel);
+  console.log(transferModel.inputs);
+  console.log(layer.output);
   return tf.model({inputs: transferModel.inputs, outputs: layer.output});
 }
 
@@ -615,16 +634,29 @@ modelUpload.addEventListener('change', async () => {
 // Initialize the application
 
 async function init() {
+
+  // console.log("loading transfer model INSIDE INIT...");
+  // let tm = loadTransferModel();
+  // console.log(tm);
+  // console.log("successfully loaded");
+
   try {
     await webcam.setup();
   } catch (e) {
     document.getElementById('no-webcam').style.display = 'block';
   }
 
+
+
   console.log(await tf.io.listModels()); 
 
   ui.init();
   modal.init();
+
+  // console.log("loading transfer model INSIDE INIT...");
+  // let tm = loadTransferModel();
+  // console.log(tm);
+  // console.log("successfully loaded");
 
   console.log("CREATING FIRST LAYER!");
   const firstLayer = new LayerNode("0", null, false, "conv");
@@ -654,6 +686,11 @@ async function init() {
   fcLayer.outputDims = lastLayer.inputDims = [100];
 
   layerLinkedList.updateDimensionDisplay(firstLayer);
+
+  // console.log("loading transfer model AFTER LOADING DEFAULT MODEL...");
+  // let tm2 = loadTransferModel();
+  // console.log(tm2);
+  // console.log("successfully loaded");
 }
 
 init();

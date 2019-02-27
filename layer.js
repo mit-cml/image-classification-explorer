@@ -157,10 +157,6 @@ export class LayerNode {
     let self = this; 
     let id_ref = self.id;
     input.onchange = self.layerSelectCheck(id_ref);
-
-    // if (!this.isFirst && updateDims) {
-    //   this.layerList.updateDimensions(this);
-    // }
   }
 
   // Methods for adding user input for layer parameters 
