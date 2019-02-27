@@ -414,8 +414,8 @@ export class LayerList {
    * @param {LayerNode} remove The layer to remove 
    */
   removeLayer(remove) {
-    oldPrev = remove.previous; 
-    oldNext = remove.next; 
+    let oldPrev = remove.previous; 
+    let oldNext = remove.next; 
 
     oldPrev.next = oldNext;
     oldNext.previous = oldPrev;
@@ -433,7 +433,7 @@ export class LayerList {
    * @param {LayerNode} add The layer to add 
    */
   addLayer(add) {
-    tailPrev = this.tail.previous; 
+    let tailPrev = this.tail.previous; 
 
     add.next = this.tail;
     add.previous = tailPrev; 
