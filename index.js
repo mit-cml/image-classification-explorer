@@ -169,11 +169,15 @@ async function train() {
   let currentModelIdx = document.getElementById("choose-model-dropdown").value;
   console.log(currentModelIdx);
   currentModel = modelInfo[currentModelIdx]; // dictionary obj of model info 
+
+  console.log("loading transfer model..");
   transferModel = await loadTransferModel(); 
+  console.log("loaded transfer model!");
 
   // gets rid of old tensors 
   trainingDataset.removeExamples();
 
+  console.log("processing images...");
   // loop over trainingImgDict and testingImgDict and process 
   for (let label in trainingImgDict) {
     for (let img in trainingImgDict[label]) {
@@ -182,6 +186,7 @@ async function train() {
       trainingImgDict[label][img] = tf.keep(img_copy); 
     }
   }
+  console.log("processed images!");
 
   // Creates a model based on layer inputs. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
@@ -194,11 +199,15 @@ async function train() {
   // get all select id's inside model-editor 
   let modelLayers = document.querySelectorAll("#model-editor select");
 
+  console.log("selected layers: ");
+  console.log(modelLayers);
+
   model = tf.sequential();
 
   for (let i = 0; i < modelLayers.length; i++) {
     try {
       let layerValue = document.getElementById(modelLayers[i].id).value;
+      console.log("Layer " + i + ": " + layerValue);
       let layerCopy = cloneDeep(layerInfo[layerValue]);
 
       console.log("Layer!");

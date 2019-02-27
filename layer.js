@@ -158,130 +158,10 @@ export class LayerNode {
     let id_ref = self.id;
     input.onchange = self.layerSelectCheck(id_ref);
 
-    if (!this.isFirst && updateDims) {
-      this.layerList.updateDimensions(this);
-    }
+    // if (!this.isFirst && updateDims) {
+    //   this.layerList.updateDimensions(this);
+    // }
   }
-
-  // updateDimensions(){
-  //   // get all select id's inside model-editor 
-  //   let modelLayers = document.querySelectorAll("#model-editor select");
-
-  //   console.log("All of the model layers: " + modelLayers);
-  //   let dimList = [[7,7,256]]; 
-
-  //   for (let j = 0; j < modelLayers.length; j++) {
-  //     let layerValue = document.getElementById(modelLayers[j].id).value;
-  //     console.log("Model layer: "+ j + ", " + layerValue);
-
-  //     let idx;
-  //     if (this.isFinal) {
-  //       idx = "final";
-  //     } else {
-  //       idx = this.id_val;
-  //     }
-
-  //     // get layer parameters and set parameters 
-  //     if (layerValue == "fc") {
-  //       // if input is not a 1D tensor, raise error 
-  //       if (dimList[dimList.length-1].length != 1) {
-  //         document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
-  //         // throw new Error("Invalid Model! Must have flatten before fully connected.");
-  //         console.error("Invalid Model! Must have flatten before fully connected.");
-  //       }
-
-  //       let fcnUnits = Number(document.getElementById(`fcn-units-${idx}`).value);
-        
-  //       // compute and push output dimensions 
-  //       let nextDims = [];
-  //       nextDims.push(fcnUnits);
-  //       dimList.push(nextDims);
-  //     } else if (layerValue == "maxpool") {
-  //       // if input is not a 3D image, raise error 
-  //       if (dimList[dimList.length-1].length != 3) {
-  //         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have max pool after flatten.";
-  //         // throw new Error("Invalid Model! Cannot have max pool after flatten.");
-  //         console.error("Invalid Model! Cannot have max pool after flatten.");
-  //       }
-  //       let maxPoolSize = Number(document.getElementById(`max-pool-size-${idx}`).value);
-  //       let maxStrides = Number(document.getElementById(`max-strides-${idx}`).value);
-
-  //       // compute and push output dimensions 
-  //       let lastDims = dimList[dimList.length-1];
-  //       let nextDims = [];
-  //       nextDims.push((lastDims[0]-maxPoolSize)/maxStrides+1);
-  //       nextDims.push((lastDims[1]-maxPoolSize)/maxStrides+1);
-  //       nextDims.push(lastDims[2]);
-  //       dimList.push(nextDims);
-  //     } else if (layerValue == "conv" || layerValue == "conv-0") {
-  //       // if input is not a 3D image, raise error 
-  //       if (dimList[dimList.length-1].length != 3) {
-  //         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have convolution after flatten.";
-  //         // throw new Error("Invalid Model! Cannot have convolution after flatten.");
-  //         console.error("Invalid Model! Cannot have convolution after flatten.");
-  //       }
-  //       let convKernelSize = Number(document.getElementById(`conv-kernel-size-${idx}`).value);
-  //       let convFilters = Number(document.getElementById(`conv-filters-${idx}`).value); 
-  //       let convStrides = Number(document.getElementById(`conv-strides-${idx}`).value);
-        
-  //       // compute and push output dimensions 
-  //       let lastDims = dimList[dimList.length-1];
-  //       let nextDims = [];
-  //       nextDims.push((lastDims[0]-convKernelSize)/convStrides+1);
-  //       nextDims.push((lastDims[1]-convKernelSize)/convStrides+1);
-  //       nextDims.push(convFilters);
-  //       dimList.push(nextDims);
-  //     } else if (layerValue == "fc-final") {
-  //       // if input is not a 1D tensor, raise error 
-  //       if (dimList[dimList.length-1].length != 1) {
-  //         document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
-  //         // throw new Error("Invalid Model! Must have flatten before fully connected.");
-  //         console.error("Invalid Model! Must have flatten before fully connected.");
-  //       }
-  //     } else {
-  //       // if input is not a 3D tensor, raise error 
-  //       if (dimList[dimList.length-1].length != 3) {
-  //         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have multiple flatten layers.";
-  //         // throw new Error("Invalid Model! Cannot have multiple flatten layers.");
-  //         console.error("Invalid Model! Cannot have multiple flatten layers.");
-  //       }
-
-  //       // compute and push output dimensions 
-  //       let lastDims = dimList[dimList.length-1];
-  //       let nextDims = [];
-  //       nextDims.push(lastDims[0]*lastDims[1]*lastDims[2]);
-  //       dimList.push(nextDims);
-  //     }
-
-  //     // if (i != modelLayers.length-1) {
-  //     if (!this.isFinal) {
-  //       document.getElementById(`dimensions-${idx}`).innerHTML = dimList[dimList.length-2] + " --> " + dimList[dimList.length-1];
-  //     } else {
-  //       document.getElementById("dimensions-final").innerHTML = dimList[dimList.length-1] + " --> " + ["Number of Labels"];
-  //     }
-      
-  //     // if it's not the final layer and we're on the matching layer, update the input and output dimensions correspondingly 
-  //     if (!this.isFinal && idx == Number(this.id)) {
-  //       this.inputDims = dimList[dimList.length-2];
-  //       this.outputDims = dimList[dimList.length-1];
-  //     }
-  //   }; 
-
-  //   dimList.push(["Number of Labels"]);
-
-  //   // check for invalid dimensions 
-  //   for (let k=0; k<dimList.length-1; k++) {
-  //     let dim = dimList[k];
-  //     for (let j=0; j<dim.length; j++) {
-  //       let d = dim[j];
-  //       if (d < 0 || !isInt(d)){
-  //         document.getElementById("dim-error").innerHTML = "Invalid Dimensions! Fix layer parameters.";
-  //         // throw new Error("Invalid Dimensions! Fix layer parameters.");
-  //         console.error("Invalid Dimensions! Fix layer parameters.");
-  //       }
-  //     }
-  //   }
-  // }
 
   // Methods for adding user input for layer parameters 
   addFc(inputWrapper, i) {
@@ -496,6 +376,9 @@ export class LayerList {
     let layerValue = document.getElementById(`select-${currentLayer.id}`).value; 
     let dimension;
 
+    console.log("Current Layer: " + layerValue);
+    console.log("Previous Dimension: " + previousDimension);
+
     // get layer parameters and set parameters 
     if (layerValue == "fc") {
       // if input is not a 1D tensor, raise error 
@@ -574,6 +457,8 @@ export class LayerList {
    * @param {LayerNode} startingLayer The layer to start updating from. 
    */
   updateDimensions(startingLayer) {
+
+    console.log("Updating Dimensions.. Previous Layer: " + previousLayer);
     let previousLayer = startingLayer.previous;
     let previousDimension; 
     if (previousLayer == null) {
