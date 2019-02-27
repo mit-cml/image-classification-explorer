@@ -146,7 +146,7 @@ function add(){
   i = i+1; 
 
   // create new node 
-  let newLayer = new LayerNode(i);
+  let newLayer = new LayerNode(i, layerLinkedList);
 
   // add to linked layer list 
   layerLinkedList.addLayer(newLayer);
@@ -237,7 +237,8 @@ async function train() {
       document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
       document.getElementById("display-area").innerHTML = "00:00:00.000";
       clearInterval(started);
-      throw new Error('Unknown model error encountered! Please edit model.');
+      // throw new Error('Unknown model error encountered! Please edit model.');
+      console.error('Unknown model error encountered! Please edit model.');
     }
   }; 
 
@@ -306,7 +307,8 @@ async function train() {
     document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
     document.getElementById("display-area").innerHTML = "00:00:00.000";
     clearInterval(started);
-    throw new Error('Unknown model error encountered! Please edit model.');
+    // throw new Error('Unknown model error encountered! Please edit model.');
+    console.error('Unknown model error encountered! Please edit model.');
   }
 }
 
@@ -367,17 +369,20 @@ document.getElementById('train').addEventListener('click', async () => {
         // if we want to add a flatten layer and we have used one already 
         document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have multiple flatten layers.";
-        throw new Error('Invalid Model! Cannot have multiple flatten layers.');
+        // throw new Error('Invalid Model! Cannot have multiple flatten layers.');
+        console.error('Invalid Model! Cannot have multiple flatten layers.');
       } else if (layerValue.includes("maxpool")) {
         // if we want to add a max pool layer and we have used flatten already
         document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have max pool after flatten.";
-        throw new Error('Invalid Model! Cannot have max pool after flatten.');
+        // throw new Error('Invalid Model! Cannot have max pool after flatten.');
+        console.error('Invalid Model! Cannot have max pool after flatten.');
       } else if (layerValue.includes("conv")) {
         // if we want to add a convolution layer and we have used flatten already 
         document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have convolution after flatten.";
-        throw new Error('Invalid Model! Cannot have convolution after flatten.');
+        // throw new Error('Invalid Model! Cannot have convolution after flatten.');
+        console.error('Invalid Model! Cannot have convolution after flatten.');
       }
     } else {
       if (layerValue.includes("flat")) {
@@ -387,7 +392,8 @@ document.getElementById('train').addEventListener('click', async () => {
         // if we want to add a fully connected layer and we haven't used flatten yet 
         document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
         document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
-        throw new Error('Invalid Model! Must have flatten before fully connected.'); 
+        // throw new Error('Invalid Model! Must have flatten before fully connected.'); 
+        console.error('Invalid Model! Must have flatten before fully connected.'); 
       }
     }
   }; 
@@ -613,22 +619,23 @@ async function init() {
   ui.init();
   modal.init();
 
-  console.log("CREATING FIRST LAYER!");
-  const firstLayer = new LayerNode("0");
-  console.log("CREATING LAST LAYER!");
-  const lastLayer = new LayerNode("final");
 
+  // let layerLinkedList = new LayerList();
+
+  // console.log("Created empty layer list: " + layerLinkedList);
+
+  console.log("CREATING FIRST LAYER!");
+  const firstLayer = new LayerNode("0", null);
+  console.log("CREATING LAST LAYER!");
+  const lastLayer = new LayerNode("final", null);
+
+  // layerLinkedList.addHeadTail(firstLayer, lastLayer);
   layerLinkedList = new LayerList(firstLayer, lastLayer);
 
-  // let select0 = document.getElementById('select-0');
-  // let convKernelSize0 = document.getElementById('conv-kernel-size-0');
-  // let convFilters0 = document.getElementById('conv-filters-0');
-  // let convStrides0 = document.getElementById('conv-strides-0');
+  console.log("Created new instance of layer list: " + layerLinkedList);
 
-  // select0.onchange = layerSelectCheck(0);
-  // convKernelSize0.onchange = layerSelectCheck(0);
-  // convFilters0.onchange = layerSelectCheck(0);
-  // convStrides0.onchange = layerSelectCheck(0);
+  firstLayer.layerList = layerLinkedList;
+  lastLayer.layerList = layerLinkedList;
 }
 
 init();

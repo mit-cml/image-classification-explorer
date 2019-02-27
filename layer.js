@@ -1,9 +1,7 @@
 // TODO: 
-// store Layer instances sequentially in list 
+// DONE: store Layer instances sequentially in list 
   // must be updated upon: Add Layer, Remove Layer 
-    // delete 1 thing at idx: layerList.splice(idx,1);
-    // insert item at idx: layerList.splice(idx, 0, item);
-// checkValidModel function that checks model validity (both layers and parameters)
+// checkValidModel function that checks model validity (both layers and parameters) 
   // call onchange/onclick all the time 
 // updateLayerDims function that computes and updates layer parameters starting at Layer 
 
@@ -12,26 +10,25 @@ function isInt(n) {
   return n % 1 == 0;
 }
 
-
-// TODO: create Layer subclass for first layer (different add method)
-// TODO: create Layer subclass for final layer 
-
 /**
  * A class that represents a layer node. 
  */
 export class LayerNode {
   /**
    * @param {String} i The layer id suffix (i.e. "0", "1", "2", ..., "final")
+   * @param {LayerList} linkedLayerList Reference to the linked layer list. 
    */
-  constructor(i) {
-    console.log("INSIDE LAYERNODE CONSTRUCTOR!!");
-    console.log(i == "final");
+  constructor(i, linkedLayerList) {
     this.id = i; 
     if (i=="final") {
       this.id_val = -1;
     } else{
       this.id_val = Number(i);
     }
+
+    this.layerList = linkedLayerList; 
+
+    console.log("inside constructor, layer list: " + linkedLayerList + this.layerList);
     
     this.previous = null; 
     this.next = null; 
@@ -39,13 +36,17 @@ export class LayerNode {
     this.isFirst = (i == "0");
     this.isFinal = (i == "final"); 
 
-    console.log("Creating Layer");
-    console.log(i);
-    console.log((i == "0"));
-    console.log((i == "final"));
-
-    this.inputDims = null; 
-    this.outputDims = null; 
+    if (i == "0") {
+      this.inputDims = [7, 7, 256];
+    } else {
+      this.inputDims = null; 
+    }
+    
+    if (i == "final") {
+      this.outputDims = "Number of Labels"; 
+    } else {
+      this.outputDims = null; 
+    }
 
     // this.removeButton = null;
 
@@ -97,8 +98,13 @@ export class LayerNode {
     if (!this.isFirst && !this.isFinal) {
       removeButton = document.createElement('button');
       removeButton.innerHTML = 'Remove Layer';
+      let that = this;
       removeButton.onclick = () => { 
         // TODO: remove from linkedLayerList ? 
+        console.log("Before removing: ");
+        console.log(that.layerList);
+        that.layerList.removeLayer(that); // testing 
+        console.log("After removing: " + that.layerList);
         modelWrapper.removeChild(inputWrapper);
       }
     }
@@ -131,12 +137,7 @@ export class LayerNode {
     let self = this; 
     let id_ref = self.id;
     input.onchange = self.layerSelectCheck(id_ref);
-    // input.onchange = () => {
-    //   console.log("Entered onchange");
-    //   self.layerSelectCheck(id_ref)();
-    // }; 
 
-    // this.updateDimensions();
     if (!this.isFirst) {
       this.updateDimensions();
     }
@@ -145,14 +146,14 @@ export class LayerNode {
   updateDimensions(){
     // get all select id's inside model-editor 
     let modelLayers = document.querySelectorAll("#model-editor select");
+
+    console.log("All of the model layers: " + modelLayers);
     let dimList = [[7,7,256]]; 
 
     for (let j = 0; j < modelLayers.length; j++) {
       let layerValue = document.getElementById(modelLayers[j].id).value;
+      console.log("Model layer: "+ j + ", " + layerValue);
 
-      console.log("Layer!");
-      console.log(layerValue);
-      
       let idx;
       if (this.isFinal) {
         idx = "final";
@@ -165,11 +166,10 @@ export class LayerNode {
         // if input is not a 1D tensor, raise error 
         if (dimList[dimList.length-1].length != 1) {
           document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
-          throw new Error("Invalid Model! Must have flatten before fully connected.");
+          // throw new Error("Invalid Model! Must have flatten before fully connected.");
+          console.error("Invalid Model! Must have flatten before fully connected.");
         }
 
-        console.log("ERROR HERE...");
-        console.log(idx); 
         let fcnUnits = Number(document.getElementById(`fcn-units-${idx}`).value);
         
         // compute and push output dimensions 
@@ -180,7 +180,8 @@ export class LayerNode {
         // if input is not a 3D image, raise error 
         if (dimList[dimList.length-1].length != 3) {
           document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have max pool after flatten.";
-          throw new Error("Invalid Model! Cannot have max pool after flatten.");
+          // throw new Error("Invalid Model! Cannot have max pool after flatten.");
+          console.error("Invalid Model! Cannot have max pool after flatten.");
         }
         let maxPoolSize = Number(document.getElementById(`max-pool-size-${idx}`).value);
         let maxStrides = Number(document.getElementById(`max-strides-${idx}`).value);
@@ -196,7 +197,8 @@ export class LayerNode {
         // if input is not a 3D image, raise error 
         if (dimList[dimList.length-1].length != 3) {
           document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have convolution after flatten.";
-          throw new Error("Invalid Model! Cannot have convolution after flatten.");
+          // throw new Error("Invalid Model! Cannot have convolution after flatten.");
+          console.error("Invalid Model! Cannot have convolution after flatten.");
         }
         let convKernelSize = Number(document.getElementById(`conv-kernel-size-${idx}`).value);
         let convFilters = Number(document.getElementById(`conv-filters-${idx}`).value); 
@@ -213,13 +215,15 @@ export class LayerNode {
         // if input is not a 1D tensor, raise error 
         if (dimList[dimList.length-1].length != 1) {
           document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
-          throw new Error("Invalid Model! Must have flatten before fully connected.");
+          // throw new Error("Invalid Model! Must have flatten before fully connected.");
+          console.error("Invalid Model! Must have flatten before fully connected.");
         }
       } else {
         // if input is not a 3D tensor, raise error 
         if (dimList[dimList.length-1].length != 3) {
           document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have multiple flatten layers.";
-          throw new Error("Invalid Model! Cannot have multiple flatten layers.");
+          // throw new Error("Invalid Model! Cannot have multiple flatten layers.");
+          console.error("Invalid Model! Cannot have multiple flatten layers.");
         }
 
         // compute and push output dimensions 
@@ -245,9 +249,6 @@ export class LayerNode {
 
     dimList.push(["Number of Labels"]);
 
-    console.log("DIMENSIONS LIST: ");
-    console.log(dimList);
-
     // check for invalid dimensions 
     for (let k=0; k<dimList.length-1; k++) {
       let dim = dimList[k];
@@ -255,7 +256,8 @@ export class LayerNode {
         let d = dim[j];
         if (d < 0 || !isInt(d)){
           document.getElementById("dim-error").innerHTML = "Invalid Dimensions! Fix layer parameters.";
-          throw new Error("Invalid Dimensions! Fix layer parameters.");
+          // throw new Error("Invalid Dimensions! Fix layer parameters.");
+          console.error("Invalid Dimensions! Fix layer parameters.");
         }
       }
     }
@@ -321,11 +323,9 @@ export class LayerNode {
     let self = this;
 
     return function() {
-      console.log("Select ID");
-      console.log(`select-${i}`);
+      console.log("checking if layerList is right.." + self.layerList); 
+
       let selectedLayer = document.getElementById(`select-${i}`).value;
-      console.log("Selected layer");
-      console.log(selectedLayer);
 
       if (selectedLayer == "fc") { 
         document.getElementById(`fcn-units-${i}`).style.display = "inline"; 
@@ -394,6 +394,21 @@ export class LayerList {
   }
 
   /**
+   * Adds head and tail in case they were never initialized when instantiated. 
+   * List must be empty. 
+   * 
+   * @param {LayerNode} head The first layer 
+   * @param {LayerNode} tail The last layer 
+   */
+  addHeadTail(head, tail) {
+    this.head = head; 
+    this.tail = tail; 
+
+    head.next = tail;
+    tail.previous = head; 
+  }
+
+  /**
    * Removes LayerNode from the doubly linked layer list 
    * 
    * @param {LayerNode} remove The layer to remove 
@@ -408,6 +423,8 @@ export class LayerList {
     // TODO: implement removal method that removes layer node entirely 
     remove.previous = remove; 
     remove.next = remove; 
+
+    // TODO: update layer parameters 
   }
 
   /**
@@ -423,5 +440,7 @@ export class LayerList {
 
     tailPrev.next = add; 
     this.tail.previous = add;
+
+    // TODO: update layer parameters 
   }
 }
