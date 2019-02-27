@@ -139,14 +139,14 @@ ui.setRemoveLabelHandler(labelId => {
 // Methods for adding layers to the model 
 const addButton = document.getElementById("add");
 const modelWrapper = document.getElementById("inputWrapper-0");
-let i = 0
+let i = 1;
 addButton.addEventListener("click", add);
 
 function add(){
   i = i+1; 
 
   // create new node 
-  let newLayer = new LayerNode(i, layerLinkedList);
+  let newLayer = new LayerNode(i, layerLinkedList, true);
 
   // add to linked layer list 
   layerLinkedList.addLayer(newLayer);
@@ -625,9 +625,9 @@ async function init() {
   // console.log("Created empty layer list: " + layerLinkedList);
 
   console.log("CREATING FIRST LAYER!");
-  const firstLayer = new LayerNode("0", null);
+  const firstLayer = new LayerNode("0", null, false);
   console.log("CREATING LAST LAYER!");
-  const lastLayer = new LayerNode("final", null);
+  const lastLayer = new LayerNode("final", null, false);
 
   // layerLinkedList.addHeadTail(firstLayer, lastLayer);
   layerLinkedList = new LayerList(firstLayer, lastLayer);
@@ -636,6 +636,15 @@ async function init() {
 
   firstLayer.layerList = layerLinkedList;
   lastLayer.layerList = layerLinkedList;
+
+  const fcnLayer = new LayerNode("1", layerLinkedList, false);
+  layerLinkedList.addLayer(fcnLayer);
+
+  // now set layer dimensions 
+  firstLayer.outputDims = fcnLayer.inputDims = [3,3,5];
+  fcnLayer.outputDims = lastLayer.inputDims = [45];
+
+  layerLinkedList.updateDimensionDisplay(firstLayer);
 }
 
 init();

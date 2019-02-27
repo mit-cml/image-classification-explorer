@@ -17,12 +17,13 @@ export class LayerNode {
   /**
    * @param {String} i The layer id suffix (i.e. "0", "1", "2", ..., "final")
    * @param {LayerList} linkedLayerList Reference to the linked layer list. 
+   * @param {Boolean} updateDims true if dimensions should be updated, false otherwise 
    */
-  constructor(i, linkedLayerList) {
+  constructor(i, linkedLayerList, updateDims) {
     this.id = i; 
     if (i=="final") {
       this.id_val = -1;
-    } else{
+    } else {
       this.id_val = Number(i);
     }
 
@@ -51,13 +52,15 @@ export class LayerNode {
     // this.removeButton = null;
 
     // call function to create layer/parameter input(s) and associated div elements  
-    this.createLayer();
+    this.createLayer(updateDims);
   }
 
   /**
    * Creates layer select input, layer parameter inputs, and associated div elements 
+   * 
+   * @param {Boolean} updateDims true if dimensions should be updated, false otherwise 
    */
-  createLayer() {
+  createLayer(updateDims) {
     let modelWrapper;
     if (this.isFinal) {
       modelWrapper = document.getElementById("model-pt2");
@@ -121,24 +124,34 @@ export class LayerNode {
     modelWrapper.appendChild(inputWrapper);
   
     // add span for layer input/output display
-    var layerDimsDisplay = document.createElement('span')
+    var layerDimsDisplay = document.createElement('span');
     layerDimsDisplay.id = `dimensions-${this.id}`;
     layerDimsDisplay.innerHTML = "[input] --> [output]";
     inputWrapper.appendChild(layerDimsDisplay);
     
     // display fully connected inputs only 
-    document.getElementById(`fcn-units-${this.id}`).style.display = "inline"; 
-    document.getElementById(`conv-kernel-size-${this.id}`).style.display = "none"; 
-    document.getElementById(`conv-filters-${this.id}`).style.display = "none"; 
-    document.getElementById(`conv-strides-${this.id}`).style.display = "none"; 
-    document.getElementById(`max-pool-size-${this.id}`).style.display = "none"; 
-    document.getElementById(`max-strides-${this.id}`).style.display = "none"; 
+    if (!this.isFirst) {
+      document.getElementById(`fcn-units-${this.id}`).style.display = "inline"; 
+      document.getElementById(`conv-kernel-size-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-filters-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-strides-${this.id}`).style.display = "none"; 
+      document.getElementById(`max-pool-size-${this.id}`).style.display = "none"; 
+      document.getElementById(`max-strides-${this.id}`).style.display = "none"; 
+    } else {
+      document.getElementById(`fcn-units-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-kernel-size-${this.id}`).style.display = "inline"; 
+      document.getElementById(`conv-filters-${this.id}`).style.display = "inline"; 
+      document.getElementById(`conv-strides-${this.id}`).style.display = "inline"; 
+      document.getElementById(`max-pool-size-${this.id}`).style.display = "none"; 
+      document.getElementById(`max-strides-${this.id}`).style.display = "none"; 
+    }
+
     
     let self = this; 
     let id_ref = self.id;
     input.onchange = self.layerSelectCheck(id_ref);
 
-    if (!this.isFirst) {
+    if (!this.isFirst && updateDims) {
       this.updateDimensions();
     }
   }
@@ -294,7 +307,8 @@ export class LayerNode {
     kernel_input.min = filter_input.min = stride_input.min = 1;
     kernel_input.max = filter_input.max = stride_input.max = 100;
     kernel_input.step = filter_input.step = stride_input.step = 1;
-    kernel_input.value = filter_input.value = stride_input.value = 5;
+    kernel_input.value = filter_input.value = 5; 
+    stride_input.value = 1;
     inputWrapper.appendChild(kernel_input);
     inputWrapper.appendChild(filter_input);
     inputWrapper.appendChild(stride_input);
@@ -442,5 +456,23 @@ export class LayerList {
     this.tail.previous = add;
 
     // TODO: update layer parameters 
+  }
+
+  /**
+   * Updates input/output dimension display starting at startingLayer. 
+   * Uses input and output dimension attributes for each layer. 
+   * 
+   * @param {LayerNode} startingLayer The layer to start updating from. 
+   */
+  updateDimensionDisplay(startingLayer) {
+    let currentLayer = startingLayer;
+
+    // while we haven't reached the end, update display 
+    while (currentLayer != null) {
+      let layerDimsDisplay = document.getElementById(`dimensions-${currentLayer.id}`);
+      layerDimsDisplay.innerHTML = currentLayer.inputDims + " --> " + currentLayer.outputDims;
+
+      currentLayer = currentLayer.next;
+    }
   }
 }
