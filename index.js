@@ -27,7 +27,7 @@ import * as saliency from './saliency';
 import {Webcam} from './webcam';
 import cloneDeep from 'lodash/cloneDeep';
 import {LayerList, LayerNode} from './layer';
-import { Layer } from '@tensorflow/tfjs-layers/dist/exports_layers';
+// import { Layer } from '@tensorflow/tfjs-layers/dist/exports_layers';
 
 const SALIENCY_NUM_SAMPLES = 15;
 const SALIENCY_NOISE_STD = 0.1;
@@ -108,14 +108,14 @@ async function loadTransferModel() {
   console.log("INSIDE ASYNC LOAD TRANSFER MODEL");
   // const transferModel = await tf.loadModel(currentModel["url"]);
   const transferModel = await tf.loadModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
-  console.log("Model");
+  console.log("Transfer Model: " + transferModel);
+  console.log(transferModel[0]);
   console.log(transferModel);
   // const layer = transferModel.getLayer(currentModel["lastLayer"]);
   const layer = transferModel.getLayer('conv_pw_13_relu');
-  console.log("inside loadTransferModel: model, inputs, output ");
-  console.log(transferModel);
-  console.log(transferModel.inputs);
-  console.log(layer.output);
+  console.log("Layer: " + layer);
+  console.log(layer[0]);
+  console.log(layer);
   return tf.model({inputs: transferModel.inputs, outputs: layer.output});
 }
 
@@ -217,6 +217,9 @@ async function train() {
 
   // get all select id's inside model-editor 
   let modelLayers = document.querySelectorAll("#model-editor select");
+  // let modelLayers = document.querySelectorAll("#model-pt1 select");
+  // let modelLayers2 = document.querySelectorAll("#model-pt2 select");
+  // modelLayers.push.apply(modelLayers, modelLayers2);
 
   console.log("selected layers: ");
   console.log(modelLayers);
@@ -228,6 +231,9 @@ async function train() {
       let layerValue = document.getElementById(modelLayers[i].id).value;
       console.log("Layer " + i + ": " + layerValue);
       let layerCopy = cloneDeep(layerInfo[layerValue]);
+
+      console.log("Layer!!!");
+      console.log(layerCopy);
 
       console.log("Layer!");
       console.log(layerValue);
@@ -256,8 +262,10 @@ async function train() {
       } else {
         console.log("flatten or final layer..");
       }
-
+      console.log("LAYER COPY");
+      console.log(layerCopy);
       model.add(layerCopy);
+      console.log("ADDED LAYER!");
     } catch (e) {
       // print error message, stop & reset timer 
       document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
@@ -268,7 +276,11 @@ async function train() {
     }
   }; 
 
+  // //adding final layer 
+  // model.add(layerInfo["fc-final"]);
+
   console.log("Model summary");
+  console.log(model);
   console.log(model.summary());
 
   // We use categoricalCrossentropy which is the loss function we use for
@@ -635,34 +647,23 @@ modelUpload.addEventListener('change', async () => {
 
 async function init() {
 
-  // console.log("loading transfer model INSIDE INIT...");
-  // let tm = loadTransferModel();
-  // console.log(tm);
-  // console.log("successfully loaded");
-
   try {
     await webcam.setup();
   } catch (e) {
     document.getElementById('no-webcam').style.display = 'block';
   }
 
-
-
   console.log(await tf.io.listModels()); 
 
   ui.init();
   modal.init();
 
-  // console.log("loading transfer model INSIDE INIT...");
-  // let tm = loadTransferModel();
-  // console.log(tm);
-  // console.log("successfully loaded");
-
   console.log("CREATING FIRST LAYER!");
-  const firstLayer = new LayerNode("0", null, false, "conv");
+  const firstLayer = new LayerNode("0", null, false, "conv-0");
   console.log("CREATING LAST LAYER!");
-  const lastLayer = new LayerNode("final", null, false);
+  const lastLayer = new LayerNode("final", null, false, "fc-final");
 
+  console.log("Creating Layer List");
   // layerLinkedList.addHeadTail(firstLayer, lastLayer);
   layerLinkedList = new LayerList(firstLayer, lastLayer);
 
@@ -686,11 +687,6 @@ async function init() {
   fcLayer.outputDims = lastLayer.inputDims = [100];
 
   layerLinkedList.updateDimensionDisplay(firstLayer);
-
-  // console.log("loading transfer model AFTER LOADING DEFAULT MODEL...");
-  // let tm2 = loadTransferModel();
-  // console.log(tm2);
-  // console.log("successfully loaded");
 }
 
 init();

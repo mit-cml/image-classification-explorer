@@ -77,10 +77,10 @@ export class LayerNode {
     let dropdown_values;
     if (this.isFirst) {
       dropdown_text = ["Convolution", "Flatten"];
-      dropdown_values = ["conv", "flat"];
+      dropdown_values = ["conv-0", "flat-0"];
     } else if (this.isFinal) {
       dropdown_text = ["Fully Connected"];
-      dropdown_values = ["fc"];
+      dropdown_values = ["fc-final"];
     } else {
       dropdown_text = ["Fully Connected", "Convolution", "Max Pool", "Flatten"];
       dropdown_values = ["fc", "conv", "maxpool", "flat"];
@@ -98,7 +98,7 @@ export class LayerNode {
     }
 
     // initialize to default value 
-    if (layerType == "fc" | layerType == "conv" | layerType == "maxpool" | layerType == "flat") {
+    if (layerType == "fc" | layerType == "conv" | layerType == "maxpool" | layerType == "flat" | layerType == "conv-0" | layerType == "flat-0" | layerType == "fc-final") {
       input.value = layerType;
     } 
     
