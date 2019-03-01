@@ -92,30 +92,12 @@ let layerInfo =   {"conv-0": tf.layers.conv2d({
 // Optimizer Function Dictionary 
 const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
 
-// ////////
-// function loadTransferModelFunc() { 
-//   const mobilenet = tf.loadModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
-//   const layer = mobilenet.getLayer('conv_pw_13_relu');
-//   console.log("INSIDE NON-ASYNC LOAD TRANSFER MODEL");
-//   console.log(mobilenet);
-//   console.log(layer);
-//   return tf.model({inputs: mobilenet.inputs, outputs: layer.output});
-// }
-
 // Loads transfer model and returns a model that returns the internal activation 
 // we'll use as input to our classifier model. 
 async function loadTransferModel() {
-  console.log("INSIDE ASYNC LOAD TRANSFER MODEL");
-  // const transferModel = await tf.loadModel(currentModel["url"]);
-  const transferModel = await tf.loadModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
-  console.log("Transfer Model: " + transferModel);
-  console.log(transferModel[0]);
-  console.log(transferModel);
-  // const layer = transferModel.getLayer(currentModel["lastLayer"]);
-  const layer = transferModel.getLayer('conv_pw_13_relu');
-  console.log("Layer: " + layer);
-  console.log(layer[0]);
-  console.log(layer);
+  const transferModel = await tf.loadModel(currentModel["url"]);
+  const layer = transferModel.getLayer(currentModel["lastLayer"]);
+
   return tf.model({inputs: transferModel.inputs, outputs: layer.output});
 }
 
@@ -186,17 +168,13 @@ modal.setGetSaliencyHandler(async function(img) {
 async function train() {
   // look at input from dropdown menu 
   let currentModelIdx = document.getElementById("choose-model-dropdown").value;
-  console.log(currentModelIdx);
   currentModel = modelInfo[currentModelIdx]; // dictionary obj of model info 
 
-  console.log("loading transfer model..");
   transferModel = await loadTransferModel(); 
-  console.log("loaded transfer model!");
 
   // gets rid of old tensors 
   trainingDataset.removeExamples();
 
-  console.log("processing images...");
   // loop over trainingImgDict and testingImgDict and process 
   for (let label in trainingImgDict) {
     for (let img in trainingImgDict[label]) {
@@ -205,7 +183,6 @@ async function train() {
       trainingImgDict[label][img] = tf.keep(img_copy); 
     }
   }
-  console.log("processed images!");
 
   // Creates a model based on layer inputs. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
@@ -217,26 +194,13 @@ async function train() {
 
   // get all select id's inside model-editor 
   let modelLayers = document.querySelectorAll("#model-editor select");
-  // let modelLayers = document.querySelectorAll("#model-pt1 select");
-  // let modelLayers2 = document.querySelectorAll("#model-pt2 select");
-  // modelLayers.push.apply(modelLayers, modelLayers2);
-
-  console.log("selected layers: ");
-  console.log(modelLayers);
 
   model = tf.sequential();
 
   for (let i = 0; i < modelLayers.length; i++) {
     try {
       let layerValue = document.getElementById(modelLayers[i].id).value;
-      console.log("Layer " + i + ": " + layerValue);
       let layerCopy = cloneDeep(layerInfo[layerValue]);
-
-      console.log("Layer!!!");
-      console.log(layerCopy);
-
-      console.log("Layer!");
-      console.log(layerValue);
       
       let idx = Number(modelLayers[i].id.substr(-1));
 
@@ -244,13 +208,11 @@ async function train() {
       if (layerValue == "fc") {
         let fcnUnits = Number(document.getElementById(`fcn-units-${idx}`).value);
         layerCopy.units = fcnUnits;
-        console.log("Successfully set fcn units!!");
       } else if (layerValue == "maxpool") {
         let maxPoolSize = Number(document.getElementById(`max-pool-size-${idx}`).value);
         let maxStrides = Number(document.getElementById(`max-strides-${idx}`).value);
         layerCopy.poolSize = [maxPoolSize, maxPoolSize];
         layerCopy.strides = [maxStrides, maxStrides];
-        console.log("Successfully set max pool params!!");
       } else if (layerValue == "conv" || layerValue == "conv-0") {
         let convKernelSize = Number(document.getElementById(`conv-kernel-size-${idx}`).value);
         let convFilters = Number(document.getElementById(`conv-filters-${idx}`).value); 
@@ -258,29 +220,19 @@ async function train() {
         layerCopy.kernelSize = [convKernelSize, convKernelSize];
         layerCopy.filters = convFilters;
         layerCopy.strides = [convStrides, convStrides];
-        console.log("Successfully set convolution params!!");
-      } else {
-        console.log("flatten or final layer..");
-      }
-      console.log("LAYER COPY");
-      console.log(layerCopy);
+      } 
       model.add(layerCopy);
-      console.log("ADDED LAYER!");
     } catch (e) {
       // print error message, stop & reset timer 
       document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
       document.getElementById("display-area").innerHTML = "00:00:00.000";
       clearInterval(started);
-      // throw new Error('Unknown model error encountered! Please edit model.');
+      
       console.error('Unknown model error encountered! Please edit model.');
     }
   }; 
 
-  // //adding final layer 
-  // model.add(layerInfo["fc-final"]);
-
-  console.log("Model summary");
-  console.log(model);
+  console.log("Model Summary:");
   console.log(model.summary());
 
   // We use categoricalCrossentropy which is the loss function we use for
@@ -345,7 +297,7 @@ async function train() {
     document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
     document.getElementById("display-area").innerHTML = "00:00:00.000";
     clearInterval(started);
-    // throw new Error('Unknown model error encountered! Please edit model.');
+    
     console.error('Unknown model error encountered! Please edit model.');
   }
 }
@@ -407,19 +359,19 @@ document.getElementById('train').addEventListener('click', async () => {
         // if we want to add a flatten layer and we have used one already 
         document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have multiple flatten layers.";
-        // throw new Error('Invalid Model! Cannot have multiple flatten layers.');
+        
         console.error('Invalid Model! Cannot have multiple flatten layers.');
       } else if (layerValue.includes("maxpool")) {
         // if we want to add a max pool layer and we have used flatten already
         document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have max pool after flatten.";
-        // throw new Error('Invalid Model! Cannot have max pool after flatten.');
+        
         console.error('Invalid Model! Cannot have max pool after flatten.');
       } else if (layerValue.includes("conv")) {
         // if we want to add a convolution layer and we have used flatten already 
         document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
         document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have convolution after flatten.";
-        // throw new Error('Invalid Model! Cannot have convolution after flatten.');
+        
         console.error('Invalid Model! Cannot have convolution after flatten.');
       }
     } else {
@@ -430,7 +382,7 @@ document.getElementById('train').addEventListener('click', async () => {
         // if we want to add a fully connected layer and we haven't used flatten yet 
         document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
         document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
-        // throw new Error('Invalid Model! Must have flatten before fully connected.'); 
+        
         console.error('Invalid Model! Must have flatten before fully connected.'); 
       }
     }
@@ -512,9 +464,6 @@ document.getElementById('predict').addEventListener('click', async () => {
 
   // gets rid of old tensors 
   testingDataset.removeExamples();
-
-  console.log("raw testing  images");
-  console.log(testingImgDict); 
 
   // loop over testingImgDict and testingImgDict and process 
   for (let label in testingImgDict) {
@@ -658,16 +607,10 @@ async function init() {
   ui.init();
   modal.init();
 
-  console.log("CREATING FIRST LAYER!");
   const firstLayer = new LayerNode("0", null, false, "conv-0");
-  console.log("CREATING LAST LAYER!");
   const lastLayer = new LayerNode("final", null, false, "fc-final");
 
-  console.log("Creating Layer List");
-  // layerLinkedList.addHeadTail(firstLayer, lastLayer);
   layerLinkedList = new LayerList(firstLayer, lastLayer);
-
-  console.log("Created new instance of layer list: " + layerLinkedList);
 
   firstLayer.layerList = layerLinkedList;
   lastLayer.layerList = layerLinkedList;

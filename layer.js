@@ -30,8 +30,6 @@ export class LayerNode {
 
     this.layerList = linkedLayerList; 
 
-    console.log("inside constructor, layer list: " + linkedLayerList + this.layerList);
-    
     this.previous = null; 
     this.next = null; 
 
@@ -110,11 +108,9 @@ export class LayerNode {
       removeButton.innerHTML = 'Remove Layer';
       let that = this;
       removeButton.onclick = () => { 
-        // TODO: remove from linkedLayerList ? 
-        console.log("Before removing: ");
-        console.log(that.layerList);
-        that.layerList.removeLayer(that); // testing 
-        console.log("After removing: " + that.layerList);
+        // removing from linked layer list 
+        that.layerList.removeLayer(that); 
+
         modelWrapper.removeChild(inputWrapper);
       }
     }
@@ -220,8 +216,6 @@ export class LayerNode {
     let self = this;
 
     return function() {
-      console.log("checking if layerList is right.." + self.layerList); 
-
       let selectedLayer = document.getElementById(`select-${i}`).value;
 
       if (selectedLayer == "fc") { 
@@ -372,9 +366,6 @@ export class LayerList {
     let layerValue = document.getElementById(`select-${currentLayer.id}`).value; 
     let dimension;
 
-    console.log("Current Layer: " + layerValue);
-    console.log("Previous Dimension: " + previousDimension);
-
     // get layer parameters and set parameters 
     if (layerValue == "fc") {
       // if input is not a 1D tensor, raise error 
@@ -453,8 +444,6 @@ export class LayerList {
    * @param {LayerNode} startingLayer The layer to start updating from. 
    */
   updateDimensions(startingLayer) {
-
-    console.log("Updating Dimensions.. Previous Layer: " + previousLayer);
     let previousLayer = startingLayer.previous;
     let previousDimension; 
     if (previousLayer == null) {
