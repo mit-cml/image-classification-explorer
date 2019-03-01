@@ -23,7 +23,6 @@ import {Dataset} from './dataset';
 import {Results} from './results';
 import * as ui from './ui';
 import * as modal from './modal';
-import * as saliency from './saliency';
 import {Webcam} from './webcam';
 
 // Later, maybe allow users to pick these values themselves?
@@ -31,10 +30,6 @@ const LEARNING_RATE = 0.0001;
 const BATCH_SIZE_FRACTION = 0.4;
 const EPOCHS = 20;
 const DENSE_UNITS = 100;
-
-const SALIENCY_NUM_SAMPLES = 15;
-const SALIENCY_NOISE_STD = 0.1;
-const SALIENCY_CLIP_PERCENT = 0.99;
 
 const fetch = require('node-fetch');
 
@@ -46,17 +41,14 @@ const testingDataset = new Dataset();
 var trainingImgDict = {};
 var testingImgDict = {}; 
 
-let trainingResults;
 let testingResults;
 
 let transferModel;
 let model;
-let entireModel;
 
 const webcam = new Webcam(document.getElementById('webcam'));
 
 // model state stuff
-// const modelNames = ["MobileNet", "SqueezeNet"];
 const modelInfo = {"0": {"name": "mobilenet", "lastLayer": "conv_pw_13_relu", "url": "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json"},
                     "1": {"name": "squeezenet", "lastLayer": "max_pooling2d_1", "url": "http://127.0.0.1:8080/model.json"}}
 let currentModel = modelInfo["0"]; // default current model to MobileNet 
@@ -66,6 +58,8 @@ let currentModel = modelInfo["0"]; // default current model to MobileNet
 async function loadTransferModel() {
   const transferModel = await tf.loadModel(currentModel["url"]);
   const layer = transferModel.getLayer(currentModel["lastLayer"]);
+  console.log(transferModel.inputs);
+  console.log(layer.output);
   return tf.model({inputs: transferModel.inputs, outputs: layer.output});
 }
 
@@ -105,15 +99,7 @@ ui.setRemoveLabelHandler(labelId => {
 
 // Methods to supply data to the results modal
 modal.setGetResultsHandler(() => {
-  if (ui.getCurrentTab() == "training") {
-    return trainingResults;
-  } else {
-    return testingResults;
-  }
-});
-
-modal.setGetSaliencyHandler(async function(img) {
-  return await saliency.smoothGrad(img, SALIENCY_NUM_SAMPLES, SALIENCY_NOISE_STD, entireModel, SALIENCY_CLIP_PERCENT);
+  return testingResults;
 });
 
 // Sets up and trains the classifier
@@ -226,21 +212,6 @@ async function train() {
       onBatchEnd: async (batch, logs) => {
         ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
       },
-
-      onTrainEnd: () => {
-        // Piece together the entire model
-
-        // TODO: add logic to determine what model we're using
-        // For mobilenet
-        let output = transferModel.getLayer(currentModel["lastLayer"]).output; 
-
-        for (let i = 0; i < model.layers.length; i++) {
-          const currentLayer = model.getLayer("filler", i);
-          output = currentLayer.apply(output);
-        }
-
-        entireModel = tf.model({inputs: transferModel.inputs, outputs: output});
-      }
     }
   });
 }
@@ -275,9 +246,6 @@ async function predict(dataset, modelLabelsJson) {
 }
 
 // Train and predict button functionality. Also updates the results' prev/next buttons.
-let resultsPrevButtonFunctionTraining = null;
-let resultsNextButtonFunctionTraining = null;
-
 document.getElementById('train').addEventListener('click', async () => {
   // First, we train the model on the training dataset
   ui.trainStatus('Training...');
@@ -320,36 +288,12 @@ document.getElementById('train').addEventListener('click', async () => {
   console.log("The training took: " + (endTime - startTime) + "ms.");
   console.log("The training took: " + (endTime - startTime)/1000 + "s.");
 
-  // Then, we use the model we trained to make predictions on the training dataset
-  trainingResults = await predict(trainingDataset, trainingDataset.getCurrentLabelNamesJson());
-
-  // Then, we update the results column of the interface with the results
-  ui.updateResult(trainingResults.getNextResult(), "training");
-
-  const resultsPrevButton = document.getElementById("results-image-button-prev-training");
-  const resultsNextButton = document.getElementById("results-image-button-next-training");
-
-  if (resultsPrevButtonFunctionTraining != null) {
-    resultsPrevButton.removeEventListener('click', resultsPrevButtonFunctionTraining);
-    resultsNextButton.removeEventListener('click', resultsNextButtonFunctionTraining);
-  }
-
-  // We store the methods to step through results so we can remove them from the buttons if
-  // we get new results
-  resultsPrevButtonFunctionTraining = () => {
-    ui.updateResult(trainingResults.getPreviousResult(), "training");
-  }
-
-  resultsNextButtonFunctionTraining = () => {
-    ui.updateResult(trainingResults.getNextResult(), "training");
-  }
-
-  resultsPrevButton.addEventListener('click', resultsPrevButtonFunctionTraining);
-  resultsNextButton.addEventListener('click', resultsNextButtonFunctionTraining);
+  // Move on to the next step in the ui
+  ui.switchSteps(2);
 });
 
-let resultsPrevButtonFunctionTesting = null;
-let resultsNextButtonFunctionTesting = null;
+let resultsPrevButtonFunction = null;
+let resultsNextButtonFunction = null;
 
 document.getElementById('predict').addEventListener('click', async () => {
 
@@ -371,28 +315,31 @@ document.getElementById('predict').addEventListener('click', async () => {
   testingResults = await predict(testingDataset, trainingDataset.getCurrentLabelNamesJson());
 
   // Then, we update the results column of the interface with the results
-  ui.updateResult(testingResults.getNextResult(), "testing");
+  ui.updateResult(testingResults.getNextResult());
 
-  const resultsPrevButton = document.getElementById("results-image-button-prev-testing");
-  const resultsNextButton = document.getElementById("results-image-button-next-testing");
+  const resultsPrevButton = document.getElementById("results-image-button-prev");
+  const resultsNextButton = document.getElementById("results-image-button-next");
 
-  if (resultsPrevButtonFunctionTesting != null) {
-    resultsPrevButton.removeEventListener('click', resultsPrevButtonFunctionTesting);
-    resultsNextButton.removeEventListener('click', resultsNextButtonFunctionTesting);
+  if (resultsPrevButtonFunction != null) {
+    resultsPrevButton.removeEventListener('click', resultsPrevButtonFunction);
+    resultsNextButton.removeEventListener('click', resultsNextButtonFunction);
   }
 
   // We store the methods to step through results so we can remove them from the buttons if
   // we get new results
-  resultsPrevButtonFunctionTesting = () => {
-    ui.updateResult(testingResults.getPreviousResult(), "testing");
+  resultsPrevButtonFunction = () => {
+    ui.updateResult(testingResults.getPreviousResult());
   }
 
-  resultsNextButtonFunctionTesting = () => {
-    ui.updateResult(testingResults.getNextResult(), "testing");
+  resultsNextButtonFunction = () => {
+    ui.updateResult(testingResults.getNextResult());
   }
 
-  resultsPrevButton.addEventListener('click', resultsPrevButtonFunctionTesting);
-  resultsNextButton.addEventListener('click', resultsNextButtonFunctionTesting);
+  resultsPrevButton.addEventListener('click', resultsPrevButtonFunction);
+  resultsNextButton.addEventListener('click', resultsNextButtonFunction);
+
+  // Move on to the next step in the ui
+  ui.switchSteps(3);
 });
 
 // Download button functionality
@@ -495,7 +442,7 @@ async function init() {
     document.getElementById('no-webcam').style.display = 'block';
   }
 
-  console.log(await tf.io.listModels()); 
+  console.log(await tf.io.listModels());
 
   ui.init();
   modal.init();

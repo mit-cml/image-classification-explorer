@@ -18,9 +18,6 @@ const ANALYSIS_TABLE_PREDICTIONS_POPUP_CLASS = "analysis-table-predictions-popup
 const ANALYSIS_TABLE_PREDICTION_CLASS = "analysis-table-prediction";
 
 // Html elements in the modal that we want to refer to
-const modal = document.getElementsByClassName("modal")[0];
-const modalContent = document.getElementsByClassName("modal-content")[0];
-const modalCloseButton = document.getElementsByClassName("modal-close-button")[0];
 const modalHeaderText = document.getElementsByClassName("modal-header-text")[0];
 const modalBody = document.getElementsByClassName("modal-body")[0];
 const modalFooter = document.getElementsByClassName("modal-footer")[0];
@@ -29,18 +26,13 @@ const modalCompareClearButton1 = document.getElementById("modal-compare-clear-bu
 const modalCompareClearButton2 = document.getElementById("modal-compare-clear-button-2");
 const modalCompareCanvas1 = document.getElementById("modal-compare-canvas-1");
 const modalCompareCanvas2 = document.getElementById("modal-compare-canvas-2");
-const modalCompareSaliency1 = document.getElementById("modal-compare-saliency-1");
-const modalCompareSaliency2 = document.getElementById("modal-compare-saliency-2");
 const modalCompareResults1 = document.getElementById("modal-compare-results-1");
 const modalCompareResults2 = document.getElementById("modal-compare-results-2");
 
-const modalSaliencyBox = document.getElementsByClassName("modal-compare-saliency-outer")[0];
-const modalSaliencyButton = document.getElementsByClassName("modal-compare-saliency-button")[0];
-
 // Variables for keeping the state of the image compare divs
 const modalCompareElements = {};
-modalCompareElements[1] = [modalCompareCanvas1, modalCompareSaliency1, modalCompareResults1];
-modalCompareElements[2] = [modalCompareCanvas2, modalCompareSaliency2, modalCompareResults2];
+modalCompareElements[1] = [modalCompareCanvas1, modalCompareResults1];
+modalCompareElements[2] = [modalCompareCanvas2, modalCompareResults2];
 
 let currentModalCompareElement = 1;
 let secondModalCompareElementOn = false;
@@ -62,20 +54,6 @@ export function init() {
 	toolTitleToContentFunction[ANALYSIS_ERROR_TITLE] = setModalContentError;
   toolTitleToContentFunction[ANALYSIS_CONFIDENCE_TITLE] = setModalContentConfidence;
 
-  modalCloseButton.addEventListener('click', () => {
-    modal.style.display = "none";
-    modalCompareClearButton1.click();
-    modalCompareClearButton2.click();
-  });
-
-  window.onclick = function(event) {
-    if (event.target == modal) {
-      modal.style.display = "none";
-      modalCompareClearButton1.click();
-      modalCompareClearButton2.click();
-    }
-  }
-
   // Adds functionality to the analysis tool buttons on the interface
   const analysisToolsButtons = document.getElementsByClassName('analysis-tools-button');
   for (let i = 0; i < analysisToolsButtons.length; i++) {
@@ -85,8 +63,6 @@ export function init() {
 
       setModalHeader(toolButtonTitle);
       toolTitleToContentFunction[toolButtonTitle](getResultsHandler());
-
-      modal.style.display = "block";
     });
   }
 
@@ -94,8 +70,6 @@ export function init() {
   modalCompareClearButton1.addEventListener("click", () => {
     clearCompareElements(1);
     currentModalCompareElement = 1;
-
-    modalSaliencyBox.style.display = 'none';
   });
 
   modalCompareClearButton2.addEventListener("click", () => {
@@ -104,17 +78,6 @@ export function init() {
     if (currentModalCompareElement > 1) {
       currentModalCompareElement = 2;
     }
-
-    modalSaliencyBox.style.display = 'none';
-  });
-
-  // Method for getting the saliencies of the images in the image compare divs
-  modalSaliencyButton.addEventListener("click", async () => {
-    const saliency1 = await getSaliencyHandler(currentCompareImgs[0]);
-    const saliency2 = await getSaliencyHandler(currentCompareImgs[1]);
-
-    await tf.toPixels(saliency1, modalCompareSaliency1);
-    await tf.toPixels(saliency2, modalCompareSaliency2);
   });
 }
 
@@ -122,11 +85,6 @@ export function init() {
 let getResultsHandler;
 export function setGetResultsHandler(handler) {
   getResultsHandler = handler;
-}
-
-let getSaliencyHandler;
-export function setGetSaliencyHandler(handler) {
-  getSaliencyHandler = handler;
 }
 
 // General helper methods for populating and cleaning up the modal
@@ -161,11 +119,7 @@ function clearCompareElements(i) {
   const canvasContext = currentCanvas.getContext('2d');
   canvasContext.clearRect(0, 0, currentCanvas.width, currentCanvas.height);
 
-  const currentSaliency = currentModalCompareElements[1];
-  const saliencyContext = currentSaliency.getContext('2d');
-  saliencyContext.clearRect(0, 0, currentSaliency.width, currentSaliency.height);
-
-  const currentResults = currentModalCompareElements[2];
+  const currentResults = currentModalCompareElements[1];
   while (currentResults.firstChild) {
     currentResults.removeChild(currentResults.firstChild);
   }
@@ -196,7 +150,7 @@ function setCompareEventListeners(cell, result) {
           resultPredictionSpan.setAttribute("class", ANALYSIS_TABLE_PREDICTION_CLASS + " incorrect");
         }
 
-        currentModalCompareElements[2].appendChild(resultPredictionSpan);
+        currentModalCompareElements[1].appendChild(resultPredictionSpan);
       }
     }
   });
@@ -223,11 +177,6 @@ function setCompareEventListeners(cell, result) {
     }
 
     currentModalCompareElement += toIncrement;
-
-    if (currentModalCompareElement > 2) {
-      modalSaliencyBox.style.display = '';
-    }
-
   });
 }
 
