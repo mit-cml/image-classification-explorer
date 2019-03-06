@@ -346,11 +346,13 @@ export class LayerList {
    * @param {Array} dimensions 
    */
   checkIfValidDimension(dimensions) {
-    for (let j=0; j<dimensions.length; j++) {
-      let d = dimensions[j];
-      if (d < 0 || !isInt(d)){
-        document.getElementById("dim-error").innerHTML = "Invalid Dimensions! Fix layer parameters.";
-        console.error("Invalid Dimensions! Fix layer parameters.");
+    if (dimensions != "Number of Labels") {
+      for (let j=0; j<dimensions.length; j++) {
+        let d = dimensions[j];
+        if (d < 0 || !isInt(d)){
+          document.getElementById("dim-error").innerHTML = "Invalid Dimensions! Fix layer parameters.";
+          console.error("Invalid Dimensions! Fix layer parameters.");
+        }
       }
     }
   }
@@ -414,6 +416,8 @@ export class LayerList {
       currentLayer.outputDims = dimension;
   
     } else if (layerValue == "fc-final") {
+      dimension = "Number of Labels";
+
       // if input is not a 1D tensor, raise error 
       if (previousDimension.length != 1) {
         document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
@@ -432,7 +436,7 @@ export class LayerList {
       currentLayer.outputDims = dimension;
   
     }
-    
+
     // check for invalid dimensions 
     this.checkIfValidDimension(dimension); 
     return dimension;

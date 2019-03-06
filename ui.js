@@ -20,12 +20,20 @@ export function init() {
   document.getElementById('explorer').style.display = '';
   document.getElementById('status').style.display = 'none';
 
-  trainingTabButton.click();
+  document.getElementById('label-add-example-training').addEventListener('click', function() {
+    addExample(trainingLabelCountSpan, trainingLabelId, "training");
+  });
+
+  document.getElementById('label-add-example-testing').addEventListener('click', function() {
+    addExample(testingLabelCountSpan, testingLabelId, "testing");
+  });
+
+  initProgressBar();
 }
 
 // Trackers for the current state of the explorer (training or testing)
-const tabNames = ["training", "testing", "model-editing"];
-let currentTab = tabNames[0];
+
+const datasetNames = ["training", "testing"];
 
 // Elements dealing with adding labels to the model
 const addLabelsInput = document.getElementById('label-name');
@@ -55,6 +63,14 @@ export function setRemoveLabelHandler(handler) {
 }
 
 // Handlers for adding/removing labels
+let trainingLabelCountSpan;
+let trainingLabelId;
+let trainingLabelBox = null;
+
+let testingLabelCountSpan;
+let testingLabelId;
+let testingLabelBox = null;
+
 export function addLabel(newLabelName) {
   const newLabelId = addLabelHandler(newLabelName);
 
@@ -68,8 +84,8 @@ export function addLabel(newLabelName) {
   const labelBoxTesting = document.createElement("div");
   const labelBoxes = [labelBoxTraining, labelBoxTesting];
 
-  for (let i = 0; i < (tabNames.length-1); i++) {
-    const datasetName = tabNames[i];
+  for (let i = 0; i < datasetNames.length; i++) {
+    const datasetName = datasetNames[i];
     const labelsOuter = document.getElementById("labels-container-" + datasetName);
 
     // Overarching div for a label
@@ -77,24 +93,31 @@ export function addLabel(newLabelName) {
     labelBox.setAttribute("class", "label-container");
     labelBox.setAttribute("id", datasetName + "-" + newLabelId);
 
-    // Div for counting number of examples for this label
-    const labelCount = document.createElement("div");
-    labelCount.setAttribute("class", "label-count-outer");
-    const labelCountText = document.createElement("span");
-    labelCountText.textContent = "Num examples: ";
+    // Div for placing the label name and number of examples
+    const labelDescriptionOuter = document.createElement("div");
+    labelDescriptionOuter.setAttribute("class", "label-description-outer");
+
+    const labelNameSpan = document.createElement("span");
+    labelNameSpan.textContent = newLabelName + " ";
+
+    const labelCountTextPrefix = document.createElement("span");
+    labelCountTextPrefix.textContent = " (";
+    labelCountTextPrefix.setAttribute("class", "label-count-text");
+
     const labelCountSpan = document.createElement("span");
     labelCountSpan.textContent = 0;
-    labelCount.appendChild(labelCountText);
-    labelCount.appendChild(labelCountSpan);
+    labelCountSpan.setAttribute("class", "label-count-text");
 
-    // Div for placing the label name
-    const labelName = document.createElement("div");
-    labelName.setAttribute("class", "label-name-outer");
-    const labelNameSpan = document.createElement("span");
-    labelNameSpan.textContent = "Label: " + newLabelName;
-    labelName.appendChild(labelNameSpan);
+    const labelCountTextSuffix = document.createElement("span");
+    labelCountTextSuffix.textContent = " examples)";
+    labelCountTextSuffix.setAttribute("class", "label-count-text");
 
-    // Div where we will put a thumbnail/previews of images users have added
+    labelDescriptionOuter.appendChild(labelNameSpan);
+    labelDescriptionOuter.appendChild(labelCountTextPrefix);
+    labelDescriptionOuter.appendChild(labelCountSpan);
+    labelDescriptionOuter.appendChild(labelCountTextSuffix);
+
+    // Div where we will put a preview thumbnail of images users have added
     const labelImagesOuter = document.createElement("div");
     labelImagesOuter.setAttribute("class", "label-images-outer");
     const labelImagesInner = document.createElement("div");
@@ -107,30 +130,46 @@ export function addLabel(newLabelName) {
     labelImagesInner.appendChild(labelImagesCanvas);
     labelImagesOuter.appendChild(labelImagesInner);
 
-    // Button for adding an example to this label
-    const labelAddExample = document.createElement("button");
-    labelAddExample.setAttribute("class", "label-add-example");
-    const labelAddExampleSpan = document.createElement("span");
-    labelAddExampleSpan.textContent = addLabelExampleButtonText;
-    labelAddExample.appendChild(labelAddExampleSpan);
+    // Setting up state changes for clicking on labels to add images for
+    if (datasetName === "training") {
+      labelBox.addEventListener("click", function() {
+        trainingLabelCountSpan = labelCountSpan;
+        trainingLabelId = newLabelId;
 
-    labelAddExample.addEventListener("click", function() {
-      labelCountSpan.textContent = parseInt(labelCountSpan.textContent) + 1;
-      addExampleHandler(newLabelId, datasetName);
-    });
+        if (trainingLabelBox !== null) {
+          trainingLabelBox.setAttribute("class", "label-container");
+        }
+
+        trainingLabelBox = labelBox;
+        trainingLabelBox.setAttribute("class", "label-container active");
+      });
+    } else if (datasetName === "testing") {
+      labelBox.addEventListener("click", function() {
+        testingLabelCountSpan = labelCountSpan;
+        testingLabelId = newLabelId;
+
+        if (testingLabelBox !== null) {
+          testingLabelBox.setAttribute("class", "label-container");
+        }
+
+        testingLabelBox = labelBox;
+        testingLabelBox.setAttribute("class", "label-container active");
+      });
+    }
+
+    labelBox.click();
 
     // Add all elements we just created to the label box and append to
     // the container on the page. Also creates a remove label button if
     // this is for the training tab
-    labelBox.appendChild(labelName);
-    labelBox.appendChild(labelCount);
-    labelBox.appendChild(labelImagesOuter);
-
     if (datasetName === "training") {
+      const labelRemoveOuter = document.createElement("div");
+      labelRemoveOuter.setAttribute("class", "label-remove-outer");
+
       const labelRemove = document.createElement("button");
       labelRemove.setAttribute("class", "label-remove");
       const labelRemoveSpan = document.createElement("span");
-      labelRemoveSpan.textContent = removeLabelButtonText;
+      labelRemoveSpan.innerHTML = "&times;";
       labelRemove.appendChild(labelRemoveSpan);
 
       labelRemove.addEventListener("click", () => {
@@ -139,13 +178,20 @@ export function addLabel(newLabelName) {
         labelBoxes[i + 1].parentNode.removeChild(labelBoxes[i + 1]);
       });
 
-      labelBox.appendChild(labelRemove);
+      labelRemoveOuter.appendChild(labelRemove);
+      labelBox.appendChild(labelRemoveOuter);
     }
 
-    labelBox.appendChild(labelAddExample);
+    labelBox.appendChild(labelImagesOuter)
+    labelBox.appendChild(labelDescriptionOuter);
 
     labelsOuter.appendChild(labelBox);
   }
+}
+
+function addExample(labelCountSpan, labelId, datasetName) {
+  labelCountSpan.textContent = parseInt(labelCountSpan.textContent) + 1;
+  addExampleHandler(labelId, datasetName);
 }
 
 addLabelsButton.addEventListener('click', () => {
@@ -162,15 +208,15 @@ export function removeLabels() {
 }
 
 // Handler for updating the results column
-export function updateResult(result, datasetName) {
-  document.getElementById('results-container-' + datasetName).style.display = "";
+export function updateResult(result) {
+  document.getElementById('results-container').style.display = "";
 
   // First, draw the image to the results canvas
-  const resultCanvas = document.getElementById("results-image-canvas-" + datasetName);
+  const resultCanvas = document.getElementById("results-image-canvas");
   draw(result.img, resultCanvas);
 
   // Then, remove the predictions from the previous result being displayed
-  const resultPredictionsDiv = document.getElementById("results-image-predictions-inner-" + datasetName);
+  const resultPredictionsDiv = document.getElementById("results-image-predictions-inner");
   while (resultPredictionsDiv.firstChild) {
     resultPredictionsDiv.removeChild(resultPredictionsDiv.firstChild);
   }
@@ -193,64 +239,72 @@ export function updateResult(result, datasetName) {
   }
 }
 
-// Handlers for switching tabs between training and testing. Updates the internal state
-// in ui.js, updates the nav bar, and moves around the webcam.
-const trainingTabButton = document.getElementById("training-tab");
-const testingTabButton = document.getElementById("testing-tab");
-const modelEditingTabButton = document.getElementById("model-editing-tab"); 
-
-const trainingContainer = document.getElementById("training");
-const testingContainer = document.getElementById("testing");
-const modelEditingContainer = document.getElementById("model-editing"); 
+// Handlers for switching between steps in the progress bar.
+const progressBarIdPrefix = "progress-bar-";
+const explorerStepIdPrefix = "explorer-step-";
+const nextStepPrefix = "next-step-";
+const backStepPrefix = "back-step-";
+const numSteps = 4;
+let currentStep = 0;
 
 const webcam = document.getElementById("webcam");
 const webcamBoxTraining = document.getElementById("webcam-box-inner-training");
-const webcamBoxTesting = document.getElementById("webcam-box-inner-testing")
+const webcamBoxTesting = document.getElementById("webcam-box-inner-testing");
+const trainingStep = 0;
+const testingStep = 2;
+const resultsStep = 3;
 
-trainingTabButton.addEventListener('click', () => {
-  trainingContainer.style.display = "";
-  testingContainer.style.display = "none";
-  modelEditingContainer.style.display = "none"; 
+export function switchSteps(i) {
+  for (let j = 0; j < numSteps; j++) {
+    const progressBarElementToToggle = document.getElementById(progressBarIdPrefix + j);
 
-  trainingTabButton.className += " active";
-  testingTabButton.className = testingTabButton.className.replace(" active", "");
-  modelEditingTabButton.className = modelEditingTabButton.className.replace(" active", "");
+    if (j <= i) {
+      progressBarElementToToggle.setAttribute("class", "progress-bar-active");
+    } else {
+      progressBarElementToToggle.setAttribute("class", "");
+    }
+  }
 
-  webcam.parentNode.removeChild(webcam);
-  webcamBoxTraining.appendChild(webcam);
+  if (i === trainingStep) {
+    webcam.parentNode.removeChild(webcam);
+    webcamBoxTraining.appendChild(webcam);
+  } else if (i === testingStep) {
+    webcam.parentNode.removeChild(webcam);
+    webcamBoxTesting.appendChild(webcam);
+  } else if (i === resultsStep) {
+    document.getElementsByClassName("analysis-tools-button")[0].click();
+  }
 
-  currentTab = tabNames[0];
-});
+  document.getElementById(explorerStepIdPrefix + currentStep).style.display = "none";
+  document.getElementById(explorerStepIdPrefix + i).style.display = "";
 
-testingTabButton.addEventListener('click', () => {
-  trainingContainer.style.display = "none";
-  testingContainer.style.display = "";
-  modelEditingContainer.style.display = "none"; 
+  currentStep = i;
+}
 
-  trainingTabButton.className = trainingTabButton.className.replace(" active", "");
-  testingTabButton.className += " active";
-  modelEditingTabButton.className = modelEditingTabButton.className.replace(" active", "");
+function initProgressBar() {
+  for (let i = 0; i < numSteps; i++) {
+    const progressBarElementToInit = document.getElementById(progressBarIdPrefix + i);
 
-  webcam.parentNode.removeChild(webcam);
-  webcamBoxTesting.appendChild(webcam);
+    progressBarElementToInit.addEventListener("click", function() {
+      switchSteps(i);
+    });
+  }
 
-  currentTab = tabNames[1];
-});
+  for (let i = 0; i < numSteps - 1; i++) {
+    const nextButtonToInit = document.getElementById(nextStepPrefix + i);
 
-modelEditingTabButton.addEventListener('click', () => {
-  trainingContainer.style.display = "none";
-  testingContainer.style.display = "none";
-  modelEditingContainer.style.display = ""; 
+    nextButtonToInit.addEventListener("click", function() {
+      switchSteps(i + 1);
+    });
+  }
 
-  trainingTabButton.className = trainingTabButton.className.replace(" active", "");
-  testingTabButton.className = testingTabButton.className.replace(" active", ""); 
-  modelEditingTabButton.className += " active"; 
+  for (let i = 1; i < numSteps; i++) {
+    const backButtonToInit = document.getElementById(backStepPrefix + i);
 
-  currentTab = tabNames[2]; 
-});
-
-export function getCurrentTab() {
-  return currentTab;
+    backButtonToInit.addEventListener("click", function() {
+      switchSteps(i - 1);
+    });
+  }
 }
 
 // Handlers for drawing images on canvases
