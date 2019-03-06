@@ -597,6 +597,7 @@ label {
 
 .modal-compare-canvas {
   transform: scaleX(-1);
+  height: 120px;
 }
 
 .modal-compare-clear-button {
