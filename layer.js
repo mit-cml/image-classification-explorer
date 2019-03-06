@@ -133,7 +133,14 @@ export class LayerNode {
     inputWrapper.appendChild(layerDimsDisplay);
     
     // display fully connected inputs only 
-    if (!this.isFirst) {
+    if (this.isFinal) {
+      document.getElementById(`fcn-units-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-kernel-size-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-filters-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-strides-${this.id}`).style.display = "none"; 
+      document.getElementById(`max-pool-size-${this.id}`).style.display = "none"; 
+      document.getElementById(`max-strides-${this.id}`).style.display = "none"; 
+    } else if (!this.isFirst) {
       document.getElementById(`fcn-units-${this.id}`).style.display = "inline"; 
       document.getElementById(`conv-kernel-size-${this.id}`).style.display = "none"; 
       document.getElementById(`conv-filters-${this.id}`).style.display = "none"; 
