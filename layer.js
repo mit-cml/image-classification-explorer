@@ -127,7 +127,7 @@ export class LayerNode {
     modelWrapper.appendChild(inputWrapper);
   
     // add span for layer input/output display
-    var layerDimsDisplay = document.createElement('span');
+    let layerDimsDisplay = document.createElement('span');
     layerDimsDisplay.id = `dimensions-${this.id}`;
     layerDimsDisplay.innerHTML = "[input] --> [output]";
     inputWrapper.appendChild(layerDimsDisplay);

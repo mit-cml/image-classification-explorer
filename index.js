@@ -46,6 +46,8 @@ let model;
 let layerLinkedList;
 
 let started; 
+let stoppedDuration;
+let timeBegan;
 
 const webcam = new Webcam(document.getElementById('webcam'));
 
@@ -147,6 +149,24 @@ function add(){
 modal.setGetResultsHandler(() => {
   return testingResults;
 });
+
+/**
+ * Updates HTML timer 
+ */
+function clockRunning(){
+  var currentTime = new Date()
+      , timeElapsed = new Date(currentTime - timeBegan - stoppedDuration)
+      , hour = timeElapsed.getUTCHours()
+      , min = timeElapsed.getUTCMinutes()
+      , sec = timeElapsed.getUTCSeconds()
+      , ms = timeElapsed.getUTCMilliseconds();
+
+  document.getElementById("display-area").innerHTML = 
+      (hour > 9 ? hour : "0" + hour) + ":" + 
+      (min > 9 ? min : "0" + min) + ":" + 
+      (sec > 9 ? sec : "0" + sec) + "." + 
+      (ms > 99 ? ms : ms > 9 ? "0" + ms : "00" + ms);
+};
 
 // Sets up and trains the classifier
 async function train() {
@@ -251,6 +271,12 @@ async function train() {
 
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
   
+  // reset & start 
+  stoppedDuration = 0
+  document.getElementById("display-area").innerHTML = "00:00:00.000";
+  timeBegan = new Date();
+  started = setInterval(clockRunning, 10); 
+
   // Get epochs 
   let epochs = Number(document.getElementById("epochs").value);
   try {
@@ -361,41 +387,10 @@ document.getElementById('train').addEventListener('click', async () => {
   await tf.nextFrame();
   await tf.nextFrame();
 
-  /**
-   * Updates HTML timer 
-   */
-  function clockRunning(){
-    var currentTime = new Date()
-        , timeElapsed = new Date(currentTime - timeBegan - stoppedDuration)
-        , hour = timeElapsed.getUTCHours()
-        , min = timeElapsed.getUTCMinutes()
-        , sec = timeElapsed.getUTCSeconds()
-        , ms = timeElapsed.getUTCMilliseconds();
-
-    document.getElementById("display-area").innerHTML = 
-        (hour > 9 ? hour : "0" + hour) + ":" + 
-        (min > 9 ? min : "0" + min) + ":" + 
-        (sec > 9 ? sec : "0" + sec) + "." + 
-        (ms > 99 ? ms : ms > 9 ? "0" + ms : "00" + ms);
-  };
-
-  // measuring training time as sanity check.. 
-  let startTime = new Date().getTime();
-
-  // reset & start 
-  let stoppedDuration = 0
-  document.getElementById("display-area").innerHTML = "00:00:00.000";
-  let timeBegan = new Date();
-  started = setInterval(clockRunning, 10); 
-
   await train();
 
   // stop 
   clearInterval(started);
-
-  let endTime = new Date().getTime();
-  console.log("The training took: " + (endTime - startTime) + "ms.");
-  console.log("The training took: " + (endTime - startTime)/1000 + "s.");
 
   // Move on to the next step in the ui
   ui.switchSteps(2);
