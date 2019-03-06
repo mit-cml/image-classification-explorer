@@ -48,6 +48,8 @@ export class LayerNode {
       this.outputDims = null; 
     }
 
+    this.layerParameterInputClassName = "layer-parameter-input";
+
     // this.removeButton = null;
 
     // call function to create layer/parameter input(s) and associated div elements  
@@ -70,6 +72,7 @@ export class LayerNode {
     
     const inputWrapper = document.createElement('div');
     inputWrapper.id = `inputWrapper-${this.id}` ;
+    inputWrapper.className = 'input-wrapper';
 
     let dropdown_text;
     let dropdown_values;
@@ -106,6 +109,7 @@ export class LayerNode {
     if (!this.isFirst && !this.isFinal) {
       removeButton = document.createElement('button');
       removeButton.innerHTML = 'Remove Layer';
+      removeButton.className = 'remove-layer-button';
       let that = this;
       removeButton.onclick = () => { 
         // removing from linked layer list 
@@ -129,6 +133,7 @@ export class LayerNode {
     // add span for layer input/output display
     var layerDimsDisplay = document.createElement('span');
     layerDimsDisplay.id = `dimensions-${this.id}`;
+    layerDimsDisplay.className = 'layer-dims-display';
     layerDimsDisplay.innerHTML = "[input] --> [output]";
     inputWrapper.appendChild(layerDimsDisplay);
     
@@ -162,6 +167,7 @@ export class LayerNode {
     const unit_input = document.createElement("input");
     unit_input.type = "number"; 
     unit_input.id = `fcn-units-${i}`;
+    unit_input.className = this.layerParameterInputClassName;
     unit_input.onchange = self.layerSelectCheck(self.id);
     unit_input.min = 1;
     unit_input.max = 300;
@@ -178,8 +184,11 @@ export class LayerNode {
     const stride_input = document.createElement("input");
     kernel_input.type = filter_input.type = stride_input.type = "number"; 
     kernel_input.id = `conv-kernel-size-${i}`;
+    kernel_input.className = this.layerParameterInputClassName;
     filter_input.id = `conv-filters-${i}`;
+    filter_input.className = this.layerParameterInputClassName;
     stride_input.id = `conv-strides-${i}`;
+    stride_input.className = this.layerParameterInputClassName;
     kernel_input.onchange = self.layerSelectCheck(self.id);
     filter_input.onchange = self.layerSelectCheck(self.id);
     stride_input.onchange = self.layerSelectCheck(self.id);
@@ -200,7 +209,9 @@ export class LayerNode {
     const stride_input = document.createElement("input");
     pool_input.type = stride_input.type = "number"; 
     pool_input.id = `max-pool-size-${i}`;
+    pool_input.className = this.layerParameterInputClassName;
     stride_input.id = `max-strides-${i}`;
+    stride_input.className = this.layerParameterInputClassName;
     pool_input.onchange = self.layerSelectCheck(self.id);
     stride_input.onchange = self.layerSelectCheck(self.id);
     pool_input.min = stride_input.min = 1;

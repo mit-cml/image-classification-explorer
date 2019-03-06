@@ -98,7 +98,7 @@ limitations under the License.
         <div class="model-columns-container">
           <div class="model-column">
             <!-- Yuria Edit -->
-            <div id="choose-model">
+            <div class="choose-model-container" id="choose-model">
               Choose Model: 
               <select id="choose-model-dropdown">
                 <option value="0">MobileNet</option>
@@ -106,28 +106,28 @@ limitations under the License.
               </select>
             </div>
 
-            <div id="create-model">
+            <div class="create-model-container" id="create-model">
             Create Model:
-            <div id="model-editor">
-              <div id="model-pt1">
-              </div>
+              <div class="model-editor-container" id="model-editor">
+                <div id="model-pt1">
+                </div>
 
-              <div id="model-pt2">
+                <div id="model-pt2">
+                </div>
               </div>
-            </div>
-            <button id="add">Add Layer</button>
+              <button class="add-layer-button" id="add">Add Layer</button>
             </div>
 
             <!-- Model Error Message Div -->
-            <div id="model-error">
+            <div class="model-error-container" id="model-error">
             </div>
             
             <!-- Dimension Error Message Div -->
-            <div id="dim-error">
+            <div class="dim-error-container" id="dim-error">
             </div>
 
             <!-- Edit Parameters Div -->
-            <div class="parameters" id="hyperparameters">
+            <div class="hyperparameters-container" id="hyperparameters">
             Hyperparameters: 
               <p> - Learning Rate: <input type="number" id="learning-rate" min="0.0001" max="1" step="0.0001" value="0.0001"> </p>
               <p> - Epochs: <input type="number" id="epochs" min="1" max="100" step="1" value="20"> </p>

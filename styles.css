@@ -317,9 +317,73 @@ label {
   white-space: pre;
 }
 
+/* Styling for the select model column */
+.choose-model-container {
+  margin-top: 16px;
+}
+
+.create-model-container {
+  margin-top: 8px;
+}
+
+.model-editor-container {
+  margin-top: 4px;
+}
+
+.input-wrapper {
+  margin-top: 4px;
+}
+
+.add-layer-button {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  background-color: #dfe4ea;
+  margin-top: 8px;
+}
+
+.remove-layer-button {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 3px 6px;
+  background-color: #dfe4ea;
+  margin-left: 4px;
+}
+
+.remove-layer-button:hover {
+  background-color: #ced6e0; 
+}
+
+.layer-parameter-input {
+  width: 80px;
+  margin-left: 4px;
+}
+
+.layer-dims-display {
+  margin-left: 4px;
+}
+
+.model-error-container {
+  color: red;
+  margin-top: 6px;
+}
+
+.dim-error-container {
+  color: red;
+  margin-top: 6px;
+}
+
+.add-layer-button:hover {
+  background-color: #ced6e0; 
+}
+
+.hyperparameters-container {
+  margin-top: 8px;
+}
 
 /* Styling for the run model column */
-
 .run-model-container {
   display: flex;
   flex-direction: column;
@@ -476,8 +540,6 @@ label {
 }
 
 /* Styling for the analysis modal */
-
-
 .modal-header {
   padding: 2px 16px;
   height: 10%;
