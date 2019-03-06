@@ -24,12 +24,9 @@ import {Results} from './results';
 import * as ui from './ui';
 import * as modal from './modal';
 import {Webcam} from './webcam';
-
-// Later, maybe allow users to pick these values themselves?
-const LEARNING_RATE = 0.0001;
-const BATCH_SIZE_FRACTION = 0.4;
-const EPOCHS = 20;
-const DENSE_UNITS = 100;
+import cloneDeep from 'lodash/cloneDeep';
+import {LayerList, LayerNode} from './layer';
+// import { Layer } from '@tensorflow/tfjs-layers/dist/exports_layers';
 
 const fetch = require('node-fetch');
 
@@ -46,12 +43,49 @@ let testingResults;
 let transferModel;
 let model;
 
+let layerLinkedList;
+
+let started; 
+let stoppedDuration;
+let timeBegan;
+
 const webcam = new Webcam(document.getElementById('webcam'));
 
-// model state stuff
+// Model Information 
 const modelInfo = {"0": {"name": "mobilenet", "lastLayer": "conv_pw_13_relu", "url": "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json"},
-                    "1": {"name": "squeezenet", "lastLayer": "max_pooling2d_1", "url": "http://127.0.0.1:8080/model.json"}}
+                    "1": {"name": "squeezenet", "lastLayer": "max_pooling2d_1", "url": "http://127.0.0.1:8081/model.json"}}
+// run http-server . --cors -o in squeezenet folder 
 let currentModel = modelInfo["0"]; // default current model to MobileNet 
+
+// Layer Information Dictionary 
+let layerInfo =   {"conv-0": tf.layers.conv2d({ 
+  inputShape: [7, 7, 256],
+  kernelSize: 5,
+  filters: 32, 
+  strides: 1, 
+  activation: 'relu',
+  kernelInitializer: 'varianceScaling'}),
+"flat-0": tf.layers.flatten({inputShape: [7, 7, 256]}),
+"fc-final": tf.layers.dense({
+  kernelInitializer: 'varianceScaling',
+  useBias: false,
+  activation: 'softmax'}),
+"fc": tf.layers.dense({
+  units: 24, 
+  kernelInitializer: 'varianceScaling', 
+  useBias: true,
+  activation: 'relu'}),
+"conv": tf.layers.conv2d({
+  kernelSize: 5,
+  filters: 32,
+  strides: 1,
+  activation: 'relu',
+  kernelInitializer: 'varianceScaling'}),
+"maxpool": tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}),
+"flat": tf.layers.flatten()}; 
+
+// Optimizer Function Dictionary 
+const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
 
 // Loads transfer model and returns a model that returns the internal activation 
 // we'll use as input to our classifier model. 
@@ -97,25 +131,54 @@ ui.setRemoveLabelHandler(labelId => {
   trainingDataset.removeLabel(labelId);
 });
 
+// Methods for adding layers to the model 
+const addButton = document.getElementById("add");
+const modelWrapper = document.getElementById("inputWrapper-0");
+let i = 2;
+addButton.addEventListener("click", add);
+
+function add(){
+  i = i+1; 
+
+  // create new node 
+  let newLayer = new LayerNode(i, layerLinkedList, true);
+
+  // add to linked layer list 
+  layerLinkedList.addLayer(newLayer);
+}
+
 // Methods to supply data to the results modal
 modal.setGetResultsHandler(() => {
   return testingResults;
 });
 
+/**
+ * Updates HTML timer 
+ */
+function clockRunning(){
+  var currentTime = new Date()
+      , timeElapsed = new Date(currentTime - timeBegan - stoppedDuration)
+      , hour = timeElapsed.getUTCHours()
+      , min = timeElapsed.getUTCMinutes()
+      , sec = timeElapsed.getUTCSeconds()
+      , ms = timeElapsed.getUTCMilliseconds();
+
+  document.getElementById("display-area").innerHTML = 
+      (hour > 9 ? hour : "0" + hour) + ":" + 
+      (min > 9 ? min : "0" + min) + ":" + 
+      (sec > 9 ? sec : "0" + sec) + "." + 
+      (ms > 99 ? ms : ms > 9 ? "0" + ms : "00" + ms);
+};
+
 // Sets up and trains the classifier
 async function train() {
-  if (Object.values(trainingImgDict) == []) {
-    throw new Error('Add some examples before training!');
-  }
-
-  // TODO: check model input, load appropriate model, and create trainingData and testingData
   // look at input from dropdown menu 
   let currentModelIdx = document.getElementById("choose-model-dropdown").value;
-  console.log(currentModelIdx);
   currentModel = modelInfo[currentModelIdx]; // dictionary obj of model info 
+
   transferModel = await loadTransferModel(); 
 
-  // TODO: create clear fxn that also gets rid of old tensors 
+  // gets rid of old tensors 
   trainingDataset.removeExamples();
 
   // loop over trainingImgDict and testingImgDict and process 
@@ -127,66 +190,65 @@ async function train() {
     }
   }
 
-  // Creates a 2-layer fully connected model. By creating a separate model,
+  // Creates a model based on layer inputs. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
   // of the mobilenet model, and only train weights from the new model.
-  // look at input from dropdown menu 
-  var currentModel2 = document.getElementById("choose-model-dropdown2").value;
-  console.log(currentModel2);
+  // look at inputs from dropdown menu and create model 
 
-  if (currentModel2 == "Model 1") {
-    model = tf.sequential({
-      layers: [
-        // Flattens the input to a vector so we can use it in a dense layer. While
-        // technically a layer, this only performs a reshape (and has no training
-        // parameters).
-        tf.layers.flatten({inputShape: [7, 7, 256]}),
-        // Layer 1
-        tf.layers.dense({
-          units: DENSE_UNITS,
-          activation: 'relu',
-          kernelInitializer: 'varianceScaling',
-          useBias: true
-        }),
-        // Layer 2. The number of units of the last layer should correspond
-        // to the number of classes we want to predict.
-        tf.layers.dense({
-          units: trainingDataset.numLabels,
-          kernelInitializer: 'varianceScaling',
-          useBias: false,
-          activation: 'softmax'
-        })
-      ]
-    });
-  } else {
-    model = tf.sequential({
-      layers: [
-        tf.layers.conv2d({
-          inputShape: [7, 7, 256],
-          kernelSize: 5,
-          filters: 32, 
-          strides: 1, 
-          activation: 'relu',
-          kernelInitializer: 'varianceScaling'
-        }),
-        tf.layers.flatten(),
-        tf.layers.dense({
-          units: trainingDataset.numLabels, 
-          kernelInitializer: 'varianceScaling', 
-          useBias: false, 
-          activation: 'softmax'
-        })
-      ]
-    }); 
+  // set final fully connected layer units 
+  layerInfo["fc-final"].units = trainingDataset.numLabels; 
 
-    
-  }
+  // get all select id's inside model-editor 
+  let modelLayers = document.querySelectorAll("#model-editor select");
+
+  model = tf.sequential();
+
+  for (let i = 0; i < modelLayers.length; i++) {
+    try {
+      let layerValue = document.getElementById(modelLayers[i].id).value;
+      let layerCopy = cloneDeep(layerInfo[layerValue]);
+      
+      let idx = Number(modelLayers[i].id.substr(-1));
+
+      // get layer parameters and set parameters 
+      if (layerValue == "fc") {
+        let fcnUnits = Number(document.getElementById(`fcn-units-${idx}`).value);
+        layerCopy.units = fcnUnits;
+      } else if (layerValue == "maxpool") {
+        let maxPoolSize = Number(document.getElementById(`max-pool-size-${idx}`).value);
+        let maxStrides = Number(document.getElementById(`max-strides-${idx}`).value);
+        layerCopy.poolSize = [maxPoolSize, maxPoolSize];
+        layerCopy.strides = [maxStrides, maxStrides];
+      } else if (layerValue == "conv" || layerValue == "conv-0") {
+        let convKernelSize = Number(document.getElementById(`conv-kernel-size-${idx}`).value);
+        let convFilters = Number(document.getElementById(`conv-filters-${idx}`).value); 
+        let convStrides = Number(document.getElementById(`conv-strides-${idx}`).value);
+        layerCopy.kernelSize = [convKernelSize, convKernelSize];
+        layerCopy.filters = convFilters;
+        layerCopy.strides = [convStrides, convStrides];
+      } 
+      model.add(layerCopy);
+    } catch (e) {
+      // print error message, stop & reset timer 
+      document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
+      document.getElementById("display-area").innerHTML = "00:00:00.000";
+      clearInterval(started);
+      
+      console.error('Unknown model error encountered! Please edit model.');
+    }
+  }; 
+
+  console.log("Model Summary:");
+  console.log(model.summary());
 
   // We use categoricalCrossentropy which is the loss function we use for
   // categorical classification which measures the error between our predicted
   // probability distribution over classes (probability that an input is of each
   // class), versus the label (100% probability in the true class)>
-  const optimizer = tf.train.adam(LEARNING_RATE);
+  // get optimizer and learning rates  
+  let optimizerIdx = document.getElementById("optimizer").value;
+  let learningRate = parseFloat(document.getElementById("learning-rate").value);
+  const optimizer = optimizerFunctions[optimizerIdx](learningRate);
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
   // Get data from the training dataset
@@ -197,23 +259,46 @@ async function train() {
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends on how many examples the user
   // collects. This allows us to have a flexible batch size.
+  let batchSizeFraction = parseFloat(document.getElementById("training-data-fraction").value);
   const batchSize =
-      Math.floor(trainingData.xs.shape[0] * BATCH_SIZE_FRACTION);
+      Math.floor(trainingData.xs.shape[0] * batchSizeFraction);
   if (!(batchSize > 0)) {
+    // print error message, stop & reset timer 
+    document.getElementById("train-error").innerHTML = "Batch size is 0 or NaN. Please choose a non-zero fraction.";
+    document.getElementById("display-area").innerHTML = "00:00:00.000";
+    clearInterval(started);
     throw new Error(
         `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
   }
 
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
-  await model.fit(trainingData.xs, trainingData.ys, {
-    batchSize,
-    epochs: EPOCHS,
-    callbacks: {
-      onBatchEnd: async (batch, logs) => {
-        ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
-      },
-    }
-  });
+  
+  // reset & start 
+  stoppedDuration = 0
+  document.getElementById("display-area").innerHTML = "00:00:00.000";
+  timeBegan = new Date();
+  started = setInterval(clockRunning, 10); 
+
+  // Get epochs 
+  let epochs = Number(document.getElementById("epochs").value);
+  try {
+    await model.fit(trainingData.xs, trainingData.ys, {
+      batchSize,
+      epochs: epochs,
+      callbacks: {
+        onBatchEnd: async (batch, logs) => {
+          ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
+        },
+      }
+    }); 
+  } catch (e) {
+    // print error message, stop & reset timer 
+    document.getElementById("train-error").innerHTML = "Unknown model error encountered! Please edit model.";
+    document.getElementById("display-area").innerHTML = "00:00:00.000";
+    clearInterval(started);
+    
+    console.error('Unknown model error encountered! Please edit model.');
+  }
 }
 
 // Uses the classifier to classify examples
@@ -247,46 +332,67 @@ async function predict(dataset, modelLabelsJson) {
 
 // Train and predict button functionality. Also updates the results' prev/next buttons.
 document.getElementById('train').addEventListener('click', async () => {
-  // First, we train the model on the training dataset
+  // Clear error messages 
+  document.getElementById("train-error").innerHTML = "";
+  document.getElementById("model-error").innerHTML = "";
+
+  // First, verify we have examples 
+  // if (Object.values(trainingImgDict) == []) {
+  if (Object.values(trainingImgDict).length == 0) {
+    document.getElementById("train-error").innerHTML = "Add some examples before training!";
+    throw new Error('Add some examples before training!');
+  }
+
+  // Verify the model is valid 
+  // get all select id's inside model-editor 
+  let modelLayers = document.querySelectorAll("#model-editor select");
+
+  let flat_bool = false; // initialize to false 
+  for (let i = 0; i < modelLayers.length; i++) {
+    let layerValue = document.getElementById(modelLayers[i].id).value;
+    if (flat_bool) {
+      if (layerValue.includes("flat")) {
+        // if we want to add a flatten layer and we have used one already 
+        document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
+        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have multiple flatten layers.";
+        
+        console.error('Invalid Model! Cannot have multiple flatten layers.');
+      } else if (layerValue.includes("maxpool")) {
+        // if we want to add a max pool layer and we have used flatten already
+        document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
+        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have max pool after flatten.";
+        
+        console.error('Invalid Model! Cannot have max pool after flatten.');
+      } else if (layerValue.includes("conv")) {
+        // if we want to add a convolution layer and we have used flatten already 
+        document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
+        document.getElementById("model-error").innerHTML = "Invalid Model! Cannot have convolution after flatten.";
+        
+        console.error('Invalid Model! Cannot have convolution after flatten.');
+      }
+    } else {
+      if (layerValue.includes("flat")) {
+        // if we want to add a flatten layer and we haven't used one yet 
+        flat_bool = true;
+      } else if (layerValue.includes("fc")) {
+        // if we want to add a fully connected layer and we haven't used flatten yet 
+        document.getElementById("train-error").innerHTML = "Invalid Model! See Model Editing tab for details.";
+        document.getElementById("model-error").innerHTML = "Invalid Model! Must have flatten before fully connected.";
+        
+        console.error('Invalid Model! Must have flatten before fully connected.'); 
+      }
+    }
+  }; 
+
+  // Then, we train the model on the training dataset
   ui.trainStatus('Training...');
   await tf.nextFrame();
   await tf.nextFrame();
-
-  /**
-   * Updates HTML timer 
-   */
-  function clockRunning(){
-    var currentTime = new Date()
-        , timeElapsed = new Date(currentTime - timeBegan - stoppedDuration)
-        , hour = timeElapsed.getUTCHours()
-        , min = timeElapsed.getUTCMinutes()
-        , sec = timeElapsed.getUTCSeconds()
-        , ms = timeElapsed.getUTCMilliseconds();
-
-    document.getElementById("display-area").innerHTML = 
-        (hour > 9 ? hour : "0" + hour) + ":" + 
-        (min > 9 ? min : "0" + min) + ":" + 
-        (sec > 9 ? sec : "0" + sec) + "." + 
-        (ms > 99 ? ms : ms > 9 ? "0" + ms : "00" + ms);
-  };
-
-  // measuring training time as sanity check.. 
-  let startTime = new Date().getTime();
-
-  // reset & start 
-  let stoppedDuration = 0
-  document.getElementById("display-area").innerHTML = "00:00:00.000";
-  let timeBegan = new Date();
-  let started = setInterval(clockRunning, 10); 
 
   await train();
 
   // stop 
   clearInterval(started);
-
-  let endTime = new Date().getTime();
-  console.log("The training took: " + (endTime - startTime) + "ms.");
-  console.log("The training took: " + (endTime - startTime)/1000 + "s.");
 
   // Move on to the next step in the ui
   ui.switchSteps(2);
@@ -297,11 +403,8 @@ let resultsNextButtonFunction = null;
 
 document.getElementById('predict').addEventListener('click', async () => {
 
-  // TODO: create clear fxn that also gets rid of old tensors 
+  // gets rid of old tensors 
   testingDataset.removeExamples();
-
-  console.log("raw testing  images");
-  console.log(testingImgDict); 
 
   // loop over testingImgDict and testingImgDict and process 
   for (let label in testingImgDict) {
@@ -436,6 +539,7 @@ modelUpload.addEventListener('change', async () => {
 // Initialize the application
 
 async function init() {
+
   try {
     await webcam.setup();
   } catch (e) {
@@ -446,6 +550,30 @@ async function init() {
 
   ui.init();
   modal.init();
+
+  const firstLayer = new LayerNode("0", null, false, "conv-0");
+  const lastLayer = new LayerNode("final", null, false, "fc-final");
+
+  layerLinkedList = new LayerList(firstLayer, lastLayer);
+
+  firstLayer.layerList = layerLinkedList;
+  lastLayer.layerList = layerLinkedList;
+
+  const flattenLayer = new LayerNode("1", layerLinkedList, false, "flat");
+  const fcLayer = new LayerNode("2", layerLinkedList, false, "fc");
+  layerLinkedList.addLayer(flattenLayer, false);
+  layerLinkedList.addLayer(fcLayer, false);
+
+  // TODO: do this more elegantly 
+  // adjust display for flat layer 
+  document.getElementById(`fcn-units-${flattenLayer.id}`).style.display = "none"; 
+
+  // now set layer dimensions & update display 
+  firstLayer.outputDims = flattenLayer.inputDims = [3,3,5];
+  flattenLayer.outputDims = fcLayer.inputDims = [45];
+  fcLayer.outputDims = lastLayer.inputDims = [100];
+
+  layerLinkedList.updateDimensionDisplay(firstLayer);
 }
 
 init();

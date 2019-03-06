@@ -613,6 +613,19 @@ label {
   background-color: #ced6e0; 
 }
 
+.modal-compare-clear-button {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  background-color: #dfe4ea;
+  margin-top: 6px;
+}
+
+.modal-compare-clear-button:hover {
+  background-color: #ced6e0; 
+}
+
 /* Styling for the predictions popup */
 .analysis-table-prediction {
   position: relative;
