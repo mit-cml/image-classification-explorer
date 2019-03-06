@@ -127,13 +127,20 @@ export class LayerNode {
     modelWrapper.appendChild(inputWrapper);
   
     // add span for layer input/output display
-    var layerDimsDisplay = document.createElement('span');
+    let layerDimsDisplay = document.createElement('span');
     layerDimsDisplay.id = `dimensions-${this.id}`;
     layerDimsDisplay.innerHTML = "[input] --> [output]";
     inputWrapper.appendChild(layerDimsDisplay);
     
     // display fully connected inputs only 
-    if (!this.isFirst) {
+    if (this.isFinal) {
+      document.getElementById(`fcn-units-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-kernel-size-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-filters-${this.id}`).style.display = "none"; 
+      document.getElementById(`conv-strides-${this.id}`).style.display = "none"; 
+      document.getElementById(`max-pool-size-${this.id}`).style.display = "none"; 
+      document.getElementById(`max-strides-${this.id}`).style.display = "none"; 
+    } else if (!this.isFirst) {
       document.getElementById(`fcn-units-${this.id}`).style.display = "inline"; 
       document.getElementById(`conv-kernel-size-${this.id}`).style.display = "none"; 
       document.getElementById(`conv-filters-${this.id}`).style.display = "none"; 
