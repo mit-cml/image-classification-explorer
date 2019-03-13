@@ -273,6 +273,7 @@ async function train() {
   
   // reset & start 
   stoppedDuration = 0
+  document.getElementById("training-time").style.display = "inline";
   document.getElementById("display-area").innerHTML = "00:00:00.000";
   timeBegan = new Date();
   started = setInterval(clockRunning, 10); 
@@ -386,6 +387,10 @@ document.getElementById('train').addEventListener('click', async () => {
   ui.trainStatus('Training...');
   await tf.nextFrame();
   await tf.nextFrame();
+
+  // set display to "Calculating..." 
+  document.getElementById("training-time").style.display = "none";
+  document.getElementById("display-area").innerHTML = "Calculating...";
 
   await train();
 
