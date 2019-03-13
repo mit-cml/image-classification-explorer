@@ -1,10 +1,3 @@
-// TODO: 
-// DONE: store Layer instances sequentially in list 
-  // must be updated upon: Add Layer, Remove Layer 
-// checkValidModel function that checks model validity (both layers and parameters) 
-  // call onchange/onclick all the time 
-// updateLayerDims function that computes and updates layer parameters starting at Layer 
-
 // Checks if n is an integer 
 function isInt(n) {
   return n % 1 == 0;
