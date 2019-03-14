@@ -32,33 +32,22 @@ const fetch = require('node-fetch');
 
 // Variables for containing the model datasets, prediction results,
 // the models themselves, and the webcam
-const trainingDataset = new Dataset();
-const testingDataset = new Dataset();
+let trainingDataset = new Dataset();
+let testingDataset = new Dataset();
 
-// testing... 
 let trainingDatasetMobilenet = new Dataset();
 let testingDatasetMobilenet = new Dataset();
 
 let trainingDatasetSqueezenet = new Dataset();
 let testingDatasetSqueezenet = new Dataset();
 
-Object.defineProperty(trainingDatasetMobilenet, "x", {writable:true});
-Object.defineProperty(testingDatasetMobilenet, "x", {writable:true});
-Object.defineProperty(trainingDatasetSqueezenet, "x", {writable:true});
-Object.defineProperty(testingDatasetSqueezenet, "x", {writable:true});
-
 let mobilenet;
 let squeezenet;
 
 let isMobilenet = true;
-// 
-
-var trainingImgDict = {};
-var testingImgDict = {}; 
 
 let testingResults;
 
-let transferModel;
 let model;
 
 let layerLinkedList;
@@ -105,16 +94,8 @@ let layerInfo =   {"conv-0": tf.layers.conv2d({
 // Optimizer Function Dictionary 
 const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
 
-// Loads transfer model and returns a model that returns the internal activation 
-// we'll use as input to our classifier model. 
-async function loadTransferModel() {
-  const transferModel = await tf.loadModel(currentModel["url"]);
-  const layer = transferModel.getLayer(currentModel["lastLayer"]);
-  return tf.model({inputs: transferModel.inputs, outputs: layer.output});
-}
-
 /**
- * Loads and returns user-specified transfer model 
+ * Loads and returns user-specified transfer model that returns the internal activation 
  * 
  * @param {String} modelIdx "0" or "1", where "0" indices Mobilenet and "1" indicates Squeezenet
  */
@@ -127,7 +108,6 @@ async function loadMyTransferModel(modelIdx) {
 
 // Methods for updating the dataset objects from the ui
 ui.setAddExampleHandler((labelId, datasetName) => {
-  // testing... 
   tf.tidy(async () => {
     const img = webcam.capture();
 
@@ -138,27 +118,9 @@ ui.setAddExampleHandler((labelId, datasetName) => {
       testingDatasetMobilenet.addExample(img, mobilenet.predict(img), labelId);
       testingDatasetSqueezenet.addExample(img, squeezenet.predict(img), labelId);
     }
+
+    ui.drawThumb(img, datasetName, labelId);
   });
-
-  // tf.tidy(async () => {
-  //   const img = webcam.capture();
-
-  //   if (datasetName == "training") {
-  //     if (labelId in trainingImgDict) {
-  //       trainingImgDict[labelId].push(tf.keep(img)); 
-  //     } else {
-  //       trainingImgDict[labelId] = [tf.keep(img)]; 
-  //     }
-  //   } else {
-  //     if (labelId in testingImgDict) {
-  //       testingImgDict[labelId].push(tf.keep(img));
-  //     } else {
-  //       testingImgDict[labelId] = [tf.keep(img)];
-  //     }
-  //   }
-
-  //   ui.drawThumb(img, datasetName, labelId);
-  // });
 });
 
 ui.setAddLabelHandler(labelName => {
@@ -166,16 +128,12 @@ ui.setAddLabelHandler(labelName => {
   return trainingDataset.addLabel(labelName);
 });
 ui.setRemoveLabelHandler(labelId => {
-  // testing... 
-  // delete trainingImgDict[labelId]; 
-  // delete testingImgDict[labelId]; 
   testingDataset.removeLabel(labelId);
   trainingDataset.removeLabel(labelId);
 });
 
 // Methods for adding layers to the model 
 const addButton = document.getElementById("add");
-const modelWrapper = document.getElementById("inputWrapper-0");
 let i = 2;
 addButton.addEventListener("click", add);
 
@@ -217,9 +175,6 @@ async function train() {
   // look at input from dropdown menu 
   let currentModelIdx = document.getElementById("choose-model-dropdown").value;
   isMobilenet = (currentModelIdx == "0");
-  // currentModel = modelInfo[currentModelIdx]; // dictionary obj of model info 
-
-  // transferModel = await loadTransferModel(); 
 
   // gets rid of old tensors 
   trainingDataset.removeExamples();
@@ -229,16 +184,6 @@ async function train() {
   } else {
     trainingDataset = cloneDeep(trainingDatasetSqueezenet);
   }
-
-  // testing... 
-  // // loop over trainingImgDict and testingImgDict and process 
-  // for (let label in trainingImgDict) {
-  //   for (let img in trainingImgDict[label]) {
-  //     const img_copy = tf.clone(trainingImgDict[label][img]); 
-  //     trainingDataset.addExample(trainingImgDict[label][img], transferModel.predict(trainingImgDict[label][img]), label); 
-  //     trainingImgDict[label][img] = tf.keep(img_copy); 
-  //   }
-  // }
 
   // Creates a model based on layer inputs. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
@@ -388,8 +333,7 @@ document.getElementById('train').addEventListener('click', async () => {
   document.getElementById("model-error").innerHTML = "";
 
   // First, verify we have examples 
-  // if (Object.values(trainingImgDict) == []) {
-  if (Object.values(trainingImgDict).length == 0) {
+  if (trainingDatasetMobilenet.labelXs == {} && trainingDatasetSqueezenet.labelXs == {}) {
     document.getElementById("train-error").innerHTML = "Add some examples before training!";
     throw new Error('Add some examples before training!');
   }
@@ -466,16 +410,6 @@ document.getElementById('predict').addEventListener('click', async () => {
   } else {
     trainingDataset = cloneDeep(trainingDatasetSqueezenet);
   }
-
-  // testing... 
-  // // loop over testingImgDict and testingImgDict and process 
-  // for (let label in testingImgDict) {
-  //   for (let img in testingImgDict[label]) {
-  //     const img_copy = tf.clone(testingImgDict[label][img]); 
-  //     testingDataset.addExample(testingImgDict[label][img], transferModel.predict(testingImgDict[label][img]), label); 
-  //     testingImgDict[label][img] = tf.keep(img_copy); 
-  //   }
-  // }
 
   testingResults = await predict(testingDataset, trainingDataset.getCurrentLabelNamesJson());
 
