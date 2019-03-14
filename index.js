@@ -384,9 +384,9 @@ document.getElementById('train').addEventListener('click', async () => {
   await tf.nextFrame();
   await tf.nextFrame();
 
-  // set display to "Calculating..." 
+  // set display to "Building model..." 
   document.getElementById("training-time").style.display = "none";
-  document.getElementById("display-area").innerHTML = "Calculating...";
+  document.getElementById("display-area").innerHTML = "Building model...";
 
   await train();
 
