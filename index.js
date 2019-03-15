@@ -32,22 +32,15 @@ const fetch = require('node-fetch');
 
 // Variables for containing the model datasets, prediction results,
 // the models themselves, and the webcam
-let trainingDataset = new Dataset();
-let testingDataset = new Dataset();
+const trainingDataset = new Dataset();
+const testingDataset = new Dataset();
 
-let trainingDatasetMobilenet = new Dataset();
-let testingDatasetMobilenet = new Dataset();
-
-let trainingDatasetSqueezenet = new Dataset();
-let testingDatasetSqueezenet = new Dataset();
-
-let mobilenet;
-let squeezenet;
-
-let isMobilenet = true;
+var trainingImgDict = {};
+var testingImgDict = {}; 
 
 let testingResults;
 
+let transferModel;
 let model;
 
 let layerLinkedList;
@@ -94,15 +87,11 @@ let layerInfo =   {"conv-0": tf.layers.conv2d({
 // Optimizer Function Dictionary 
 const optimizerFunctions = {"0": tf.train.adam, "1": tf.train.adadelta, "2": tf.train.adagrad, "3": tf.train.sgd}; 
 
-/**
- * Loads and returns user-specified transfer model that returns the internal activation 
- * 
- * @param {String} modelIdx "0" or "1", where "0" indices Mobilenet and "1" indicates Squeezenet
- */
-async function loadMyTransferModel(modelIdx) {
-  const myModel = modelInfo[modelIdx];
-  const transferModel = await tf.loadModel(myModel["url"]);
-  const layer = transferModel.getLayer(myModel["lastLayer"]);
+// Loads transfer model and returns a model that returns the internal activation 
+// we'll use as input to our classifier model. 
+async function loadTransferModel() {
+  const transferModel = await tf.loadModel(currentModel["url"]);
+  const layer = transferModel.getLayer(currentModel["lastLayer"]);
   return tf.model({inputs: transferModel.inputs, outputs: layer.output});
 }
 
@@ -111,12 +100,18 @@ ui.setAddExampleHandler((labelId, datasetName) => {
   tf.tidy(async () => {
     const img = webcam.capture();
 
-    if (datasetName === "training") {
-      trainingDatasetMobilenet.addExample(img, mobilenet.predict(img), labelId);
-      trainingDatasetSqueezenet.addExample(img, squeezenet.predict(img), labelId);
+    if (datasetName == "training") {
+      if (labelId in trainingImgDict) {
+        trainingImgDict[labelId].push(tf.keep(img)); 
+      } else {
+        trainingImgDict[labelId] = [tf.keep(img)]; 
+      }
     } else {
-      testingDatasetMobilenet.addExample(img, mobilenet.predict(img), labelId);
-      testingDatasetSqueezenet.addExample(img, squeezenet.predict(img), labelId);
+      if (labelId in testingImgDict) {
+        testingImgDict[labelId].push(tf.keep(img));
+      } else {
+        testingImgDict[labelId] = [tf.keep(img)];
+      }
     }
 
     ui.drawThumb(img, datasetName, labelId);
@@ -128,12 +123,15 @@ ui.setAddLabelHandler(labelName => {
   return trainingDataset.addLabel(labelName);
 });
 ui.setRemoveLabelHandler(labelId => {
+  delete trainingImgDict[labelId]; 
+  delete testingImgDict[labelId]; 
   testingDataset.removeLabel(labelId);
   trainingDataset.removeLabel(labelId);
 });
 
 // Methods for adding layers to the model 
 const addButton = document.getElementById("add");
+const modelWrapper = document.getElementById("inputWrapper-0");
 let i = 2;
 addButton.addEventListener("click", add);
 
@@ -174,15 +172,20 @@ function clockRunning(){
 async function train() {
   // look at input from dropdown menu 
   let currentModelIdx = document.getElementById("choose-model-dropdown").value;
-  isMobilenet = (currentModelIdx == "0");
+  currentModel = modelInfo[currentModelIdx]; // dictionary obj of model info 
+
+  transferModel = await loadTransferModel(); 
 
   // gets rid of old tensors 
   trainingDataset.removeExamples();
 
-  if (isMobilenet) {
-    trainingDataset = cloneDeep(trainingDatasetMobilenet);
-  } else {
-    trainingDataset = cloneDeep(trainingDatasetSqueezenet);
+  // loop over trainingImgDict and testingImgDict and process 
+  for (let label in trainingImgDict) {
+    for (let img in trainingImgDict[label]) {
+      const img_copy = tf.clone(trainingImgDict[label][img]); 
+      trainingDataset.addExample(trainingImgDict[label][img], transferModel.predict(trainingImgDict[label][img]), label); 
+      trainingImgDict[label][img] = tf.keep(img_copy); 
+    }
   }
 
   // Creates a model based on layer inputs. By creating a separate model,
@@ -270,7 +273,7 @@ async function train() {
   
   // reset & start 
   stoppedDuration = 0
-  document.getElementById("training-time").style.display = "inline";
+  document.getElementById("training-time").style.display = "inline";
   document.getElementById("display-area").innerHTML = "00:00:00.000";
   timeBegan = new Date();
   started = setInterval(clockRunning, 10); 
@@ -333,7 +336,8 @@ document.getElementById('train').addEventListener('click', async () => {
   document.getElementById("model-error").innerHTML = "";
 
   // First, verify we have examples 
-  if (trainingDatasetMobilenet.labelXs == {} && trainingDatasetSqueezenet.labelXs == {}) {
+  // if (Object.values(trainingImgDict) == []) {
+  if (Object.values(trainingImgDict).length == 0) {
     document.getElementById("train-error").innerHTML = "Add some examples before training!";
     throw new Error('Add some examples before training!');
   }
@@ -384,9 +388,9 @@ document.getElementById('train').addEventListener('click', async () => {
   await tf.nextFrame();
   await tf.nextFrame();
 
-  // set display to "Building model..." 
-  document.getElementById("training-time").style.display = "none";
-  document.getElementById("display-area").innerHTML = "Building model...";
+  // set display to say Checking Model...
+  document.getElementById("training-time").style.display = "none";
+  document.getElementById("display-area").innerHTML = "Checking Model...";
 
   await train();
 
@@ -405,10 +409,13 @@ document.getElementById('predict').addEventListener('click', async () => {
   // gets rid of old tensors 
   testingDataset.removeExamples();
 
-  if (isMobilenet) {
-    trainingDataset = cloneDeep(trainingDatasetMobilenet);
-  } else {
-    trainingDataset = cloneDeep(trainingDatasetSqueezenet);
+  // loop over testingImgDict and testingImgDict and process 
+  for (let label in testingImgDict) {
+    for (let img in testingImgDict[label]) {
+      const img_copy = tf.clone(testingImgDict[label][img]); 
+      testingDataset.addExample(testingImgDict[label][img], transferModel.predict(testingImgDict[label][img]), label); 
+      testingImgDict[label][img] = tf.keep(img_copy); 
+    }
   }
 
   testingResults = await predict(testingDataset, trainingDataset.getCurrentLabelNamesJson());
@@ -546,9 +553,6 @@ async function init() {
 
   ui.init();
   modal.init();
-
-  mobilenet = loadMyTransferModel("0");
-  squeezenet = loadMyTransferModel("1");
 
   const firstLayer = new LayerNode("0", null, false, "conv-0");
   const lastLayer = new LayerNode("final", null, false, "fc-final");
