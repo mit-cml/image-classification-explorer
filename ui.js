@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs';
+import {Webcam} from './webcam';
 
 export function init() {
   document.getElementById('explorer').style.display = '';
@@ -49,6 +50,11 @@ export function trainStatus(status) {
 export let addExampleHandler;
 export function setAddExampleHandler(handler) {
   addExampleHandler = handler;
+}
+//copy of setAddExampleHandler but for uploaded files NATALIE
+export let addExampleHandlerUpload;
+export function setAddExampleHandlerUpload(handler) {
+  addExampleHandlerUpload = handler;
 }
 
 export let addLabelHandler;
@@ -184,8 +190,83 @@ export function addLabel(newLabelName) {
     labelBox.appendChild(labelImagesOuter)
     labelBox.appendChild(labelDescriptionOuter);
 
+    //NATALIE'S ADD IMAGES VIA COMPUTER CODE BEGIN
+    
+    const addLocalImg = document.createElement("div");
+    addLocalImg.setAttribute("class", "add-local-image");
+    
+    const addImgButton = document.createElement("input");
+    addImgButton.setAttribute("type", "file");
+
+    addImgButton.addEventListener('change', function(){
+        var reader  = new FileReader();
+        var imgFile = this.files[0];
+
+        /*reader.onloadend = function () {
+          console.log("IN READER ONLOADEND")
+          uploadImg.src = reader.result;
+          console.log(uploadImg.src)
+          //TODO: tf.tidy tempImg and store into the right dataset
+        }*/
+
+        //CHECK IF THE LOCAL FILE IS AN IMAGE
+
+        if (imgFile.type.split('/')[0]=='image'){
+          //uploadImg.src = URL.createObjectURL(imgFile); no width or height
+          //reader.readAsDataURL(imgFile);
+
+          var _URL = window.URL || window.webkitURL;
+          var uploadImg = new Image();
+
+          var imgToTensor4D = null;
+          
+          uploadImg.onload = function () {
+            console.log("INSIDE ONLOAD")
+            imgToTensor4D = tf.tidy(() => {
+              //copied from webcam.capture
+              var webcamImage2 = tf.fromPixels(uploadImg)
+              console.log(webcamImage2)
+              var croppedImage2 = webcamPortedCropImage(webcamImage2);
+              console.log(croppedImage2)
+              var batchedImage2 = croppedImage2.expandDims(0);
+              console.log(batchedImage2)
+              return batchedImage2.toFloat().div(tf.scalar(127)).sub(tf.scalar(1));              
+            });
+
+            //THIS IS STUFF FROM function addExample(labelCountSpan, labelId, datasetName) replace with newLabelId
+            labelCountSpan.textContent = parseInt(labelCountSpan.textContent) + 1;
+          
+            addExampleHandlerUpload(newLabelId, datasetName, imgToTensor4D);
+          }
+
+          uploadImg.src = _URL.createObjectURL(imgFile);
+        }
+        else{
+          alert("The file was not a valid image. Please import JPEG, PNG, or GIF file types only.");
+          //CLEARS THE INPUT FILE
+          addImgButton.value = null
+        }
+      }
+    );
+
+    addLocalImg.appendChild(addImgButton);
+    labelBox.appendChild(addLocalImg);
+
+    //NATALIE END
+
     labelsOuter.appendChild(labelBox);
   }
+}
+
+//HACKY ported from webcam.js, can figure out how to call it directly later
+//for some reason I can't call it from the imported {Webcam} class... Prolly cuz i dont know javascript lol
+function webcamPortedCropImage(img) {
+  const size = Math.min(img.shape[0], img.shape[1]);
+  const centerHeight = img.shape[0] / 2;
+  const beginHeight = centerHeight - (size / 2);
+  const centerWidth = img.shape[1] / 2;
+  const beginWidth = centerWidth - (size / 2);
+  return img.slice([beginHeight, beginWidth, 0], [size, size, 3]);
 }
 
 function addExample(labelCountSpan, labelId, datasetName) {

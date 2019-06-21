@@ -120,6 +120,29 @@ ui.setAddExampleHandler((labelId, datasetName) => {
   });
 });
 
+// NATALIE copy of above for uploads
+ui.setAddExampleHandlerUpload((labelId, datasetName, uploadedTensor) => {
+  tf.tidy(async () => {
+    const img = uploadedTensor;
+
+    if (datasetName == "training") {
+      if (labelId in trainingImgDict) {
+        trainingImgDict[labelId].push(tf.keep(img)); 
+      } else {
+        trainingImgDict[labelId] = [tf.keep(img)]; 
+      }
+    } else {
+      if (labelId in testingImgDict) {
+        testingImgDict[labelId].push(tf.keep(img));
+      } else {
+        testingImgDict[labelId] = [tf.keep(img)];
+      }
+    }
+
+    ui.drawThumb(img, datasetName, labelId);
+  });
+});
+
 ui.setAddLabelHandler(labelName => {
   testingDataset.addLabel(labelName);
   return trainingDataset.addLabel(labelName);
