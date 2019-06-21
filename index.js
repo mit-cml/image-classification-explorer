@@ -120,7 +120,7 @@ ui.setAddExampleHandler((labelId, datasetName) => {
   });
 });
 
-// NATALIE copy of above for uploads
+// NATALIE START copy of above for uploads
 ui.setAddExampleHandlerUpload((labelId, datasetName, uploadedTensor) => {
   tf.tidy(async () => {
     const img = uploadedTensor;
@@ -142,6 +142,7 @@ ui.setAddExampleHandlerUpload((labelId, datasetName, uploadedTensor) => {
     ui.drawThumb(img, datasetName, labelId);
   });
 });
+//NATALIE END
 
 ui.setAddLabelHandler(labelName => {
   testingDataset.addLabel(labelName);
@@ -206,7 +207,9 @@ async function train() {
 
   // loop over trainingImgDict and testingImgDict and process 
   for (let label in trainingImgDict) {
+    console.log("in first part of forloop train")
     for (let img in trainingImgDict[label]) {
+      console.log("in second part of forloop train")
       const img_copy = tf.clone(trainingImgDict[label][img]); 
       trainingDataset.addExample(trainingImgDict[label][img], transferModel.predict(trainingImgDict[label][img]), label); 
       trainingImgDict[label][img] = tf.keep(img_copy); 

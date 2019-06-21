@@ -190,8 +190,7 @@ export function addLabel(newLabelName) {
     labelBox.appendChild(labelImagesOuter)
     labelBox.appendChild(labelDescriptionOuter);
 
-    //NATALIE'S ADD IMAGES VIA COMPUTER CODE BEGIN
-    
+    //NATALIE START ADD UPLOAD BUTTON
     const addLocalImg = document.createElement("div");
     addLocalImg.setAttribute("class", "add-local-image");
     
@@ -268,6 +267,7 @@ export function addLabel(newLabelName) {
   }
 }
 
+//NATALIE START HELPER METHOD
 //HACKY ported from webcam.js, can figure out how to call it directly later
 //for some reason I can't call it from the imported {Webcam} class... Prolly cuz i dont know javascript lol
 function webcamPortedCropImage(img) {
@@ -278,6 +278,7 @@ function webcamPortedCropImage(img) {
   const beginWidth = centerWidth - (size / 2);
   return img.slice([beginHeight, beginWidth, 0], [size, size, 3]);
 }
+//NATALIE END
 
 function addExample(labelCountSpan, labelId, datasetName) {
   labelCountSpan.textContent = parseInt(labelCountSpan.textContent) + 1;
