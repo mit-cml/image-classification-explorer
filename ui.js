@@ -221,15 +221,25 @@ export function addLabel(newLabelName) {
           var imgToTensor4D = null;
           
           uploadImg.onload = function () {
-            console.log("INSIDE ONLOAD")
+            //console.log("INSIDE ONLOAD")
+            //shrink smallest part to 224
+            var ratio = Math.min(224/uploadImg.width, 224/uploadImg.width);
+            //console.log("ratio: "+ratio)
+            uploadImg.width = uploadImg.width*ratio
+            uploadImg.height = uploadImg.height*ratio
+
+            //console.log("new width and height: "+uploadImg.width+" "+uploadImg.height)
+
             imgToTensor4D = tf.tidy(() => {
               //copied from webcam.capture
               var webcamImage2 = tf.fromPixels(uploadImg)
-              console.log(webcamImage2)
+              //console.log("After fromPixels: "+webcamImage2.shape)
               var croppedImage2 = webcamPortedCropImage(webcamImage2);
-              console.log(croppedImage2)
+              //console.log("After cropping: "+croppedImage2.shape)
               var batchedImage2 = croppedImage2.expandDims(0);
-              console.log(batchedImage2)
+              //console.log("After expand dims: "+batchedImage2.shape)
+
+              //console.log("Final output: "+batchedImage2.toFloat().div(tf.scalar(127)).sub(tf.scalar(1)).shape)
               return batchedImage2.toFloat().div(tf.scalar(127)).sub(tf.scalar(1));              
             });
 

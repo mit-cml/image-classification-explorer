@@ -33,18 +33,23 @@ export class Webcam {
    */
   capture() {
     return tf.tidy(() => {
+      //console.log("Inside Webcam")
       // Reads the image as a Tensor from the webcam <video> element.      
       const webcamImage = tf.fromPixels(this.webcamElement);     
+      //console.log("After fromPixels: "+webcamImage.shape)
 
       // Crop the image so we're using the center square of the rectangular
       // webcam.
       const croppedImage = this.cropImage(webcamImage);
+      //console.log("After croppedImage: "+croppedImage.shape)
 
       // Expand the outer most dimension so we have a batch size of 1.
       const batchedImage = croppedImage.expandDims(0);
+      //console.log("After expand dims: "+batchedImage.shape)
 
       // Normalize the image between -1 and 1. The image comes in between 0-255,
       // so we divide by 127 and subtract 1.
+      //console.log("Final output: "+batchedImage.toFloat().div(tf.scalar(127)).sub(tf.scalar(1)).shape)
       return batchedImage.toFloat().div(tf.scalar(127)).sub(tf.scalar(1));
     });
   }
