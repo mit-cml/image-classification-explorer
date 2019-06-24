@@ -222,12 +222,18 @@ export function addLabel(newLabelName) {
           uploadImg.onload = function () {
             //console.log("INSIDE ONLOAD")
             //shrink smallest part to 224
-            var ratio = Math.min(224/uploadImg.width, 224/uploadImg.width);
-            //console.log("ratio: "+ratio)
-            uploadImg.width = uploadImg.width*ratio
-            uploadImg.height = uploadImg.height*ratio
-
-            //console.log("new width and height: "+uploadImg.width+" "+uploadImg.height)
+            console.log("initial width and height: "+uploadImg.width+" "+uploadImg.height)
+            if (uploadImg.width > uploadImg.height){
+              var ratio = 224/uploadImg.height
+              uploadImg.width = uploadImg.width*ratio
+              uploadImg.height = 224
+            } else{
+              var ratio = 224/uploadImg.width
+              uploadImg.width = 224
+              uploadImg.height = uploadImg.height*ratio
+            }
+            console.log("ratio: "+ratio)
+            console.log("new width and height: "+uploadImg.width+" "+uploadImg.height)
 
             imgToTensor4D = tf.tidy(() => {
               //copied from webcam.capture
