@@ -53,7 +53,7 @@ const webcam = new Webcam(document.getElementById('webcam'));
 
 // Model Information 
 const modelInfo = {"0": {"name": "mobilenet", "lastLayer": "conv_pw_13_relu", "url": "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json"},
-                    "1": {"name": "squeezenet", "lastLayer": "max_pooling2d_1", "url": "http://127.0.0.1:8081/model.json"}}
+                    "1": {"name": "squeezenet", "lastLayer": "max_pooling2d_1", "url": "https://classifier.appinventor.mit.edu:8080/model.json"}}
 // run http-server . --cors -o in squeezenet folder 
 let currentModel = modelInfo["0"]; // default current model to MobileNet 
 
