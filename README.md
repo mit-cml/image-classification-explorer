@@ -8,3 +8,5 @@ cd image-classification-explorer
 yarn
 yarn watch
 ```
+
+Will need to yarn build after restart
