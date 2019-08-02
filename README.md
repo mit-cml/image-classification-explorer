@@ -13,7 +13,7 @@ When make changes, pull from this branch in the vm, then yarn build.
 The http-server will automatically update after yarn build.
 
 
-INSTRUCTIONS BELOW NOW COVERED BY JUST RUNNING run-me.sh
+INSTRUCTIONS BELOW NOW COVERED BY JUST RUNNING ./run-me.sh (in ~)
 
 If the http-server process dies, cd into image-classification-explorer and yarn build. 
 cd ~/, you should see cert.pem and key.pem
