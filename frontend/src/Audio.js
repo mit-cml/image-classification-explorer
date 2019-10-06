@@ -2,6 +2,9 @@
 import React from 'react';
 import { ReactMic } from '@cleandersonlobo/react-mic';
 import Button from 'react-bootstrap/Button';
+import DropdownButton from 'react-bootstrap/DropdownButton';
+import Dropdown from 'react-bootstrap/Dropdown';
+
 import './App.css';
 import redCircle from'./images/red_circle.png';
 
@@ -20,10 +23,15 @@ class Audio extends React.Component {
 
         this.state = { 
             record: false,
-            countdown: this.maxAudioTime,
-            image: undefined,
+            countdown: this.maxAudioTime,   
+            allLabels: this.props.allLabels,
+            currentLabel: this.props.allLabels[0],        
         }
 
+    }
+
+    componentWillReceiveProps(nextProps) {
+        this.setState({ allLabels: nextProps.allLabels });  
     }
     
     decrement = () => {
@@ -64,7 +72,7 @@ class Audio extends React.Component {
                 let result = reader.result;
                 // console.log("IMAGE STATE UPDATED")
                 // this.setState({image: result}); 
-                this.props.handleNewImage(result)
+                this.props.handleNewImage(result, this.state.currentLabel)
             }
         })
 
@@ -108,10 +116,27 @@ class Audio extends React.Component {
         return reader;
     }
 
+    handleDropdownSelect(selectedLabel) {
+        this.setState({currentLabel: selectedLabel})
+    }
     render () {
-        console.log(this.state);
         return (
             <div className="record-box">
+                <div className="recording-for-dropdown-wrapper">
+                    <a className="record-p">RECORDING FOR: &nbsp;</a>
+                    <DropdownButton 
+                        disabled={this.state.allLabels.length === 0}
+                        title={this.state.allLabels.length === 0 ? "No Labels" : this.state.currentLabel} 
+                        size="sm" 
+                        variant="outline-light"
+                    >
+                        {this.state.allLabels.map(l => {
+                            return (
+                                <Dropdown.Item key={l} onClick={() => this.handleDropdownSelect(l)}>{l}</Dropdown.Item>
+                            )
+                        })}
+                    </DropdownButton>
+                </div>
                 <ReactMic
                     record={this.state.record}
                     className="sound-wave"
@@ -119,10 +144,10 @@ class Audio extends React.Component {
                     strokeColor="#adc2ff"
                     backgroundColor="#1a1a1d" 
                     width={200}
-                    height={40}
+                    height={140}
                     />
                 <div className="record-and-countdown">
-                    <Button onClick={this.startRecording} variant="dark" size="sm" className="record-button">
+                    <Button onClick={this.startRecording} disabled={this.state.allLabels.length === 0} variant="outline-light" className="record-button">
                         {this.state.record ? [
                             <img key={0} src={redCircle} width={10} height={10}/>,
                             <span key={1}>&nbsp;&nbsp;</span>,
