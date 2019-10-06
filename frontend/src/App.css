@@ -1,0 +1,227 @@
+@font-face {
+  font-family: 'DJB';
+  src: local('DJB'), url(./fonts/DJB.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Poppins-Regular';
+  src: local('Poppins-Regular'), url(./fonts/Poppins-Regular.otf) format('truetype');
+}
+
+@-webkit-keyframes slide-out-bck-center {
+  0% {
+    -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+    opacity: 1;
+  }
+  100% {
+    -webkit-transform: translateZ(-1100px);
+            transform: translateZ(-1100px);
+    opacity: 0;
+  }
+}
+@keyframes slide-out-bck-center {
+  0% {
+    -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+    opacity: 1;
+  }
+  100% {
+    -webkit-transform: translateZ(-1100px);
+            transform: translateZ(-1100px);
+    opacity: 0;
+  }
+}
+
+@-webkit-keyframes slide-in-fwd-center {
+  0% {
+    -webkit-transform: translateZ(-1400px);
+            transform: translateZ(-1400px);
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+    opacity: 1;
+  }
+}
+@keyframes slide-in-fwd-center {
+  0% {
+    -webkit-transform: translateZ(-1400px);
+            transform: translateZ(-1400px);
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+    opacity: 1;
+  }
+}
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+}
+
+.App-header {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #09d3ac;
+}
+
+.record-box {
+  background-color: #1a1a1d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  border-radius: 6px 0px 0px 6px;
+  /* border-right: 2px solid #adc2ff; */
+}
+
+.title-box {
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-family: Poppins-Regular;
+}
+
+.title-box input{
+  border: none;
+  width: 125px;
+  outline: none;
+  resize: none;
+  white-space: nowrap;
+  overflow-x: scroll;
+  background: transparent;
+  margin: 0px 10px 0px 20px;
+  color: white;
+  font-size: 24px;
+  height: 30px;
+}
+
+.title-box input:focus{
+  color: #adc2ff;
+  opacity: .75;
+  font-style: italic;
+}
+
+.label-border {
+  padding: 5px;
+  margin: 5px;
+  background-color: #adc2ff;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px #757575;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.label-box {
+  background-color: #1a1a1d;
+  border-radius: 6px;
+  /* border: 5px solid #adc2ff;
+  box-shadow: 0 10px 25px #757575; */
+  
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  /* border: 2px solid black; */
+}
+
+.image-box {
+  background-color: #1a1a1d;
+  border-radius: 6px;
+  padding: 3px;
+  margin-left: 10px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-content: flex-start;
+  flex-wrap: wrap;
+  width: 370px;
+  max-height: 128px;
+  overflow-y: auto;
+}
+
+/* .image-text {
+  width: 80px;
+  margin: 0px;
+  font-size: 12px;
+  font-family: Poppins-Regular;
+} */
+
+.image {
+  border-radius: 3px;
+  margin: 3px;
+  height: 50px;
+}
+
+#image-wrapper {
+  height: 56px; /* .image(height) + 2*.image(margin)*/
+}
+
+#image-wrapper .text {
+  transform: scale(1, .8);
+  cursor: pointer;
+  position:relative;
+  font-size: 14px;
+  color: white;
+  bottom:55px;
+  left:26px;
+  visibility:hidden;
+  margin: 0px;
+}
+  
+#image-wrapper:hover .text {
+  visibility:visible;
+}
+  
+.countdown {
+  margin: 2px 0px 0px 0px;
+  font-family: DJB;
+  font-size: 16px;
+}
+
+.record-button {
+  max-width: 200px;
+  margin-right: 12px;
+}
+
+.vertical-line {
+  display: flex;
+  width: 20px;
+  /* border-left: 2px solid white; */
+}
+
+.record-and-countdown {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 5px 0px 0px 45px;
+}
+
+.slide-in-fwd-center {
+	-webkit-animation: slide-in-fwd-center 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+	        animation: slide-in-fwd-center 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+}
+
+.slide-out-bck-center {
+	-webkit-animation: slide-out-bck-center 0.5s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+	        animation: slide-out-bck-center 0.5s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+}
