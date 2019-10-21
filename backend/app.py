@@ -1,9 +1,12 @@
 from flask import Flask, request, Response, json, send_file
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
+import requests
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/")
 def index():
@@ -33,6 +36,14 @@ def spectrogram():
 	# return Response(json.dumps("Here's your spectrogram!"), status=200)
 	return send_file('./temp/spectrogram.png', mimetype='image/png')
 
+@app.route("/mobilenet", methods=['GET'])
+def mobilenet():
+	# return send_file('./models/mobilenet.json', mimetype='application/json')
+	return Response(requests.get('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json').text, mimetype="application/json")
+
+@app.route("/squeezenet", methods=['GET'])
+def squeezenet():
+	return send_file('./models/squeezenet.json', mimetype='application/json')
 
 if __name__ == "__main__":
     app.run()

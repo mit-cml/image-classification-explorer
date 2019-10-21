@@ -22,7 +22,7 @@ class Label extends React.Component {
 
     render () {
         return (
-            <div className="label-border">
+            <div className="label-border scale-in-center">
                 <div className="label-box">
                     <div className="title-box">
                         <p className="name-p">{this.state.name}</p>
@@ -37,7 +37,7 @@ class Label extends React.Component {
                         {this.state.images.map(i => {
                             return (
                                 <div id="image-wrapper" key={i}>
-                                    <img src={i} className="slide-in-fwd-center image hover"></img>
+                                    <img src={i} className="image hover"></img>
                                     <p className="text" onClick={() => this.props.handleRemoveImage(i, this.state.name)}>x</p>
                                 </div>
                             )

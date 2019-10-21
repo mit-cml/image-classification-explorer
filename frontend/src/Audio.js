@@ -25,13 +25,17 @@ class Audio extends React.Component {
             record: false,
             countdown: this.maxAudioTime,   
             allLabels: this.props.allLabels,
-            currentLabel: this.props.allLabels[0],        
+            currentLabel: this.props.allLabels.length === 0 ? undefined : this.props.allLabels[0],        
         }
 
     }
 
     componentWillReceiveProps(nextProps) {
-        this.setState({ allLabels: nextProps.allLabels });  
+        this.setState({ allLabels: nextProps.allLabels });
+        if(this.state.currentLabel === undefined) {
+            this.setState({currentLabel: nextProps.allLabels[0]})
+        } 
+        
     }
     
     decrement = () => {
@@ -119,6 +123,7 @@ class Audio extends React.Component {
     handleDropdownSelect(selectedLabel) {
         this.setState({currentLabel: selectedLabel})
     }
+
     render () {
         return (
             <div className="record-box">
