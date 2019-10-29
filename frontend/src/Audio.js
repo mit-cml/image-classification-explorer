@@ -12,7 +12,7 @@ class Audio extends React.Component {
     constructor(props) {
         super(props)
 
-        this.maxAudioTime = 2
+        this.maxAudioTime = 1
         this.startRecording = this.startRecording.bind(this)
         this.stopRecording = this.stopRecording.bind(this)
         this.onStop = this.onStop.bind(this)

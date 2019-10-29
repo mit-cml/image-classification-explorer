@@ -88,12 +88,12 @@
 }
 
 .App-header {
-  background-color: #EDEEF0;
+  background-color: #ffffff;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   font-size: calc(10px + 2vmin);
   color: white;
 }
@@ -153,6 +153,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 498px;
 }
 
 .label-box {
@@ -176,7 +177,7 @@
   justify-content: flex-start;
   align-content: flex-start;
   flex-wrap: wrap;
-  width: 370px;
+  width: 297px;
   max-height: 128px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -270,7 +271,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 5px 0px 0px 45px;
+  margin: 5px 0px 0px 40px;
 }
 
 .view-all {
@@ -278,30 +279,36 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 90vh;
+  height: 50vh;
   width: 90vw;
 }
 
 .all-labels {
   display: flex;
   flex-direction: column;
-  margin: 0px 10px 0px 0px;
-  min-width: 565px;
+  min-width: 530px;
   max-height: 80vh;
   overflow: auto;
-  padding: 0px 20px 20px 10px;
+  padding: 0px 0px 35px 10px;
 
 }
 
 .plus-wrapper {
   display: flex;
-  justify-content: flex-end;
-  margin: 10px 0px 0px 0px;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin: 0px 0px 5px 0px;
+  height: 35px;
+  width: 500px;
+}
+
+.plus-wrapper .btn {
+  height: 28px;
 }
 
 .plus {
   width: 25px;
-  margin: 0px 10px 0px 0px;
+  margin: 0px 0px 0px 5px;
   filter: drop-shadow(2px 2px 2px #757575);
 }
 
@@ -363,7 +370,7 @@
   align-items: center;
   background-color: #1a1a1d;
   width: 270px;
-  min-height: 320px;
+  min-height: 275px;
   border: 5px solid #adc2ff;
   border-radius: 6px 6px 6px 6px;
   box-shadow: 0 10px 10px #757575;
@@ -384,6 +391,20 @@
   margin: 0px;
   color: black;
   font-family: Poppins-Regular;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+}
+
+.message {
+  font-family: Poppins-Regular;
+  color: black;
+  font-size: 20px;
 }
 
 

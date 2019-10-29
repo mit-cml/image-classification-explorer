@@ -21,8 +21,6 @@ class LabelView extends React.Component {
 
         this.state = { 
             imageMap: {
-            "Hello": [],
-            "Bye": []
             }
         }
     }
@@ -85,7 +83,7 @@ class LabelView extends React.Component {
                     <div className="plus-wrapper">
                         <OverlayTrigger
                             trigger="click"
-                            placement={"left"}
+                            placement={"right"}
                             rootClose={true}
                             overlay={
                                 <Popover>
@@ -104,6 +102,13 @@ class LabelView extends React.Component {
                             >
                             <img src={plus} className="plus"></img>
                         </OverlayTrigger>
+                        <Link 
+                    to={{
+                        pathname: "/test",
+                        state: {imageMap: this.state.imageMap}}}
+                >
+                    <Button variant="dark" size="sm">Train</Button>
+                </Link>
                     </div>
                     {Object.keys(this.state.imageMap).map(k => {
                         return (
@@ -115,13 +120,7 @@ class LabelView extends React.Component {
                         )
                     })}
                 </div>
-                <Link 
-                    to={{
-                        pathname: "/test",
-                        state: {imageMap: this.state.imageMap}}}
-                >
-                    <Button variant="dark">Train</Button>
-                </Link>
+
             </div>
         )
     }
