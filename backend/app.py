@@ -5,18 +5,18 @@ import requests
 from flask_cors import CORS
 
 
-app = Flask(__name__)
-CORS(app)
+application = Flask(__name__)
+CORS(application)
 
-@app.route("/")
+@application.route("/")
 def index():
     return "Index!"
 
-@app.route("/hello")
+@application.route("/hello")
 def hello():
     return "Hello World!"
 
-@app.route("/spectrogram", methods=['POST'])
+@application.route("/spectrogram", methods=['POST'])
 def spectrogram():
 	print(request.data)
 
@@ -36,14 +36,14 @@ def spectrogram():
 	# return Response(json.dumps("Here's your spectrogram!"), status=200)
 	return send_file('./temp/spectrogram.png', mimetype='image/png')
 
-@app.route("/mobilenet", methods=['GET'])
+@application.route("/mobilenet", methods=['GET'])
 def mobilenet():
-	# return send_file('./models/mobilenet.json', mimetype='application/json')
-	return Response(requests.get('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json').text, mimetype="application/json")
+	# return send_file('./models/mobilenet.json', mimetype='applicationlication/json')
+	return Response(requests.get('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json').text, mimetype="applicationlication/json")
 
-@app.route("/squeezenet", methods=['GET'])
+@application.route("/squeezenet", methods=['GET'])
 def squeezenet():
-	return send_file('./models/squeezenet.json', mimetype='application/json')
+	return send_file('./models/squeezenet.json', mimetype='applicationlication/json')
 
 if __name__ == "__main__":
-    app.run()
+    application.run()

@@ -55,7 +55,7 @@ class TestView extends React.Component {
         //     'conv_dw_13'
         // ];
         console.log('Loading mobilenet..');
-        this.setState({message: "Loading mobilenet...", progress: 30})
+        this.setState({message: "Loading mobilenet...", progress: 20})
 
         // const model = await tf.loadLayersModel("http://localhost:3000/mobilenet");
         const model = await tf.loadLayersModel(
@@ -73,7 +73,7 @@ class TestView extends React.Component {
         const layer = model.getLayer("conv_pw_13_relu")
         let modelModified = tf.model({inputs: model.inputs, outputs: layer.output, name: 'modelModified' });
         console.log('Mobilenet model is modified')
-        setTimeout(() => this.setState({message: "Truncating mobilenet...", progress: 50}), 0)
+        this.setState({message: "Truncating mobilenet...", progress: 50})
 
         // modelModified = this.freezeModelLayers(trainableLayers,modelModified)
         // console.log('ModifiedMobilenet model layers are frozen')
@@ -215,7 +215,7 @@ class TestView extends React.Component {
         //     console.log('All', logs);
         // }
         console.log('Building the model...');
-        setTimeout(() => this.setState({message: "Building custom model...", progress: 40}), 0)
+        this.setState({message: "Building custom model...", progress: 70})
 
         var model = tf.sequential();
 
