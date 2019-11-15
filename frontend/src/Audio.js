@@ -1,5 +1,9 @@
 // @ts-ignore
 import React from 'react';
+import chroma from 'chroma-js';
+// import spectrogram from 'spectrogram';
+// import spectrogram from 'spectrogram-fork';
+import spectrogram from './spectrogram';
 import { ReactMic } from '@cleandersonlobo/react-mic';
 import Button from 'react-bootstrap/Button';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -69,16 +73,18 @@ class Audio extends React.Component {
     }
 
     onStop = (recordedBlob) => {
-        console.log('recordedBlob is: ', recordedBlob);
+        // console.log('recordedBlob is: ', recordedBlob);
 
-        this.getSpectrogram(recordedBlob).then(reader => {
-            reader.onload = () => { 
-                let result = reader.result;
-                // console.log("IMAGE STATE UPDATED")
-                // this.setState({image: result}); 
-                this.props.handleNewImage(result, this.state.currentLabel)
-            }
-        })
+        // this.getSpectrogram(recordedBlob).then(reader => {
+        //     reader.onload = () => { 
+        //         let result = reader.result;
+        //         // console.log("IMAGE STATE UPDATED")
+        //         // this.setState({image: result}); 
+        //         this.props.handleNewImage(result, this.state.currentLabel)
+        //     }
+        // })
+
+        this.getSpectrogram(recordedBlob)
 
         // var blob = new Blob([recordedBlob], {type: "audio/wav"})
         // var url = window.URL.createObjectURL(blob);
@@ -108,16 +114,71 @@ class Audio extends React.Component {
     }
 
     getSpectrogram = async (recordedBlob) => {
-        const response = await fetch('/spectrogram', {
-            method: 'POST',
-            body: recordedBlob.blob
+        console.log("AUDIO BLOB:")
+        console.log(recordedBlob)
+
+        // const response = await fetch('/spectrogram', {
+        //     method: 'POST',
+        //     body: recordedBlob.blob
+        // });
+        // const blob = await response.blob()
+        // // let matrixBlob = new Blob([res.data], {type:"image/png"}); 
+        // let reader = new FileReader();
+        // reader.readAsDataURL(blob); 
+        // return reader;
+
+        var canvas = document.createElement('canvas')
+        canvas.width = 200;
+        canvas.height = 200;
+        // document.body.appendChild(canvas)
+ 
+        var spectro = spectrogram(canvas, {
+            audio: {
+                enable: false
+            },
+            colors: (steps) => {
+                var baseColors = [[65,65,90,1], [0,255,255,1], [0,255,0,1], [255,255,0,1], [ 255,0,0,1]];
+                var positions = [0, 0.15, 0.30, 0.50, 0.75];
+             
+                var scale = new chroma.scale(baseColors, positions)
+                .domain([0, steps]);
+             
+                var colors = [];
+             
+                for (var i = 0; i < steps; ++i) {
+                  var color = scale(i);
+                  colors.push(color.hex());
+                }
+             
+                return colors;
+              }
         });
-        const blob = await response.blob()
-        // let matrixBlob = new Blob([res.data], {type:"image/png"}); 
-        let reader = new FileReader();
-        reader.readAsDataURL(blob); 
         
-        return reader;
+        var audioContext = new AudioContext({sampleRate: 384000});
+        var request = new XMLHttpRequest();
+        request.open('GET', URL.createObjectURL(recordedBlob.blob), true);
+        request.responseType = 'arraybuffer';
+
+        request.onload = () => {
+            audioContext.decodeAudioData(request.response, (buffer) => {
+                spectro.connectSource(buffer, audioContext);
+                var canvasPromise = new Promise(function(resolve, reject) {
+                    spectro.start(0, resolve);
+                })
+                canvasPromise.then(() => {
+                    console.log("Promise Resolved")
+                    var dataURL = canvas.toDataURL();
+                    console.log(dataURL)
+                    this.props.handleNewImage(dataURL, this.state.currentLabel)
+                })
+            });
+        };
+        request.send();
+        
+
+
+
+
     }
 
     handleDropdownSelect(selectedLabel) {

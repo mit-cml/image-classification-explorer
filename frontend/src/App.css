@@ -190,6 +190,7 @@
 
 .record-box {
   height: 275px;
+  width: 275px;
   background-color: #1a1a1d;
   display: flex;
   flex-direction: column;
@@ -240,8 +241,8 @@
   position:relative;
   font-size: 14px;
   color: white;
-  bottom:55px;
-  left:26px;
+  bottom:57px;
+  left:19px;
   visibility:hidden;
   margin: 0px;
 }
@@ -323,7 +324,7 @@
 
 .navbar {
   width: 100vw;
-  height: 60px;
+  height: 50px;
 }
 
 .nav-link {
@@ -337,16 +338,27 @@
   justify-content: flex-start;
   align-items: center;
   background-color: #1a1a1d;
-  width: 300px;
+  width: 275px;
   height: 275px;
   border: 5px solid #adc2ff;
   border-radius: 6px 6px 6px 6px;
   box-shadow: 0 10px 10px #757575;
   margin: 0px 20px;
-  padding: 20px 5px 5px 5px;
+  padding: 15px 5px 5px 5px;
 }
 
 .test-pic-p {
+  white-space: nowrap;
+  overflow-x: scroll;
+  margin: 0px 0px 10px 0px;
+  background: transparent;
+  color: white;
+  font-size: 14px;
+  font-family: Poppins-Regular;
+  min-height: 20px;
+}
+
+.classification-p {
   white-space: nowrap;
   overflow-x: scroll;
   margin: 0px 0px 20px 0px;
@@ -360,7 +372,12 @@
 .test-pic {
   border-radius: 3px;
   margin: 3px;
-  height: 180px;
+  height: 200px;
+}
+
+.results-cell-pic {
+  border-radius: 5px;
+  margin-bottom: 5px;
 }
 
 .results-background {
@@ -378,6 +395,35 @@
   padding: 15px 5px 10px 5px;
 }
 
+.results-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  margin: 20px 0px;
+  width: 75vw;
+}
+
+.results-cell {
+  margin: 0px 10px;
+}
+
+.results-cells-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  overflow: auto;
+  width: 1000px;
+}
+
+.progress {
+  background-color: rgb(0, 123, 255, .25) !important;
+}
+
+.jumbotron {
+  margin: 0px !important;
+  padding: 50px 0px !important;
+}
+
 .results-bubble {
   display: flex;
   flex-direction: column;
@@ -386,11 +432,25 @@
   width: 150px;
 }
 
+.test-label-bubble {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: left;
+  min-width: 150px;
+  margin: 20px;
+}
+
+.results-row .test-label-bubble .alert {
+  margin: 0px;
+}
+
 .results-bubble-title {
   font-size: 16px;
   margin: 0px;
   color: black;
   font-family: Poppins-Regular;
+  overflow: scroll;
 }
 
 .loading {
@@ -407,6 +467,30 @@
   font-size: 20px;
 }
 
+.train-button {
+  box-shadow: 0 3px 3px #757575;
+}
+
+form {
+  width: 89% !important;
+  margin-left: 28px;
+}
+
+.navbar-nav a:nth-child(n+1) {
+  text-decoration: none;
+  color: lightgray;
+  margin: 0px 8px 0px 8px;
+  font-size: 18px;
+}
+
+.navbar-nav a:hover {
+  text-decoration: none;
+  color: white;
+}
+
+.disable-link {
+  pointer-events: none;
+}
 
 .slide-out-bck-center {
 	-webkit-animation: slide-out-bck-center 0.5s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;

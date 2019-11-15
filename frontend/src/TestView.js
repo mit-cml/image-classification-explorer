@@ -3,6 +3,8 @@ import React from 'react';
 import { ReactMic } from '@cleandersonlobo/react-mic';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Popover from 'react-bootstrap/Popover'
+import Jumbotron from 'react-bootstrap/Jumbotron'
+import Container from 'react-bootstrap/Container'
 import Alert from 'react-bootstrap/Alert';
 import ProgressBar from 'react-bootstrap/ProgressBar';
 import './App.css';
@@ -12,6 +14,12 @@ import * as tf from '@tensorflow/tfjs';
 import Audio from './Audio.js';
 // import * as mobilenet from '@tensorflow-models/mobilenet';
 
+import Navbar from 'react-bootstrap/Navbar';
+import Nav from 'react-bootstrap/Nav';
+
+import { Link } from 'react-router-dom';
+
+import { Link as ScrollLink, animateScroll as AnimateScroll } from "react-scroll";
 
 class TestView extends React.Component {
     constructor(props) {
@@ -22,6 +30,7 @@ class TestView extends React.Component {
 
         this.state = { 
             imageMap: this.props.location.state.imageMap,
+
             transferModel: undefined,
             customModel: undefined,
             trainActivations: undefined,
@@ -29,6 +38,7 @@ class TestView extends React.Component {
             testImage: undefined,
             testRanks: undefined,
             testConfidences: undefined,
+            testResults: undefined,
 
             loading: true,
             progress: 0,
@@ -42,7 +52,7 @@ class TestView extends React.Component {
         // } else {
         //     this.setState({testLabel: Object.keys(this.state.imageMap).sort()[1]})
         // }
-
+        
         await this.train()
     }
 
@@ -89,6 +99,21 @@ class TestView extends React.Component {
         return modelModified
     }
 
+    async getImg(imgUrl) {
+        const load = () => new Promise((resolve, reject) => {
+            var img = new Image()
+            img.onload = () => {
+              resolve({img})
+            }
+            img.src = imgUrl
+            img.width = 200;
+            img.height = 200;
+          });
+      
+        const {img} = await load()
+        return img
+    }
+
     async convertImg(imgUrl) {
         const load = () => new Promise((resolve, reject) => {
             var img = new Image()
@@ -130,11 +155,17 @@ class TestView extends React.Component {
 
         const {images, labels} = await this.generateInputTensors();
         const activations = this.generateActivations(images, transferModel);
+        
+        const testResults = {}
+        Object.keys(this.state.imageMap).sort().forEach((k) => {
+            testResults[k] = []
+        })
 
         this.setState({
             trainActivations: activations,
             customModel: customModel,
             transferModel: transferModel,
+            testResults: testResults,
         })
 
         await this.fitCustomModel(activations, labels, customModel)
@@ -327,7 +358,7 @@ class TestView extends React.Component {
         )
 
         var prediction = customModel.predict(activation)
-        var top = await prediction.topk(Math.min(3, Object.keys(this.state.imageMap).length))
+        var top = await prediction.topk(Object.keys(this.state.imageMap).length)
         let confidences = await top.values.data()
         let ranks = await top.indices.data()
         console.log(confidences)
@@ -337,6 +368,12 @@ class TestView extends React.Component {
         var testConfidences = {}
         Object.keys(this.state.imageMap).sort().forEach((label, index)=> {
             let rank =  ranks.indexOf(index)
+            if(rank == 0) {
+                this.setState({testResults: {
+                    ...this.state.testResults,
+                    [label]: [...this.state.testResults[label], [this.state.testImage, confidences[rank]]]
+                }})
+            }
             testRanks[label] = rank
             testConfidences[label] = confidences[rank]
         })
@@ -351,54 +388,137 @@ class TestView extends React.Component {
         console.log(this.state)
         if(this.state.loading) {
             return (
-                <div className="loading">
-                    <p className="message">{this.state.message}</p>
-                    <ProgressBar animated variant="warning" style={{width: "500px"}} now={this.state.progress} />              
-                </div>
+                <header className="App-header">
+                    <Navbar bg="dark" variant="dark">
+                        <Navbar.Brand href="/">Spectrogram Audio Classifier</Navbar.Brand>
+                        <Nav className="mr-auto">
+                            <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
+                                Train
+                            </Link>
+                            <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap}}}>
+                                Test
+                            </Link>
+                            <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
+                                Export
+                            </Link>
+                            {/* <Nav.Link>Train</Nav.Link>
+                            <Nav.Link>Test</Nav.Link>
+                            <Nav.Link>Export</Nav.Link> */}
+                        </Nav>
+                    </Navbar>
+
+                    <div className="loading">
+                        <p className="message">{this.state.message}</p>
+                        <ProgressBar animated variant="warning" style={{width: "500px"}} now={this.state.progress} />              
+                    </div>
+
+                    <div></div>
+                </header>
             )
         } else {
             return (
-                <div className="view-all">
-                    <Audio 
-                        handleNewImage={this.handleTestImage}
-                        allLabels={Object.keys(this.state.imageMap)}/>
-                    <div className="test-pic-background">
-                        <p className="test-pic-p">SPECTROGRAM:</p>
-                        <img src={this.state.testImage} className="test-pic hover"></img>
-                    </div>
-                    <div className="results-background">
-                        <p className="test-pic-p">CLASSIFICATION:</p>
-                        {Object.keys(this.state.imageMap).sort(
-                            // (x,y) => {
-                            //     if(this.state.testRanks[x] === 0) { return -1 }
-                            //     if(this.state.testRanks[y] !== 0) { return  1 }
-                            //     else { return 0 }
-                            // }
-                        ).map((k, i, arr) => {
-                        return (
-                            <div className="results-bubble" key={k}>
-                                {/* <OverlayTrigger
-                                    trigger="hover"
-                                    placement="right"
-                                    overlay={
-                                        this.state.testRanks !== undefined &&
-                                        <Popover>
-                                            <Popover.Title as="h3">{"Details"}</Popover.Title>
-                                            <Popover.Content>
-                                                <strong>Confidence: {Math.round(this.state.testConfidences[k]*10000)/100}%    </strong>
-                                                <div style={{marginTop:"5px"}}></div>
-                                                <ProgressBar now={Math.round(this.state.testConfidences[k]*10000)/100} variant={this.state.testRanks[k] === 0 ? "success" : "danger"} />
-                                            </Popover.Content>
-                                        </Popover>
-                                    }> */}
-                                    <Alert variant={this.state.testRanks === undefined ? "info" : this.state.testRanks[k] === 0 ? "success" : "danger"}>
-                                        <p align="center" className="results-bubble-title">{k}</p>
-                                    </Alert>
-                                {/* </OverlayTrigger> */}
+                <div>
+                    <header className="App-header">
+                        <Navbar bg="dark" variant="dark">
+                            <Navbar.Brand href="/">Spectrogram Audio Classifier</Navbar.Brand>
+                            <Nav className="mr-auto">
+                                <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
+                                    Train
+                                </Link>
+                                <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap}}}>
+                                    Test
+                                </Link>
+                                <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
+                                    Export
+                                </Link>
+                            </Nav>
+                        </Navbar>
+                        <div className="view-all">
+                            <Audio 
+                                handleNewImage={this.handleTestImage}
+                                allLabels={Object.keys(this.state.imageMap)}/>
+                            <div className="test-pic-background">
+                                <p className="test-pic-p">SPECTROGRAM:</p>
+                                <img src={this.state.testImage} className="test-pic hover"></img>
                             </div>
-                        )
-                    })}
-                    </div>
+                            <div className="results-background">
+                                <p className="classification-p">CLASSIFICATION:</p>
+                                {Object.keys(this.state.imageMap).sort(
+                                    // (x,y) => {
+                                    //     if(this.state.testRanks[x] === 0) { return -1 }
+                                    //     if(this.state.testRanks[y] !== 0) { return  1 }
+                                    //     else { return 0 }
+                                    // }
+                                ).map((k, i, arr) => {
+                                    if(this.state.testRanks !== undefined) {
+                                        return (
+                                            <div className="results-bubble" key={k}>
+                                                <OverlayTrigger
+                                                trigger="hover"
+                                                placement="right"
+                                                overlay={
+                                                    <Popover>
+                                                        <Popover.Title as="h3">{"Details"}</Popover.Title>
+                                                        <Popover.Content>
+                                                            <strong>Confidence: {Math.round(this.state.testConfidences[k]*10000)/100}%    </strong>
+                                                            <div style={{marginTop:"5px"}}></div>
+                                                            <ProgressBar now={Math.round(this.state.testConfidences[k]*10000)/100} variant={this.state.testRanks[k] === 0 ? "success" : "danger"} />
+                                                        </Popover.Content>
+                                                    </Popover>
+                                                }>
+                                                    <Alert variant={this.state.testRanks === undefined ? "info" : this.state.testRanks[k] === 0 ? "success" : "danger"}>
+                                                        <p align="center" className="results-bubble-title">{k}</p>
+                                                    </Alert>
+                                                </OverlayTrigger>
+                                            </div>
+                                        )
+                                    } else {
+                                        return (
+                                            <div className="results-bubble" key={k}>
+                                                <Alert variant={this.state.testRanks === undefined ? "info" : this.state.testRanks[k] === 0 ? "success" : "danger"}>
+                                                            <p align="center" className="results-bubble-title">{k}</p>
+                                                </Alert>
+                                            </div>
+                                        )
+                                    }
+                                    
+                                })}
+                            </div>
+                        </div>
+                        <div></div>
+                    </header>
+                    <Jumbotron fluid>
+                        <Container>
+                            <h1>Test Results</h1>
+                            <p></p>
+                            {this.state.testResults !== undefined && Object.keys(this.state.testResults).sort().map(label => {
+                                const results = this.state.testResults[label]
+                                return (
+                                    <div className="results-row" key={label}>
+                                        <div className="test-label-bubble" key={label}>
+                                            <Alert variant="info">
+                                                <p align="center" className="results-bubble-title">{label}</p>
+                                            </Alert>
+                                        </div>
+                                        <div className="results-cells-wrapper">
+                                            {results.map(r => {
+                                                const imgUrl = r[0]
+                                                // const img = await this.getImg(imgUrl)
+                                                const confidence = r[1]
+                                                return (
+                                                    <div className="results-cell" key={r}>
+                                                        <img src={imgUrl} width={100} className="results-cell-pic"></img>
+                                                        <ProgressBar now={Math.round(confidence*100)} label={Math.round(confidence*100) + "%"}/>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                    
+                                )
+                            })}
+                        </Container>
+                    </Jumbotron>
                 </div>
             )
         }

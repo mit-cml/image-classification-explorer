@@ -12,24 +12,10 @@ import TestView from './TestView';
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <Navbar bg="dark" variant="dark">
-          <Navbar.Brand href="#home">Spectrogram Audio Classifier</Navbar.Brand>
-          <Nav className="mr-auto">
-            <Nav.Link>Train</Nav.Link>
-            <Nav.Link>Test</Nav.Link>
-            <Nav.Link>Export</Nav.Link>
-          </Nav>
-        </Navbar>
-
         <Router>
           <Route exact path="/" component={LabelView} />
           <Route path="/test" component={TestView} />
-          <Route path="/loading" component={Loading} />
         </Router>
-        
-        <div></div>
-      </header>
     </div>
   );
 }
