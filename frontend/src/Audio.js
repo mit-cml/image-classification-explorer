@@ -3,7 +3,7 @@ import React from 'react';
 import chroma from 'chroma-js';
 // import spectrogram from 'spectrogram';
 // import spectrogram from 'spectrogram-fork';
-import spectrogram from './spectrogram';
+import spectrogram from './spectrogram/spectrogram';
 import { ReactMic } from '@cleandersonlobo/react-mic';
 import Button from 'react-bootstrap/Button';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -16,7 +16,7 @@ class Audio extends React.Component {
     constructor(props) {
         super(props)
 
-        this.maxAudioTime = 1
+        this.maxAudioTime = 2
         this.startRecording = this.startRecording.bind(this)
         this.stopRecording = this.stopRecording.bind(this)
         this.onStop = this.onStop.bind(this)
@@ -73,7 +73,8 @@ class Audio extends React.Component {
     }
 
     onStop = (recordedBlob) => {
-        // console.log('recordedBlob is: ', recordedBlob);
+        console.log('recordedBlob is: ', recordedBlob);
+        console.log('recordedBlob.blob is: ', recordedBlob.blob);
 
         // this.getSpectrogram(recordedBlob).then(reader => {
         //     reader.onload = () => { 
@@ -168,7 +169,6 @@ class Audio extends React.Component {
                 canvasPromise.then(() => {
                     console.log("Promise Resolved")
                     var dataURL = canvas.toDataURL();
-                    console.log(dataURL)
                     this.props.handleNewImage(dataURL, this.state.currentLabel)
                 })
             });

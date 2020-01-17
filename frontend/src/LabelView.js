@@ -144,7 +144,7 @@ class LabelView extends React.Component {
         return (
             <header className="App-header">
                 <Navbar bg="dark" variant="dark">
-                    <Navbar.Brand href="/">Spectrogram Audio Classifier</Navbar.Brand>
+                    <Navbar.Brand href="/">Personal Audio Classifier</Navbar.Brand>
                     <Nav className="mr-auto">
                         <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
                             Train

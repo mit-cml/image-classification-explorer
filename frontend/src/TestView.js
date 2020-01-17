@@ -1,5 +1,8 @@
 // @ts-ignore
 import React from 'react';
+import * as JSZip from 'jszip';
+import * as FileSaver from 'file-saver';
+import Button from 'react-bootstrap/Button';
 import { ReactMic } from '@cleandersonlobo/react-mic';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Popover from 'react-bootstrap/Popover'
@@ -27,6 +30,7 @@ class TestView extends React.Component {
         this.canvasRef = React.createRef();
 
         this.handleTestImage = this.handleTestImage.bind(this)
+        this.exportModel = this.exportModel.bind(this)
 
         this.state = { 
             imageMap: this.props.location.state.imageMap,
@@ -340,6 +344,53 @@ class TestView extends React.Component {
         return {images, labels}
     }
 
+    async exportModel() {
+        // The TensorFlow.js save method doesn't work properly in Firefox, so we write
+        // our own. This methods zips up the model's topology file, weights files, and
+        // a json of the mapping of model predictions to label names. The resulting file
+        // is given the .mdl extension to prevent tampering with.
+        const zipSaver = {save: (modelSpecs) => {
+            const modelTopologyFileName = "model.json";
+            const weightDataFileName = "model.weights.bin";
+            const modelLabelsName = "model_labels.json";
+            const transferModelInfoName = "transfer_model.json";
+            const modelZipName = "model.mdl";
+
+            const weightsBlob = new Blob(
+            [modelSpecs.weightData], {type: 'application/octet-stream'});
+
+            const weightsManifest = [{
+            paths: ['./' + weightDataFileName],
+            weights: modelSpecs.weightSpecs
+            }];
+            const modelTopologyAndWeightManifest = {
+            modelTopology: modelSpecs.modelTopology,
+            weightsManifest
+            };
+            const modelTopologyAndWeightManifestBlob = new Blob(
+            [JSON.stringify(modelTopologyAndWeightManifest)],
+            {type: 'application/json'});
+
+            const zip = new JSZip();
+            zip.file(modelTopologyFileName, modelTopologyAndWeightManifestBlob);
+            zip.file(weightDataFileName, weightsBlob);
+            const labels = {}
+            Object.keys(this.state.imageMap).sort().forEach((label, i) => {
+                labels[i] = label
+            })
+            console.log(JSON.stringify(labels))
+            zip.file(modelLabelsName, JSON.stringify(labels));
+            zip.file(transferModelInfoName, "MobileNet");
+
+            zip.generateAsync({type:"blob"})
+            .then(function (blob) {
+                FileSaver.saveAs(blob, modelZipName);
+            });
+        }};
+
+        const savedModel = await this.state.customModel.save(zipSaver);
+    }
+
 
     handleTestImage(image) {
         console.log("image changed")
@@ -377,6 +428,7 @@ class TestView extends React.Component {
             testRanks[label] = rank
             testConfidences[label] = confidences[rank]
         })
+        console.log(testRanks)
         this.setState({
             testRanks: testRanks,
             testConfidences: testConfidences,
@@ -390,7 +442,7 @@ class TestView extends React.Component {
             return (
                 <header className="App-header">
                     <Navbar bg="dark" variant="dark">
-                        <Navbar.Brand href="/">Spectrogram Audio Classifier</Navbar.Brand>
+                        <Navbar.Brand href="/">Personal Audio Classifier</Navbar.Brand>
                         <Nav className="mr-auto">
                             <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
                                 Train
@@ -485,7 +537,9 @@ class TestView extends React.Component {
                                 })}
                             </div>
                         </div>
-                        <div></div>
+                        <div>
+                            <Button onClick={this.exportModel}>Export</Button>
+                        </div>
                     </header>
                     <Jumbotron fluid>
                         <Container>
