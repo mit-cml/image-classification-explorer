@@ -260,13 +260,16 @@
 
 .record-button {
   width: 100px;
-  outline: none !important;
-  outline-offset: none !important;
 }
 
 .record-button:focus {
   outline: none !important;
-  outline-offset: none !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.btn:focus {
+  outline: none;
 }
 
 .vertical-line {
