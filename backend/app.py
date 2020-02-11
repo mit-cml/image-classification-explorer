@@ -26,8 +26,10 @@ def spectrogram():
 
 	rate, data = wavfile.read('./temp/audio.wav')
 	data = data[:,0]
+	print(data)
 	fig,ax = plt.subplots(1)
-	fig.subplots_adjust(left=-.031,right=1,bottom=0,top=1)
+	fig.subplots_adjust(left=-.08,right=1,bottom=0,top=1)
+	fig.set_size_inches(10, 10)
 	ax.axis('off')
 	pxx, freqs, bins, im = ax.specgram(x=data, Fs=rate, noverlap=384, NFFT=512)
 	ax.axis('off')

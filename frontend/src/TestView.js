@@ -68,6 +68,7 @@ class TestView extends React.Component {
         //     'conv_dw_13_bn',
         //     'conv_dw_13'
         // ];
+        console.log(tf.version.tfjs)
         console.log('Loading mobilenet..');
         this.setState({message: "Loading mobilenet...", progress: 20})
 
@@ -380,7 +381,7 @@ class TestView extends React.Component {
             })
             console.log(JSON.stringify(labels))
             zip.file(modelLabelsName, JSON.stringify(labels));
-            zip.file(transferModelInfoName, "MobileNet");
+            zip.file(transferModelInfoName, "{\"name\":\"mobilenet\",\"lastLayer\":\"conv_pw_13_relu\",\"url\":\"https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json\"}");
 
             zip.generateAsync({type:"blob"})
             .then(function (blob) {

@@ -8,6 +8,7 @@ import { ReactMic } from '@cleandersonlobo/react-mic';
 import Button from 'react-bootstrap/Button';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import Dropdown from 'react-bootstrap/Dropdown';
+import ProgressBar from 'react-bootstrap/ProgressBar';
 
 import './App.css';
 import redCircle from'./images/red_circle.png';
@@ -16,7 +17,9 @@ class Audio extends React.Component {
     constructor(props) {
         super(props)
 
-        this.maxAudioTime = 2
+        this.recordInterval = undefined
+
+        this.maxAudioTime = 1
         this.startRecording = this.startRecording.bind(this)
         this.stopRecording = this.stopRecording.bind(this)
         this.onStop = this.onStop.bind(this)
@@ -27,6 +30,7 @@ class Audio extends React.Component {
 
         this.state = { 
             record: false,
+            recordProgress: 0,
             countdown: this.maxAudioTime,   
             allLabels: this.props.allLabels,
             currentLabel: this.props.allLabels.length === 0 ? undefined : this.props.allLabels[0],        
@@ -57,35 +61,42 @@ class Audio extends React.Component {
 
     timer = () => {
         var t = setTimeout(this.decrement, 1000);
+
     }
 
     startRecording = () => {
         this.setState({
-          record: true
+          record: true,
         });
+        this.recordInterval = setInterval(() => {
+            this.setState({recordProgress: this.state.recordProgress + 20})
+            // console.log(this.state.recordProgress)
+          },50)
         this.timer()
     }
     
     stopRecording = () => {
         this.setState({
-            record: false
+            record: false,
+            recordProgress: 0
         });
+        clearInterval(this.recordInterval)
     }
 
     onStop = (recordedBlob) => {
         console.log('recordedBlob is: ', recordedBlob);
         console.log('recordedBlob.blob is: ', recordedBlob.blob);
 
-        // this.getSpectrogram(recordedBlob).then(reader => {
-        //     reader.onload = () => { 
-        //         let result = reader.result;
-        //         // console.log("IMAGE STATE UPDATED")
-        //         // this.setState({image: result}); 
-        //         this.props.handleNewImage(result, this.state.currentLabel)
-        //     }
-        // })
+        this.getSpectrogram(recordedBlob).then(reader => {
+            reader.onload = () => { 
+                let result = reader.result;
+                // console.log("IMAGE STATE UPDATED")
+                // this.setState({image: result}); 
+                this.props.handleNewImage(result, this.state.currentLabel)
+            }
+        })
 
-        this.getSpectrogram(recordedBlob)
+        // this.getSpectrogram(recordedBlob)
 
         // var blob = new Blob([recordedBlob], {type: "audio/wav"})
         // var url = window.URL.createObjectURL(blob);
@@ -118,62 +129,62 @@ class Audio extends React.Component {
         console.log("AUDIO BLOB:")
         console.log(recordedBlob)
 
-        // const response = await fetch('/spectrogram', {
-        //     method: 'POST',
-        //     body: recordedBlob.blob
-        // });
-        // const blob = await response.blob()
-        // // let matrixBlob = new Blob([res.data], {type:"image/png"}); 
-        // let reader = new FileReader();
-        // reader.readAsDataURL(blob); 
-        // return reader;
-
-        var canvas = document.createElement('canvas')
-        canvas.width = 200;
-        canvas.height = 200;
-        // document.body.appendChild(canvas)
- 
-        var spectro = spectrogram(canvas, {
-            audio: {
-                enable: false
-            },
-            colors: (steps) => {
-                var baseColors = [[65,65,90,1], [0,255,255,1], [0,255,0,1], [255,255,0,1], [ 255,0,0,1]];
-                var positions = [0, 0.15, 0.30, 0.50, 0.75];
-             
-                var scale = new chroma.scale(baseColors, positions)
-                .domain([0, steps]);
-             
-                var colors = [];
-             
-                for (var i = 0; i < steps; ++i) {
-                  var color = scale(i);
-                  colors.push(color.hex());
-                }
-             
-                return colors;
-              }
+        const response = await fetch('/spectrogram', {
+            method: 'POST',
+            body: recordedBlob.blob
         });
-        
-        var audioContext = new AudioContext({sampleRate: 384000});
-        var request = new XMLHttpRequest();
-        request.open('GET', URL.createObjectURL(recordedBlob.blob), true);
-        request.responseType = 'arraybuffer';
+        const blob = await response.blob()
+        // let matrixBlob = new Blob([res.data], {type:"image/png"}); 
+        let reader = new FileReader();
+        reader.readAsDataURL(blob); 
+        return reader;
 
-        request.onload = () => {
-            audioContext.decodeAudioData(request.response, (buffer) => {
-                spectro.connectSource(buffer, audioContext);
-                var canvasPromise = new Promise(function(resolve, reject) {
-                    spectro.start(0, resolve);
-                })
-                canvasPromise.then(() => {
-                    console.log("Promise Resolved")
-                    var dataURL = canvas.toDataURL();
-                    this.props.handleNewImage(dataURL, this.state.currentLabel)
-                })
-            });
-        };
-        request.send();
+        // var canvas = document.createElement('canvas')
+        // canvas.width = 200;
+        // canvas.height = 200;
+        // // document.body.appendChild(canvas)
+ 
+        // var spectro = spectrogram(canvas, {
+        //     audio: {
+        //         enable: false
+        //     },
+        //     colors: (steps) => {
+        //         var baseColors = [[65,65,90,1], [0,255,255,1], [0,255,0,1], [255,255,0,1], [ 255,0,0,1]];
+        //         var positions = [0, 0.15, 0.30, 0.50, 0.75];
+             
+        //         var scale = new chroma.scale(baseColors, positions)
+        //         .domain([0, steps]);
+             
+        //         var colors = [];
+             
+        //         for (var i = 0; i < steps; ++i) {
+        //           var color = scale(i);
+        //           colors.push(color.hex());
+        //         }
+             
+        //         return colors;
+        //       }
+        // });
+        
+        // var audioContext = new AudioContext({sampleRate: 384000});
+        // var request = new XMLHttpRequest();
+        // request.open('GET', URL.createObjectURL(recordedBlob.blob), true);
+        // request.responseType = 'arraybuffer';
+
+        // request.onload = () => {
+        //     audioContext.decodeAudioData(request.response, (buffer) => {
+        //         spectro.connectSource(buffer, audioContext);
+        //         var canvasPromise = new Promise(function(resolve, reject) {
+        //             spectro.start(0, resolve);
+        //         })
+        //         canvasPromise.then(() => {
+        //             console.log("Promise Resolved")
+        //             var dataURL = canvas.toDataURL();
+        //             this.props.handleNewImage(dataURL, this.state.currentLabel)
+        //         })
+        //     });
+        // };
+        // request.send();
         
 
 
@@ -186,6 +197,7 @@ class Audio extends React.Component {
     }
 
     render () {
+        console.log(this.state.recordProgress)
         return (
             <div className="record-box">
                 <div className="recording-for-dropdown-wrapper">
@@ -213,16 +225,18 @@ class Audio extends React.Component {
                     height={140}
                     />
                 <div className="record-and-countdown">
-                    <Button onClick={this.startRecording} disabled={this.state.allLabels.length === 0} variant="outline-light" className="record-button">
-                        {this.state.record ? [
+                    <Button onClick={this.startRecording} disabled={this.state.allLabels.length === 0} variant={this.state.record ? "outline-danger" : "outline-light"} className="record-button">
+                        {/* {this.state.record ? [
                             <img key={0} src={redCircle} width={10} height={10}/>,
                             <span key={1}>&nbsp;&nbsp;</span>,
                             "Recording",
-                        ] : "Record"}
-                        {/* {<img src={redCircle} width={10} height={10}/>} &#8239; {this.state.record ? "Recording 0:0" + this.state.countdown : "Record"} */}
+                        ] : "Record"} */}
+                        {"Record"}
                     </Button>
-                    <p className="countdown">{"0:0" + (this.maxAudioTime - this.state.countdown)}</p>
+                    {/* <p className="countdown">{"0:0" + (this.maxAudioTime - this.state.countdown)}</p> */}
+
                 </div>
+                <ProgressBar animated variant="danger" style={{width: 100, borderRadius: 3, backgroundColor: "#e9ecef"}} now={this.state.recordProgress} />              
                 
                 {/* <img src={this.state.image} height="100" alt="Image preview..."></img> */}
             </div>
