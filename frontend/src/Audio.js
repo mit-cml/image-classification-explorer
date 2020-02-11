@@ -69,7 +69,7 @@ class Audio extends React.Component {
           record: true,
         });
         this.recordInterval = setInterval(() => {
-            this.setState({recordProgress: this.state.recordProgress + 20})
+            this.setState({recordProgress: this.state.recordProgress + (20/this.maxAudioTime)})
             // console.log(this.state.recordProgress)
           },50)
         this.timer()
