@@ -152,9 +152,7 @@ class LabelView extends React.Component {
                         <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap}}} className={Object.keys(this.state.imageMap).length > 0 && Math.min(...Object.keys(this.state.imageMap).map(k => this.state.imageMap[k].length)) > 1 ? "": "disable-link"}>
                             Test
                         </Link>
-                        <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
-                            Export
-                        </Link>
+
                         {/* <Nav.Link>Train</Nav.Link>
                         <Nav.Link>Test</Nav.Link>
                         <Nav.Link>Export</Nav.Link> */}

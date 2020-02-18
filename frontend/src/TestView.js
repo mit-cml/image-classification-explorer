@@ -451,9 +451,7 @@ class TestView extends React.Component {
                             <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap}}}>
                                 Test
                             </Link>
-                            <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
-                                Export
-                            </Link>
+                           
                             {/* <Nav.Link>Train</Nav.Link>
                             <Nav.Link>Test</Nav.Link>
                             <Nav.Link>Export</Nav.Link> */}
@@ -473,16 +471,13 @@ class TestView extends React.Component {
                 <div>
                     <header className="App-header">
                         <Navbar bg="dark" variant="dark">
-                            <Navbar.Brand href="/">Spectrogram Audio Classifier</Navbar.Brand>
+                            <Navbar.Brand href="/">Personal Audio Classifier</Navbar.Brand>
                             <Nav className="mr-auto">
                                 <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
                                     Train
                                 </Link>
                                 <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap}}}>
                                     Test
-                                </Link>
-                                <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
-                                    Export
                                 </Link>
                             </Nav>
                         </Navbar>
@@ -539,7 +534,7 @@ class TestView extends React.Component {
                             </div>
                         </div>
                         <div>
-                            <Button onClick={this.exportModel}>Export</Button>
+                            <Button variant={"dark"} onClick={this.exportModel}>Export</Button>
                         </div>
                     </header>
                     <Jumbotron fluid>

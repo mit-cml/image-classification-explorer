@@ -129,7 +129,7 @@ class Audio extends React.Component {
         console.log("AUDIO BLOB:")
         console.log(recordedBlob)
 
-        const response = await fetch('/spectrogram', {
+        const response = await fetch('https://c1.appinventor.mit.edu:5000/spectrogram', {
             method: 'POST',
             body: recordedBlob.blob
         });
@@ -236,7 +236,7 @@ class Audio extends React.Component {
                     {/* <p className="countdown">{"0:0" + (this.maxAudioTime - this.state.countdown)}</p> */}
 
                 </div>
-                <ProgressBar animated variant="danger" style={{width: 100, borderRadius: 3, backgroundColor: "#e9ecef"}} now={this.state.recordProgress} />              
+                <ProgressBar animated variant="danger" style={{width: 100, borderRadius: 3, backgroundColor: "#e9ecef", visibility: this.state.recordProgress == 0 ? "hidden" : "visible"}} now={this.state.recordProgress} />              
                 
                 {/* <img src={this.state.image} height="100" alt="Image preview..."></img> */}
             </div>

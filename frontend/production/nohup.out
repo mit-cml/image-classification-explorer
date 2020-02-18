@@ -1,0 +1,17 @@
+Listening on port 4000
+ReferenceError: date is not defined
+    at app.post (/home/nwbhatia/frontend/production/server.js:17:14)
+    at Layer.handle [as handle_request] (/home/nwbhatia/frontend/production/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/nwbhatia/frontend/production/node_modules/express/lib/router/route.js:137:13)
+    at Route.dispatch (/home/nwbhatia/frontend/production/node_modules/express/lib/router/route.js:112:3)
+    at Layer.handle [as handle_request] (/home/nwbhatia/frontend/production/node_modules/express/lib/router/layer.js:95:5)
+    at /home/nwbhatia/frontend/production/node_modules/express/lib/router/index.js:281:22
+    at Function.process_params (/home/nwbhatia/frontend/production/node_modules/express/lib/router/index.js:335:12)
+    at next (/home/nwbhatia/frontend/production/node_modules/express/lib/router/index.js:275:10)
+    at serveStatic (/home/nwbhatia/frontend/production/node_modules/serve-static/index.js:75:16)
+    at Layer.handle [as handle_request] (/home/nwbhatia/frontend/production/node_modules/express/lib/router/layer.js:95:5)
+Listening on port 4000
+14:35:41
+Proxying /spectrogram to http://localhost:5000/spectrogram
+14:36:26
+Proxying /spectrogram to http://localhost:5000/spectrogram
