@@ -126,12 +126,17 @@
 .name-p{
   width: 100px;
   white-space: nowrap;
-  overflow-x: scroll;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
   background: transparent;
   margin: 0px 10px 0px 20px;
   color: white;
-  font-size: 24px;
+  font-size: 20px;
   height: 35px;
+}
+
+.name-p:hover {
+  overflow:visible;
 }
 
 .count-p{
@@ -139,7 +144,7 @@
   white-space: nowrap;
   overflow-x: scroll;
   background: transparent;
-  margin: 3px 10px 0px 20px;
+  margin: 0px 10px 0px 20px;
   color: white;
   font-size: 12px;
 }
@@ -241,7 +246,7 @@
   cursor: pointer;
   position:relative;
   font-size: 14px;
-  color: white;
+  color:#adc2ff;
   bottom:57px;
   left:19px;
   visibility:hidden;

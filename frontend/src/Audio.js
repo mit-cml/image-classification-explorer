@@ -130,7 +130,8 @@ class Audio extends React.Component {
         console.log(recordedBlob)
 
         const response = await fetch('https://c1.appinventor.mit.edu:5000/spectrogram', {
-            method: 'POST',
+        // const response = await fetch('/spectrogram', {
+                method: 'POST',
             body: recordedBlob.blob
         });
         const blob = await response.blob()

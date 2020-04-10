@@ -29,7 +29,7 @@ class Label extends React.Component {
                         <p className="count-p">{this.state.images.length + (this.state.images.length === 1 ? " example" : " examples")}</p>
                     </div>
                     <div className="vertical-line">
-                        <img src={arrow} width={10} style={{margin: "auto"}}></img>
+                        <img src={arrow} width={10} style={{margin: "auto", cursor:"pointer"}} onClick={() => this.props.handleRemoveLabel(this.state.name)}></img>
                     </div>
  
                         {/* <p className="image-text">0 EXAMPLES</p> */}

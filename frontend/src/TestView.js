@@ -481,7 +481,8 @@ class TestView extends React.Component {
                                 </Link>
                             </Nav>
                         </Navbar>
-                        <div className="view-all">
+                        <div>
+                            <div className="view-all">
                             <Audio 
                                 handleNewImage={this.handleTestImage}
                                 allLabels={Object.keys(this.state.imageMap)}/>
@@ -533,9 +534,9 @@ class TestView extends React.Component {
                                 })}
                             </div>
                         </div>
-                        <div>
-                            <Button variant={"dark"} onClick={this.exportModel}>Export</Button>
+                            <Button variant={"dark"} className="train-button" onClick={this.exportModel}>Export</Button>
                         </div>
+                        <div></div>
                     </header>
                     <Jumbotron fluid>
                         <Container>

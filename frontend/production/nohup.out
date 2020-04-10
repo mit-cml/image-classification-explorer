@@ -15,3 +15,22 @@ Listening on port 4000
 Proxying /spectrogram to http://localhost:5000/spectrogram
 14:36:26
 Proxying /spectrogram to http://localhost:5000/spectrogram
+internal/fs/utils.js:230
+    throw err;
+    ^
+
+Error: ENOENT: no such file or directory, open '/etc/letsencrypt/live/c1.appinventor.mit.edu/privkey.pem'
+    at Object.openSync (fs.js:457:3)
+    at Object.readFileSync (fs.js:359:35)
+    at Object.<anonymous> (/Users/nikhilbhatia/spectrogram-audio-classification/frontend/production/server.js:31:22)
+    at Module._compile (internal/modules/cjs/loader.js:1151:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1171:10)
+    at Module.load (internal/modules/cjs/loader.js:1000:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:899:14)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:71:12)
+    at internal/main/run_main_module.js:17:47 {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '/etc/letsencrypt/live/c1.appinventor.mit.edu/privkey.pem'
+}

@@ -25,12 +25,14 @@ class LabelView extends React.Component {
         super(props)
         this.handleNewImage = this.handleNewImage.bind(this)
         this.handleRemoveImage = this.handleRemoveImage.bind(this)
+        this.handleRemoveLabel = this.handleRemoveLabel.bind(this)
         this.handleLabelKeyDown = this.handleLabelKeyDown.bind(this)
         this.createNewLabel = this.createNewLabel.bind(this)
         this.tuneModal = this.tuneModal.bind(this)
 
         this.state = { 
             imageMap: this.props.location.state === undefined ? {} : this.props.location.state.imageMap,
+            // imageMap: {},
         }
     }
 
@@ -53,6 +55,18 @@ class LabelView extends React.Component {
         })
 
         // this.downloadURI(image, currentLabel)
+    }
+
+    handleRemoveLabel(labelToRemove) {
+        var newImageMap = {}
+        Object.keys(this.state.imageMap).forEach((label) => {
+            if(labelToRemove !== label) {
+                newImageMap[label] = this.state.imageMap[label]
+            }
+        })
+        this.setState({
+            imageMap: newImageMap
+        })
     }
 
     handleRemoveImage(i, name) {
@@ -199,6 +213,7 @@ class LabelView extends React.Component {
                                 name={k}
                                 images={this.state.imageMap[k]}
                                 handleRemoveImage={this.handleRemoveImage}
+                                handleRemoveLabel={this.handleRemoveLabel}
                                 key={k}/>
                         )
                     })}

@@ -24,7 +24,7 @@ def hello():
 
 @application.route("/spectrogram", methods=['POST'])
 def spectrogram():
-	print(request.data)
+
 
 	f = open('./temp/audio.wav', 'wb')
 	f.write(request.data)
@@ -35,20 +35,32 @@ def spectrogram():
 	if len(data.shape) > 1:
 		data = data[:,0]
 
-	print(rate)
+	print("Rate: " + str(rate))
+	
+	silence_threshold = -50
+
 	sound = AudioSegment.from_file("./temp/audio.wav", format="wav")
 	sound = sound.set_channels(1)
 
-	chunks = split_on_silence(sound, min_silence_len=10, silence_thresh=-50, keep_silence=0)
-	sound = sum(chunks[1:], chunks[0])
+	start_trim = detect_leading_silence(sound, silence_threshold)
+	end_trim = detect_leading_silence(sound.reverse(), silence_threshold)
+	duration = len(sound)    
+	sound = sound[start_trim:duration-end_trim]
+
+	chunks = split_on_silence(sound, min_silence_len=10, silence_thresh=silence_threshold, keep_silence=0)
+	print("Num Chunks: " + str(len(chunks)))
+	# for i,c in enumerate(chunks):
+	# 	print("Chunk: " + i, flush=True)
+	# 	print(c._data, flush=True)
+	
+	if len(chunks) == 1:
+		sound = chunks[0]
+	if len(chunks) > 1:
+		sound = sum(chunks[1:], chunks[0])
 	
 	data = np.array(sound.get_array_of_samples())
 
-	# start_trim = detect_leading_silence(sound)
-	# end_trim = detect_leading_silence(sound.reverse())
-	# duration = len(sound)    
-	# trimmed_sound = sound[start_trim:duration-end_trim]
-	# data = np.array(trimmed_sound.get_array_of_samples())
+
 
 	fig,ax = plt.subplots(1)
 	fig.subplots_adjust(left=-0,right=1,bottom=0,top=1)
@@ -74,21 +86,21 @@ def squeezenet():
 
 
 
-# def detect_leading_silence(sound, silence_threshold=-50.0, chunk_size=10):
-#     '''
-#     sound is a pydub.AudioSegment
-#     silence_threshold in dB
-#     chunk_size in ms
+def detect_leading_silence(sound, silence_threshold, chunk_size=10):
+    '''
+    sound is a pydub.AudioSegment
+    silence_threshold in dB
+    chunk_size in ms
 
-#     iterate over chunks until you find the first one with sound
-#     '''
-#     trim_ms = 0 # ms
+    iterate over chunks until you find the first one with sound
+    '''
+    trim_ms = 0 # ms
 
-#     assert chunk_size > 0 # to avoid infinite loop
-#     while sound[trim_ms:trim_ms+chunk_size].dBFS < silence_threshold and trim_ms < len(sound):
-#         trim_ms += chunk_size
+    assert chunk_size > 0 # to avoid infinite loop
+    while sound[trim_ms:trim_ms+chunk_size].dBFS < silence_threshold and trim_ms < len(sound):
+        trim_ms += chunk_size
 
-#     return trim_ms
+    return trim_ms
 
 # def remove_silence(sound, silence_threshold=-50.0, chunk_size=10):
 # 	silence_start = 0
