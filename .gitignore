@@ -1,4 +1,4 @@
-node_modules/
 temp/
 models/
-build/
+*~*
+*.pyc

@@ -1,0 +1,4 @@
+letsencrypt/** filter=git-crypt diff=git-crypt
+*.pem filter=git-crypt diff=git-crypt
+loginserver.keyring filter=git-crypt diff=git-crypt
+
