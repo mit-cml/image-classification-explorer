@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/static/css/main.df1b6ef6.chunk.css",
+    "main.js": "/static/js/main.a346d982.chunk.js",
+    "main.js.map": "/static/js/main.a346d982.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.212eca15.js",
+    "runtime-main.js.map": "/static/js/runtime-main.212eca15.js.map",
+    "static/css/2.0624914a.chunk.css": "/static/css/2.0624914a.chunk.css",
+    "static/js/2.d355101f.chunk.js": "/static/js/2.d355101f.chunk.js",
+    "static/js/2.d355101f.chunk.js.map": "/static/js/2.d355101f.chunk.js.map",
+    "index.html": "/index.html",
+    "precache-manifest.a2c12aa226988e2727b3298f7e0b5ff8.js": "/precache-manifest.a2c12aa226988e2727b3298f7e0b5ff8.js",
+    "service-worker.js": "/service-worker.js",
+    "static/css/2.0624914a.chunk.css.map": "/static/css/2.0624914a.chunk.css.map",
+    "static/css/main.df1b6ef6.chunk.css.map": "/static/css/main.df1b6ef6.chunk.css.map",
+    "static/media/DJB.ttf": "/static/media/DJB.e4210c98.ttf",
+    "static/media/Poppins-Regular.otf": "/static/media/Poppins-Regular.de2dd933.otf",
+    "static/media/logo.svg": "/static/media/logo.25bf045c.svg"
+  }
+}
