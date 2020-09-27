@@ -1,8 +1,6 @@
 // @ts-ignore
 import React from 'react';
-import Button from 'react-bootstrap/Button';
 import './App.css';
-import Audio from './Audio.js';
 import arrow from'./images/arrow.png';
 
 class Label extends React.Component {

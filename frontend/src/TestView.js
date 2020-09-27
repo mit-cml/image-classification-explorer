@@ -3,7 +3,6 @@ import React from 'react';
 import * as JSZip from 'jszip';
 import * as FileSaver from 'file-saver';
 import Button from 'react-bootstrap/Button';
-import { ReactMic } from '@cleandersonlobo/react-mic';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Popover from 'react-bootstrap/Popover'
 import Jumbotron from 'react-bootstrap/Jumbotron'
@@ -14,7 +13,7 @@ import './App.css';
 import * as tf from '@tensorflow/tfjs';
 
 // import * as mobilenet from './models/mobilenet.json';
-import Audio from './Audio.js';
+import Image from './Image.js';
 // import * as mobilenet from '@tensorflow-models/mobilenet';
 
 import Navbar from 'react-bootstrap/Navbar';
@@ -443,7 +442,7 @@ class TestView extends React.Component {
             return (
                 <header className="App-header">
                     <Navbar bg="dark" variant="dark">
-                        <Navbar.Brand href="/">Personal Audio Classifier</Navbar.Brand>
+                        <Navbar.Brand href="/">Personal Image Classifier (React)</Navbar.Brand>
                         <Nav className="mr-auto">
                             <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
                                 Train
@@ -471,7 +470,7 @@ class TestView extends React.Component {
                 <div>
                     <header className="App-header">
                         <Navbar bg="dark" variant="dark">
-                            <Navbar.Brand href="/">Personal Audio Classifier</Navbar.Brand>
+                            <Navbar.Brand href="/">Personal Image Classifier (React)</Navbar.Brand>
                             <Nav className="mr-auto">
                                 <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
                                     Train
@@ -483,7 +482,7 @@ class TestView extends React.Component {
                         </Navbar>
                         <div>
                             <div className="view-all">
-                            <Audio 
+                            <Image 
                                 handleNewImage={this.handleTestImage}
                                 allLabels={Object.keys(this.state.imageMap)}/>
                             <div className="test-pic-background">

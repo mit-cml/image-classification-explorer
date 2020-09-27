@@ -1,8 +1,6 @@
 // @ts-ignore
 import React from 'react';
 import { useState } from 'react';
-import InputGroup from 'react-bootstrap/InputGroup';
-import FormControl from 'react-bootstrap/FormControl'
 import Form from 'react-bootstrap/Form'
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Modal from 'react-bootstrap/Modal';
@@ -10,7 +8,7 @@ import Modal from 'react-bootstrap/Modal';
 import Popover from 'react-bootstrap/Popover'
 import './App.css';
 import Label from './Label.js';
-import Audio from './Audio.js';
+import Image from './Image.js';
 import Button from 'react-bootstrap/Button';
 
 import plus from'./images/plus.png';
@@ -47,6 +45,7 @@ class LabelView extends React.Component {
     }
 
     handleNewImage(image, currentLabel) {
+        console.log(image)
         this.setState({
             imageMap: {
                 ...this.state.imageMap,
@@ -158,7 +157,7 @@ class LabelView extends React.Component {
         return (
             <header className="App-header">
                 <Navbar bg="dark" variant="dark">
-                    <Navbar.Brand href="/">Personal Audio Classifier</Navbar.Brand>
+                    <Navbar.Brand href="/">Personal Image Classifier (React)</Navbar.Brand>
                     <Nav className="mr-auto">
                         <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
                             Train
@@ -173,7 +172,7 @@ class LabelView extends React.Component {
                     </Nav>
                 </Navbar>
                 <div className="view-all">
-                <Audio 
+                <Image 
                     handleNewImage={this.handleNewImage}
                     allLabels={Object.keys(this.state.imageMap)}/>
                 <div className="all-labels">

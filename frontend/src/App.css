@@ -231,6 +231,10 @@
   font-family: Poppins-Regular;
 } */
 
+#webcam {
+  width: 100%;
+}
+
 .image {
   border-radius: 3px;
   margin: 3px;

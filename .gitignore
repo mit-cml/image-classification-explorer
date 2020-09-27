@@ -2,3 +2,6 @@ temp/
 models/
 *~*
 *.pyc
+*.vscode/
+*node_modules/
+package-lock.json
