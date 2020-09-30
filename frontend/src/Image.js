@@ -57,8 +57,8 @@ class Image extends React.Component {
        * Captures a frame from the webcam and normalizes it between -1 and 1.
        * Returns a batched image (1-element batch) of shape [1, w, h, c].
        */
-      capture() {
-        const newImage = tf.tidy((video=this.webcam) => {
+      async capture() {
+        const result = tf.tidy((video=this.webcam) => {
           //console.log("Inside Webcam")
           // Reads the image as a Tensor from the webcam <video> element.      
           const webcamImage = tf.browser.fromPixels(video.current);
@@ -66,19 +66,29 @@ class Image extends React.Component {
   
           // Crop the image so we're using the center square of the rectangular
           // webcam.
-          const croppedImage = this.cropImage(webcamImage);
+          const croppedImage = tf.keep(this.cropImage(webcamImage));
+          return croppedImage;
           //console.log("After croppedImage: "+croppedImage.shape)
   
           // Expand the outer most dimension so we have a batch size of 1.
-          const batchedImage = croppedImage.expandDims(0);
+          //const batchedImage = croppedImage.expandDims(0);
           //console.log("After expand dims: "+batchedImage.shape)
   
           // Normalize the image between -1 and 1. The image comes in between 0-255,
           // so we divide by 127 and subtract 1.
           //console.log("Final output: "+batchedImage.toFloat().div(tf.scalar(127)).sub(tf.scalar(1)).shape)
-          const result = batchedImage.toFloat().div(tf.scalar(127)).sub(tf.scalar(1))
-          this.props.handleNewImage(tf.keep(result), this.state.currentLabel);
+          //return tf.keep(batchedImage.toFloat().div(tf.scalar(127)).sub(tf.scalar(1)));
         });
+        let newImage = await tf.browser.toPixels(result);
+        let imageData = new ImageData(newImage, result.shape[0]);
+        console.log(imageData);
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+        ctx.putImageData(imageData, 0, 0);
+        let imageString = canvas.toDataURL();
+        this.props.handleNewImage(imageString, this.state.currentLabel);
       }
   
       /**
