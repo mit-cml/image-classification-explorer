@@ -13,7 +13,7 @@ import './App.css';
 import * as tf from '@tensorflow/tfjs';
 
 // import * as mobilenet from './models/mobilenet.json';
-import Image from './Image.js';
+import Cam from './Cam.js';
 // import * as mobilenet from '@tensorflow-models/mobilenet';
 
 import Navbar from 'react-bootstrap/Navbar';
@@ -482,7 +482,7 @@ class TestView extends React.Component {
                         </Navbar>
                         <div>
                             <div className="view-all">
-                            <Image 
+                            <Cam 
                                 handleNewImage={this.handleTestImage}
                                 allLabels={Object.keys(this.state.imageMap)}/>
                             <div className="test-pic-background">

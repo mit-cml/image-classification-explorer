@@ -8,7 +8,7 @@ import Modal from 'react-bootstrap/Modal';
 import Popover from 'react-bootstrap/Popover'
 import './App.css';
 import Label from './Label.js';
-import Image from './Image.js';
+import Cam from './Cam.js';
 import Button from 'react-bootstrap/Button';
 
 import plus from'./images/plus.png';
@@ -172,7 +172,7 @@ class LabelView extends React.Component {
                     </Nav>
                 </Navbar>
                 <div className="view-all">
-                <Image 
+                <Cam 
                     handleNewImage={this.handleNewImage}
                     allLabels={Object.keys(this.state.imageMap)}/>
                 <div className="all-labels">

@@ -6,7 +6,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import './App.css';
 import * as tf from '@tensorflow/tfjs';
 
-class Image extends React.Component {
+class Cam extends React.Component {
     constructor(props) {
         super(props)
         this.loadedData = this.loadedData.bind(this);
@@ -153,4 +153,4 @@ class Image extends React.Component {
     }
 }
 
-export default Image;
+export default Cam;
