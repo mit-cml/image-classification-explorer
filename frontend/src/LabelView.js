@@ -30,13 +30,12 @@ class LabelView extends React.Component {
 
         this.state = { 
             imageMap: this.props.location.state === undefined ? {} : this.props.location.state.imageMap,
-            // imageMap: {},
         }
     }
 
 
     downloadURI(uri, name) {
-        var link = document.createElement("a");
+        let link = document.createElement("a");
         link.download = name;
         link.href = uri;
         document.body.appendChild(link);
@@ -45,19 +44,16 @@ class LabelView extends React.Component {
     }
 
     handleNewImage(image, currentLabel) {
-        console.log(image)
         this.setState({
             imageMap: {
                 ...this.state.imageMap,
                 [currentLabel]: [...this.state.imageMap[currentLabel], image]
             }
-        })
-
-        // this.downloadURI(image, currentLabel)
+        });
     }
 
     handleRemoveLabel(labelToRemove) {
-        var newImageMap = {}
+        let newImageMap = {}
         Object.keys(this.state.imageMap).forEach((label) => {
             if(labelToRemove !== label) {
                 newImageMap[label] = this.state.imageMap[label]
@@ -65,12 +61,12 @@ class LabelView extends React.Component {
         })
         this.setState({
             imageMap: newImageMap
-        })
+        });
     }
 
     handleRemoveImage(i, name) {
-        var images = [...(this.state.imageMap[name])]
-        var index = images.indexOf(i)
+        let images = [...(this.state.imageMap[name])]
+        let index = images.indexOf(i)
         if (index !== -1) {
             images.splice(index, 1);
             this.setState({imageMap: {
@@ -96,10 +92,8 @@ class LabelView extends React.Component {
 
     tuneModal() {
         const [show, setShow] = useState(false);
-      
         const handleClose = () => setShow(false);
         const handleShow = () => setShow(true);
-      
         return (
           <>
             <Button 
@@ -150,14 +144,13 @@ class LabelView extends React.Component {
             </Modal>
           </>
         );
-      }
+    }
 
     render () {
-        console.log(this.state.imageMap)
         return (
             <header className="App-header">
                 <Navbar bg="dark" variant="dark">
-                    <Navbar.Brand href="/">Personal Image Classifier (React)</Navbar.Brand>
+                    <Navbar.Brand href="/">Personal Image Classifier</Navbar.Brand>
                     <Nav className="mr-auto">
                         <Link to={{ pathname: "/", state: {imageMap: this.state.imageMap}}}>
                             Train
@@ -165,10 +158,6 @@ class LabelView extends React.Component {
                         <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap}}} className={Object.keys(this.state.imageMap).length > 0 && Math.min(...Object.keys(this.state.imageMap).map(k => this.state.imageMap[k].length)) > 1 ? "": "disable-link"}>
                             Test
                         </Link>
-
-                        {/* <Nav.Link>Train</Nav.Link>
-                        <Nav.Link>Test</Nav.Link>
-                        <Nav.Link>Export</Nav.Link> */}
                     </Nav>
                 </Navbar>
                 <div className="view-all">
@@ -195,16 +184,10 @@ class LabelView extends React.Component {
                                     </Popover.Content>
                                 </Popover>
                             }
-                            >
-                            <img src={plus} className="plus"></img>
+                        >
+                            <img src={plus} alt="plus" className="plus"></img>
                         </OverlayTrigger>
-                    
-                        {/* {Object.keys(this.state.imageMap).length > 0 && Math.min(...Object.keys(this.state.imageMap).map(k => this.state.imageMap[k].length)) > 1 && 
-                            <this.tuneModal/>
-                        } */}
-                        {Object.keys(this.state.imageMap).length > 0  && 
-                            <this.tuneModal/>
-                        }
+                        {Object.keys(this.state.imageMap).length > 0  && <this.tuneModal/>}
                     </div>
                     {Object.keys(this.state.imageMap).map(k => {
                         return (
@@ -217,7 +200,6 @@ class LabelView extends React.Component {
                         )
                     })}
                 </div>
-
             </div>
                 <div></div>
             </header>
