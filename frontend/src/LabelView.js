@@ -5,6 +5,9 @@ import Form from 'react-bootstrap/Form'
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Modal from 'react-bootstrap/Modal';
 
+import * as JSZip from 'jszip';
+import * as FileSaver from 'file-saver';
+
 import Popover from 'react-bootstrap/Popover'
 import './App.css';
 import Label from './Label.js';
@@ -27,6 +30,13 @@ class LabelView extends React.Component {
         this.handleLabelKeyDown = this.handleLabelKeyDown.bind(this)
         this.createNewLabel = this.createNewLabel.bind(this)
         this.tuneModal = this.tuneModal.bind(this)
+        this.uploadData = this.uploadData.bind(this)
+        this.uploadModel = this.uploadModel.bind(this)
+        this.handleData = this.handleData.bind(this)
+        this.handleModel = this.handleModel.bind(this)
+
+        this.modelInputRef = React.createRef()
+        this.dataInputRef = React.createRef()
 
         this.state = { 
             imageMap: this.props.location.state === undefined ? {} : this.props.location.state.imageMap,
@@ -90,6 +100,31 @@ class LabelView extends React.Component {
         }})
     }
 
+    uploadModel() {
+        this.modelInputRef.current.click()
+    }
+
+    uploadData() {
+        this.dataInputRef.current.click()
+    }
+
+    async handleModel() {
+        const zip = new JSZip();
+        let data = await zip.loadAsync(this.modelInputRef.current.files[0]);
+        console.log(data)
+        const weights = JSON.parse(await data.files['model.weights.json'].async('string'))
+        console.log(weights)
+        this.setState({loadedWeights: weights});
+    }
+
+    async handleData() {
+        const zip = new JSZip();
+        let data = await zip.loadAsync(this.dataInputRef.current.files[0]);
+        console.log(data)
+        const loadedMap = JSON.parse(await data.files['images.json'].async('string'))
+        this.setState({imageMap: loadedMap});
+    }
+
     tuneModal() {
         const [show, setShow] = useState(false);
         const handleClose = () => setShow(false);
@@ -137,7 +172,7 @@ class LabelView extends React.Component {
                 <Button variant="danger" onClick={handleClose}>
                     Close
                 </Button>
-                <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap}}}>
+                <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap, loadedWeights: this.state.loadedWeights}}}>
                     <Button variant="warning">  Train Model </Button>
                 </Link>
                 </Modal.Footer>
@@ -201,7 +236,12 @@ class LabelView extends React.Component {
                     })}
                 </div>
             </div>
-                <div></div>
+            <div>
+                <Button variant={"dark"} className="train-button" onClick={this.uploadModel}>Upload Model</Button>
+                <input type="file" id="modelFile" onInput={this.handleModel} ref={this.modelInputRef} style={{display: "none"}}/>
+                <Button variant={"dark"} className="train-button" onClick={this.uploadData}>Upload Training Data</Button>
+                <input type="file" id="dataFile" onInput={this.handleData} ref={this.dataInputRef} style={{display: "none"}}/>
+            </div>
             </header>
         )
     }

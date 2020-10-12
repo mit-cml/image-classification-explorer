@@ -24,8 +24,10 @@ class TestView extends React.Component {
         this.canvasRef = React.createRef();
         this.handleTestImage = this.handleTestImage.bind(this)
         this.exportModel = this.exportModel.bind(this)
+        this.exportData = this.exportData.bind(this)
         this.state = { 
             imageMap: this.props.location.state.imageMap,
+            loadedWeights: this.props.location.state.loadedWeights,
             transferModel: undefined,
             customModel: undefined,
             trainActivations: undefined,
@@ -106,8 +108,13 @@ class TestView extends React.Component {
             transferModel: transferModel,
             testResults: testResults,
         })
-        await this.fitCustomModel(activations, labels, customModel)
+        if(this.state.loadedWeights){
+            customModel.setWeights(this.state.loadedWeights);
+        } else {
+            await this.fitCustomModel(activations, labels, customModel)
+        }
         this.setState({loading: false})
+        console.log(customModel.weights)
     }
 
     async fitCustomModel(activations, labels, customModel) {
@@ -201,6 +208,7 @@ class TestView extends React.Component {
         const zipSaver = {save: (modelSpecs) => {
             const modelTopologyFileName = "model.json";
             const weightDataFileName = "model.weights.bin";
+            const weightDataFileNameTest = "model.weights.json";
             const modelLabelsName = "model_labels.json";
             const transferModelInfoName = "transfer_model.json";
             const modelZipName = "model.mdl";
@@ -220,6 +228,7 @@ class TestView extends React.Component {
             const zip = new JSZip();
             zip.file(modelTopologyFileName, modelTopologyAndWeightManifestBlob);
             zip.file(weightDataFileName, weightsBlob);
+            zip.file(weightDataFileNameTest, JSON.stringify(modelSpecs.weightData));
             const labels = {}
             Object.keys(this.state.imageMap).sort().forEach((label, i) => {
                 labels[i] = label
@@ -233,6 +242,17 @@ class TestView extends React.Component {
             });
         }};
         await this.state.customModel.save(zipSaver);
+    }
+
+    async exportData() {
+        const imagesFileName = "images.json";
+        const dataZipName = "data.zip";
+        const zip = new JSZip();
+        zip.file(imagesFileName, JSON.stringify(this.props.location.state.imageMap));
+        zip.generateAsync({type:"blob"})
+        .then(function (blob) {
+            FileSaver.saveAs(blob, dataZipName);
+        });
     }
 
     handleTestImage(image) {
@@ -354,7 +374,8 @@ class TestView extends React.Component {
                                 })}
                             </div>
                         </div>
-                            <Button variant={"dark"} className="train-button" onClick={this.exportModel}>Export</Button>
+                            <Button variant={"dark"} className="train-button" onClick={this.exportModel}>Export Model</Button>
+                            <Button variant={"dark"} className="train-button" onClick={this.exportData}>Export Training Data</Button>
                         </div>
                         <div></div>
                     </header>
