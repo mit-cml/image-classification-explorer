@@ -43,6 +43,13 @@ const datasetNames = ["training", "testing"];
 const addLabelsInput = document.getElementById('label-name');
 const addLabelsButton = document.getElementById('add-labels-button');
 
+addLabelsInput.addEventListener('keydown', e => {
+  if (e.keyCode === 13) {
+    addLabelsButton.click();
+    e.preventDefault();
+  }
+});
+
 // Element for displaying training loss
 const trainStatusElement = document.getElementById('train-status');
 
