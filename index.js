@@ -98,9 +98,9 @@ async function loadTransferModel() {
 }
 
 // Methods for updating the dataset objects from the ui
-ui.setAddExampleHandler((labelId, datasetName) => {
-  tf.tidy(async () => {
-    const img = webcam.capture();
+ui.setAddExampleHandler((labelId, datasetName, image) => {
+  tf.tidy(() => {
+    const img = image ? tf.fromPixels(image).expandDims(0).toFloat().div(tf.scalar(127)).sub(tf.scalar(1)) : webcam.capture();
 
     if (datasetName == "training") {
       if (labelId in trainingImgDict) {
