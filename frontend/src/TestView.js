@@ -27,7 +27,7 @@ class TestView extends React.Component {
         this.exportData = this.exportData.bind(this)
         this.state = { 
             imageMap: this.props.location.state.imageMap,
-            loadedWeights: this.props.location.state.loadedWeights,
+            loadedModel: this.props.location.state.loadedModel,
             transferModel: undefined,
             customModel: undefined,
             trainActivations: undefined,
@@ -94,7 +94,7 @@ class TestView extends React.Component {
 
     async train() {
         const transferModel = await this.getTransferModel();
-        const customModel = this.getCustomModel()
+        const customModel = this.state.loadedModel? this.state.loadedModel : this.getCustomModel();
         customModel.summary()
         const {images, labels} = await this.generateInputTensors();
         const activations = this.generateActivations(images, transferModel);
@@ -107,14 +107,9 @@ class TestView extends React.Component {
             customModel: customModel,
             transferModel: transferModel,
             testResults: testResults,
-        })
-        if(this.state.loadedWeights){
-            customModel.setWeights(this.state.loadedWeights);
-        } else {
-            await this.fitCustomModel(activations, labels, customModel)
-        }
+        });
+        await this.fitCustomModel(activations, labels, customModel)
         this.setState({loading: false})
-        console.log(customModel.weights)
     }
 
     async fitCustomModel(activations, labels, customModel) {
@@ -208,7 +203,6 @@ class TestView extends React.Component {
         const zipSaver = {save: (modelSpecs) => {
             const modelTopologyFileName = "model.json";
             const weightDataFileName = "model.weights.bin";
-            const weightDataFileNameTest = "model.weights.json";
             const modelLabelsName = "model_labels.json";
             const transferModelInfoName = "transfer_model.json";
             const modelZipName = "model.mdl";
@@ -228,7 +222,6 @@ class TestView extends React.Component {
             const zip = new JSZip();
             zip.file(modelTopologyFileName, modelTopologyAndWeightManifestBlob);
             zip.file(weightDataFileName, weightsBlob);
-            zip.file(weightDataFileNameTest, JSON.stringify(modelSpecs.weightData));
             const labels = {}
             Object.keys(this.state.imageMap).sort().forEach((label, i) => {
                 labels[i] = label

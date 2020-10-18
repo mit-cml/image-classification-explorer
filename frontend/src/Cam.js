@@ -38,8 +38,9 @@ class Cam extends React.Component {
 
   static getDerivedStateFromProps(props, state) {
     if(props.allLabels.length !== 0 && (state.currentLabel === undefined || props.allLabels.indexOf(state.currentLabel) === -1)) {
-      state.currentLabel = props.allLabels[0]
+      return {currentLabel: props.allLabels[0]};
     }
+    return null;
   }
     
   handleDropdownSelect(selectedLabel) {

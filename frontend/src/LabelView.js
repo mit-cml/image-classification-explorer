@@ -6,7 +6,7 @@ import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Modal from 'react-bootstrap/Modal';
 
 import * as JSZip from 'jszip';
-import * as FileSaver from 'file-saver';
+import * as tf from '@tensorflow/tfjs';
 
 import Popover from 'react-bootstrap/Popover'
 import './App.css';
@@ -111,10 +111,14 @@ class LabelView extends React.Component {
     async handleModel() {
         const zip = new JSZip();
         let data = await zip.loadAsync(this.modelInputRef.current.files[0]);
-        console.log(data)
-        const weights = JSON.parse(await data.files['model.weights.json'].async('string'))
-        console.log(weights)
-        this.setState({loadedWeights: weights});
+        const weightData = new File([await data.files['model.weights.bin'].async('blob')], "model.weights.bin");
+        const topologyWeightsJSON = new File([await data.files['model.json'].async('blob')], "model.json");
+        console.log(weightData);
+        console.log(topologyWeightsJSON);
+        const loadedModel = await tf.loadLayersModel(tf.io.browserFiles([topologyWeightsJSON, weightData]));
+        loadedModel.summary();
+        console.log(loadedModel);
+        this.setState({loadedModel: loadedModel});
     }
 
     async handleData() {
@@ -172,7 +176,7 @@ class LabelView extends React.Component {
                 <Button variant="danger" onClick={handleClose}>
                     Close
                 </Button>
-                <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap, loadedWeights: this.state.loadedWeights}}}>
+                <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap, loadedModel: this.state.loadedModel}}}>
                     <Button variant="warning">  Train Model </Button>
                 </Link>
                 </Modal.Footer>
