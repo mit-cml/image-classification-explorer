@@ -415,9 +415,17 @@ export function switchSteps(i) {
   if (i === trainingStep) {
     webcam.parentNode.removeChild(webcam);
     webcamBoxTraining.appendChild(webcam);
+    let firstItem = document.getElementById('training-0');
+    if (firstItem) {
+      firstItem.click();
+    }
   } else if (i === testingStep) {
     webcam.parentNode.removeChild(webcam);
     webcamBoxTesting.appendChild(webcam);
+    let firstItem = document.getElementById('testing-0');
+    if (firstItem) {
+      firstItem.click();
+    }
   } else if (i === resultsStep) {
     document.getElementsByClassName("analysis-tools-button")[0].click();
   }
