@@ -233,6 +233,7 @@ class LabelView extends React.Component {
                             <Label 
                                 name={k}
                                 images={this.state.imageMap[k]}
+                                handleNewImage={this.handleNewImage}
                                 handleRemoveImage={this.handleRemoveImage}
                                 handleRemoveLabel={this.handleRemoveLabel}
                                 key={k}/>

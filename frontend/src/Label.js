@@ -4,9 +4,48 @@ import './App.css';
 import arrow from'./images/arrow.png';
 
 class Label extends React.Component {
+    constructor(props){
+        super(props)
+        this.handleDragOver = this.handleDragOver.bind(this);
+        this.handleDragExit = this.handleDragExit.bind(this);
+        this.handleDragLeave = this.handleDragLeave.bind(this);
+        this.handleDrop = this.handleDrop.bind(this);
+        this.state = {
+            names: "label-border scale-in-center"
+        }
+    }
+
+    handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        this.setState({names: "label-border scale-in-center droppable"});
+    }
+    handleDragExit(e) {
+        this.setState({names: "label-border scale-in-center"});
+    }
+    handleDragLeave(e) {
+        this.setState({names: "label-border scale-in-center"});
+    }
+    handleDrop(e) {
+        for (let i = 0; i < e.dataTransfer.files.length; i++) {
+            let file = e.dataTransfer.files[i];
+            const name = file.name;
+            let reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                this.props.handleNewImage(reader.result, this.props.name);
+            };
+            reader.onerror = () => {
+                console.log("Failed to load" + name);
+            } 
+          }
+          this.setState({names: "label-border scale-in-center"});
+          e.preventDefault();
+    }
+
     render () {
         return (
-            <div className="label-border scale-in-center">
+            <div className={this.state.names} onDragOver={this.handleDragOver} onDragExit={this.handleDragExit} onDragLeave={this.handleDragLeave} onDrop={this.handleDrop}>
                 <div className="label-box">
                     <div className="title-box">
                         <p className="name-p">{this.props.name}</p>
