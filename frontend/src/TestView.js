@@ -25,6 +25,10 @@ class TestView extends React.Component {
         this.handleTestImage = this.handleTestImage.bind(this)
         this.exportModel = this.exportModel.bind(this)
         this.exportData = this.exportData.bind(this)
+        this.handleDragOver = this.handleDragOver.bind(this);
+        this.handleDragExit = this.handleDragExit.bind(this);
+        this.handleDragLeave = this.handleDragLeave.bind(this);
+        this.handleDrop = this.handleDrop.bind(this);
         this.state = { 
             imageMap: this.props.location.state.imageMap,
             loadedModel: this.props.location.state.loadedModel,
@@ -37,7 +41,8 @@ class TestView extends React.Component {
             testResults: undefined,
             loading: true,
             progress: 0,
-            message: "Loading..."
+            message: "Loading...",
+            names: "test-pic-background",
         }
     }
 
@@ -254,6 +259,34 @@ class TestView extends React.Component {
         }, async () => await this.test())
     }
 
+    handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        this.setState({names: "test-pic-background droppable"});
+    }
+    handleDragExit(e) {
+        this.setState({names: "test-pic-background"});
+    }
+    handleDragLeave(e) {
+        this.setState({names: "test-pic-background"});
+    }
+    handleDrop(e) {
+        for (let i = 0; i < e.dataTransfer.files.length; i++) {
+            let file = e.dataTransfer.files[i];
+            const name = file.name;
+            let reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                this.handleTestImage(reader.result, this.props.name);
+            };
+            reader.onerror = () => {
+                console.log("Failed to load" + name);
+            } 
+          }
+          this.setState({names: "test-pic-background"});
+          e.preventDefault();
+    }
+
     async test() {
         let transferModel = this.state.transferModel
         let customModel = this.state.customModel
@@ -326,7 +359,7 @@ class TestView extends React.Component {
                             <Cam 
                                 handleNewImage={this.handleTestImage}
                                 allLabels={Object.keys(this.state.imageMap)}/>
-                            <div className="test-pic-background">
+                            <div className={this.state.names} onDragOver={this.handleDragOver} onDragExit={this.handleDragExit} onDragLeave={this.handleDragLeave} onDrop={this.handleDrop}>
                                 <p className="test-pic-p">CAPTURED PIC:</p>
                                 {this.state.testImage? <img src={this.state.testImage} alt="test" className="test-pic hover"></img> : <></>}
                             </div>
@@ -337,7 +370,7 @@ class TestView extends React.Component {
                                         return (
                                             <div className="results-bubble" key={k}>
                                                 <OverlayTrigger
-                                                trigger="hover"
+                                                trigger={['hover', 'focus']}
                                                 placement="right"
                                                 overlay={
                                                     <Popover>
