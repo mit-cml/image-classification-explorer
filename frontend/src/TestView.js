@@ -328,7 +328,7 @@ class TestView extends React.Component {
                                 allLabels={Object.keys(this.state.imageMap)}/>
                             <div className="test-pic-background">
                                 <p className="test-pic-p">CAPTURED PIC:</p>
-                                <img src={this.state.testImage} alt="test" className="test-pic hover"></img>
+                                {this.state.testImage? <img src={this.state.testImage} alt="test" className="test-pic hover"></img> : <></>}
                             </div>
                             <div className="results-background">
                                 <p className="classification-p">CLASSIFICATION:</p>

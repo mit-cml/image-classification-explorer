@@ -115,7 +115,6 @@
 
 .record-p {
   white-space: nowrap;
-  overflow-x: scroll;
   margin: 0px 0px 0px 0px;
   background: transparent;
   color: white;
@@ -142,7 +141,6 @@
 .count-p{
   width: 125px;
   white-space: nowrap;
-  overflow-x: scroll;
   background: transparent;
   margin: 0px 10px 0px 20px;
   color: white;
@@ -368,7 +366,6 @@
 
 .test-pic-p {
   white-space: nowrap;
-  overflow-x: scroll;
   margin: 0px 0px 10px 0px;
   background: transparent;
   color: white;
@@ -379,7 +376,6 @@
 
 .classification-p {
   white-space: nowrap;
-  overflow-x: scroll;
   margin: 0px 0px 20px 0px;
   background: transparent;
   color: white;
@@ -469,7 +465,6 @@
   margin: 0px;
   color: black;
   font-family: Poppins-Regular;
-  overflow: scroll;
 }
 
 .loading {
