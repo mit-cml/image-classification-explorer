@@ -385,9 +385,10 @@
 }
 
 .test-pic {
+  display: block;
   border-radius: 3px;
   margin: 3px;
-  height: 200px;
+  width: 224px;
 }
 
 .results-cell-pic {

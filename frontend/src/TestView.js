@@ -254,9 +254,30 @@ class TestView extends React.Component {
     }
 
     handleTestImage(image) {
-        this.setState({
-            testImage: image,
-        }, async () => await this.test())
+        let cropCanvas = document.createElement('canvas');
+        let cropCtx = cropCanvas.getContext('2d');
+        var img = new Image();
+        img.src = image;
+        img.onload = () => {
+            const aspectRatio = img.width / img.height;
+            if (img.width >= img.height) {
+            img.width = aspectRatio * img.height;
+            } else if (img.width < img.height) {
+            img.height = img.width / aspectRatio;
+            }
+            const size = Math.min(img.height, img.width);
+            const centerHeight = img.height / 2;
+            const beginHeight = centerHeight - (size / 2);
+            const centerWidth = img.width / 2;
+            const beginWidth = centerWidth - (size / 2);
+            console.log(img.height, img.width, beginHeight, beginWidth)
+            cropCtx.drawImage(img, beginWidth, beginHeight, size, size, 0,0, 224,224);
+            cropCtx.save();
+            let croppedImage = cropCanvas.toDataURL();
+            this.setState({
+                testImage: croppedImage,
+            }, async () => await this.test())
+        };
     }
 
     handleDragOver(e) {
