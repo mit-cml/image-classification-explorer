@@ -387,7 +387,8 @@
 .test-pic {
   border-radius: 3px;
   margin: 3px;
-  width: 90%;
+  width: 200px;
+  height: 200px;
 }
 
 .results-cell-pic {
