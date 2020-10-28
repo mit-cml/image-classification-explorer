@@ -55,16 +55,13 @@ class LabelView extends React.Component {
 
     handleNewImage(image, currentLabel) {
         let cropCanvas = document.createElement('canvas');
+        cropCanvas.width = 224;
+        cropCanvas.height = 224;
         let cropCtx = cropCanvas.getContext('2d');
         var img = new Image();
         img.src = image;
         img.onload = () => {
-            const size = Math.min(img.height, img.width);
-            const centerHeight = img.height / 2;
-            const beginHeight = centerHeight - (size / 2);
-            const centerWidth = img.width / 2;
-            const beginWidth = centerWidth - (size / 2);
-            cropCtx.drawImage(img, beginWidth, beginHeight, size, size, 0,0, 224,224);
+            cropCtx.drawImage(img, 0, 0, 224, 224);
             cropCtx.save();
             let croppedImage = cropCanvas.toDataURL();
             this.setState({
