@@ -309,11 +309,10 @@
   font-size: 28pt;
   min-height: 30px;
   width: 100%;
-  margin: 5px 20px 5px 20px;
+  padding-left: 20px;
 }
 
 .page-info {
-  margin: 0px 0px 10px 0px;
   background: transparent;
   color: white;
   font-size: 16px;
