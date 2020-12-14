@@ -365,11 +365,22 @@ class TestView extends React.Component {
                                 </Link>
                             </Nav>
                         </Navbar>
+                        <div className="page-title">Testing Page</div>
                         <div>
+
                             <div className="view-all">
+                                <div className="test-pic-background">
+                                    <p className="page-info">With a model now generated, you can simply add images
+                                        as you did in the Training portion to classify them. You can then scroll down
+                                        to see an overview of the results. When done, you can export the model and data
+                                        for later use.
+                                    </p>
+                                </div>
                             <Cam 
                                 handleNewImage={this.handleTestImage}
-                                allLabels={Object.keys(this.state.imageMap)}/>
+                                allLabels={Object.keys(this.state.imageMap)}
+                                testing={true}
+                            />
                             <div className={this.state.names} onDragOver={this.handleDragOver} onDragExit={this.handleDragExit} onDragLeave={this.handleDragLeave} onDrop={this.handleDrop}>
                                 <p className="test-pic-p">CAPTURED PIC:</p>
                                 {this.state.testImage? <img src={this.state.testImage} alt="test" className="test-pic hover"></img> : <></>}

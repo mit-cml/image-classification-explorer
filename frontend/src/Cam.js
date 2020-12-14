@@ -13,7 +13,8 @@ class Cam extends React.Component {
     this.capture = this.capture.bind(this);
     this.webcam = React.createRef()
     this.state = {
-      currentLabel: this.props.allLabels.length === 0 ? undefined : this.props.allLabels[0],        
+      currentLabel: this.props.currentLabel,
+      homeLabel: this.props.currentLabel,
     }
   }
 
@@ -37,8 +38,8 @@ class Cam extends React.Component {
   }
 
   static getDerivedStateFromProps(props, state) {
-    if(props.allLabels.length !== 0 && (state.currentLabel === undefined || props.allLabels.indexOf(state.currentLabel) === -1)) {
-      return {currentLabel: props.allLabels[0]};
+    if(props.currentLabel !== state.currentLabel && props.currentLabel !== state.homeLabel) {
+      return {currentLabel: props.currentLabel, homeLabel: props.currentLabel};
     }
     return null;
   }
@@ -112,7 +113,7 @@ class Cam extends React.Component {
   render () {
     return (
       <div className="record-box">
-        <div className="recording-for-dropdown-wrapper">
+        {!this.props.testing? <div className="recording-for-dropdown-wrapper">
           <p className="record-p">CAPTURING FOR: &nbsp;</p>
           <DropdownButton 
             disabled={this.props.allLabels.length === 0}
@@ -125,7 +126,7 @@ class Cam extends React.Component {
                 )
             })}
           </DropdownButton>
-        </div>
+        </div> : <div/>}
         <video hidden={this.state && this.state.working ? '' : 'hidden'} autoPlay playsInline muted id="webcam" width="100" height="100" onLoadedData={this.loadedData} ref={this.webcam}></video>
         <div id="no-webcam" hidden={this.state && this.state.working ? 'hidden' : ''}>
           No webcam found. <br/>

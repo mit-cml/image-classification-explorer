@@ -75,13 +75,16 @@ class LabelView extends React.Component {
 
     handleRemoveLabel(labelToRemove) {
         let newImageMap = {}
+        let newCur;
         Object.keys(this.state.imageMap).forEach((label) => {
             if(labelToRemove !== label) {
-                newImageMap[label] = this.state.imageMap[label]
+                newImageMap[label] = this.state.imageMap[label];
+                newCur = label;
             }
         })
         this.setState({
-            imageMap: newImageMap
+            imageMap: newImageMap,
+            currentLabel: newCur
         });
     }
 
@@ -108,7 +111,7 @@ class LabelView extends React.Component {
         this.setState({imageMap: {
             ...this.state.imageMap,
             [labelName]: []
-        }})
+        }, currentLabel: labelName})
     }
 
     uploadModel() {
@@ -162,8 +165,16 @@ class LabelView extends React.Component {
                 onClick={handleShow} 
                 disabled={Object.keys(this.state.imageMap).length > 0 && Math.min(...Object.keys(this.state.imageMap).map(k => this.state.imageMap[k].length)) > 0 ? false : true}
             >
-                Train
+                Custom
             </Button>
+              <Link to={{ pathname: "/test", state: {imageMap: this.state.imageMap, loadedModel: this.state.loadedModel}}}>
+                  <Button variant="dark"
+                          size="sm"
+                          className="train-button"
+                          disabled={Object.keys(this.state.imageMap).length > 0 && Math.min(...Object.keys(this.state.imageMap).map(k => this.state.imageMap[k].length)) > 0 ? false : true}>
+                      Train
+                  </Button>
+              </Link>
             <Modal show={show} onHide={handleClose} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Customize Hyperparameters</Modal.Title>
@@ -219,10 +230,19 @@ class LabelView extends React.Component {
                         </Link>
                     </Nav>
                 </Navbar>
+                <div className="page-title">Training Page</div>
                 <div className="view-all">
+                <div className="test-pic-background">
+                    <p className="page-info">To get started, click the plus icon to add a classification and then use the "Capture" button or drag images into the capture box to add images to the selected
+                        classification. You can also upload previously generated data and models using the
+                        buttons below. When done, hit "Train"
+                    </p>
+                </div>
                 <Cam 
                     handleNewImage={this.handleNewImage}
-                    allLabels={Object.keys(this.state.imageMap)}/>
+                    allLabels={Object.keys(this.state.imageMap)}
+                    currentLabel={this.state.currentLabel}
+                />
                 <div className="all-labels">
                     <div className="plus-wrapper">
                         <OverlayTrigger
