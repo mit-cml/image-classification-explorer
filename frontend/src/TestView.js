@@ -366,16 +366,13 @@ class TestView extends React.Component {
                             </Nav>
                         </Navbar>
                         <div className="page-title">Testing Page</div>
-                        <div>
-
-                            <div className="view-all">
-                                <div className="test-pic-background">
-                                    <p className="page-info">With a model now generated, you can simply add images
+                        <p className="page-info">With a model now generated, you can simply add images
                                         as you did in the Training portion to classify them. You can then scroll down
                                         to see an overview of the results. When done, you can export the model and data
                                         for later use.
-                                    </p>
-                                </div>
+                        </p>
+                        <div>
+                            <div className="view-all">
                             <Cam 
                                 handleNewImage={this.handleTestImage}
                                 allLabels={Object.keys(this.state.imageMap)}

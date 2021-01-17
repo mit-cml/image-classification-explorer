@@ -231,13 +231,11 @@ class LabelView extends React.Component {
                     </Nav>
                 </Navbar>
                 <div className="page-title">Training Page</div>
-                <div className="view-all">
-                <div className="test-pic-background">
-                    <p className="page-info">To get started, click the plus icon to add a classification and then use the "Capture" button or drag images into the capture box to add images to the selected
+                <p className="page-info">To get started, click the plus icon to add a classification and then use the "Capture" button or drag images into the capture box to add images to the selected
                         classification. You can also upload previously generated data and models using the
                         buttons below. When done, hit "Train"
-                    </p>
-                </div>
+                </p>
+                <div className="view-all">
                 <Cam 
                     handleNewImage={this.handleNewImage}
                     allLabels={Object.keys(this.state.imageMap)}

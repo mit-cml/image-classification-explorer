@@ -1,34 +1,35 @@
 @font-face {
-  font-family: 'DJB';
-  src: local('DJB'), url(./fonts/DJB.ttf) format('truetype');
+  font-family: "DJB";
+  src: local("DJB"), url(./fonts/DJB.ttf) format("truetype");
 }
 
 @font-face {
-  font-family: 'Poppins-Regular';
-  src: local('Poppins-Regular'), url(./fonts/Poppins-Regular.otf) format('truetype');
+  font-family: "Poppins-Regular";
+  src: local("Poppins-Regular"),
+    url(./fonts/Poppins-Regular.otf) format("truetype");
 }
 
 @-webkit-keyframes slide-out-bck-center {
   0% {
     -webkit-transform: translateZ(0);
-            transform: translateZ(0);
+    transform: translateZ(0);
     opacity: 1;
   }
   100% {
     -webkit-transform: translateZ(-1100px);
-            transform: translateZ(-1100px);
+    transform: translateZ(-1100px);
     opacity: 0;
   }
 }
 @keyframes slide-out-bck-center {
   0% {
     -webkit-transform: translateZ(0);
-            transform: translateZ(0);
+    transform: translateZ(0);
     opacity: 1;
   }
   100% {
     -webkit-transform: translateZ(-1100px);
-            transform: translateZ(-1100px);
+    transform: translateZ(-1100px);
     opacity: 0;
   }
 }
@@ -36,24 +37,24 @@
 @-webkit-keyframes scale-in-center {
   0% {
     -webkit-transform: scale(0);
-            transform: scale(0);
+    transform: scale(0);
     opacity: 1;
   }
   100% {
     -webkit-transform: scale(1);
-            transform: scale(1);
+    transform: scale(1);
     opacity: 1;
   }
 }
 @keyframes scale-in-center {
   0% {
     -webkit-transform: scale(0);
-            transform: scale(0);
+    transform: scale(0);
     opacity: 1;
   }
   100% {
     -webkit-transform: scale(1);
-            transform: scale(1);
+    transform: scale(1);
     opacity: 1;
   }
 }
@@ -61,24 +62,23 @@
 @-webkit-keyframes rotate-center {
   0% {
     -webkit-transform: rotate(0);
-            transform: rotate(0);
+    transform: rotate(0);
   }
   100% {
     -webkit-transform: rotate(360deg);
-            transform: rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 @keyframes rotate-center {
   0% {
     -webkit-transform: rotate(0);
-            transform: rotate(0);
+    transform: rotate(0);
   }
   100% {
     -webkit-transform: rotate(360deg);
-            transform: rotate(360deg);
+    transform: rotate(360deg);
   }
 }
-
 
 .App {
   text-align: center;
@@ -103,7 +103,6 @@
   color: #09d3ac;
 }
 
-
 .title-box {
   width: 140px;
   display: flex;
@@ -122,7 +121,7 @@
   font-family: Poppins-Regular;
 }
 
-.name-p{
+.name-p {
   width: 100px;
   white-space: nowrap;
   overflow-x: hidden;
@@ -135,10 +134,10 @@
 }
 
 .name-p:hover {
-  overflow:visible;
+  overflow: visible;
 }
 
-.count-p{
+.count-p {
   width: 125px;
   white-space: nowrap;
   background: transparent;
@@ -189,7 +188,7 @@
 
 .record-header {
   background-color: white;
-  height: 20px;  
+  height: 20px;
 }
 
 .record-box {
@@ -244,21 +243,21 @@
 }
 
 #image-wrapper .text {
-  transform: scale(1, .8);
+  transform: scale(1, 0.8);
   cursor: pointer;
-  position:relative;
+  position: relative;
   font-size: 14px;
-  color:#adc2ff;
-  bottom:57px;
-  left:19px;
-  visibility:hidden;
+  color: #adc2ff;
+  bottom: 57px;
+  left: 19px;
+  visibility: hidden;
   margin: 0px;
 }
-  
+
 #image-wrapper:hover .text {
-  visibility:visible;
+  visibility: visible;
 }
-  
+
 .countdown {
   margin: 2px 0px 0px 0px;
   font-family: DJB;
@@ -314,11 +313,10 @@
 
 .page-info {
   background: transparent;
-  color: white;
+  color: black;
   font-size: 16px;
   font-family: Poppins-Regular;
   min-height: 20px;
-  overflow: scroll;
 }
 
 .all-labels {
@@ -328,7 +326,6 @@
   max-height: 80vh;
   overflow: auto;
   padding: 0px 0px 35px 10px;
-
 }
 
 .plus-wrapper {
@@ -451,7 +448,7 @@
 }
 
 .progress {
-  background-color: rgb(68, 76, 100, .25) !important;
+  background-color: rgb(68, 76, 100, 0.25) !important;
 }
 
 .jumbotron {
@@ -511,7 +508,7 @@ form {
   margin-left: 28px;
 }
 
-.navbar-nav a:nth-child(n+1) {
+.navbar-nav a:nth-child(n + 1) {
   text-decoration: none;
   color: lightgray;
   margin: 0px 8px 0px 8px;
@@ -528,16 +525,19 @@ form {
 }
 
 .slide-out-bck-center {
-	-webkit-animation: slide-out-bck-center 0.5s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
-	        animation: slide-out-bck-center 0.5s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+  -webkit-animation: slide-out-bck-center 0.5s
+    cubic-bezier(0.55, 0.085, 0.68, 0.53) both;
+  animation: slide-out-bck-center 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53)
+    both;
 }
 
 .scale-in-center {
-	-webkit-animation: scale-in-center 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
-	        animation: scale-in-center 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+  -webkit-animation: scale-in-center 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+    both;
+  animation: scale-in-center 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
 .plus:hover {
-	-webkit-animation: rotate-center 0.6s ease-in-out both;
-	        animation: rotate-center 0.6s ease-in-out both;
+  -webkit-animation: rotate-center 0.6s ease-in-out both;
+  animation: rotate-center 0.6s ease-in-out both;
 }
