@@ -58,7 +58,7 @@ class Label extends React.Component {
                         {this.props.images.map(i => {
                             return (
                                 <div id="image-wrapper" key={i}>
-                                    <img src={i} alt="remove pic from label" className="image hover"></img>
+                                    <img src={i} alt="remove pic from label" className="image hover" width={50} height={50}></img>
                                     <p className="text" onClick={() => this.props.handleRemoveImage(i, this.props.name)}>x</p>
                                 </div>
                             )

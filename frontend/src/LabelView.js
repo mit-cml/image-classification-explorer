@@ -54,23 +54,12 @@ class LabelView extends React.Component {
     }
 
     handleNewImage(image, currentLabel) {
-        let cropCanvas = document.createElement('canvas');
-        cropCanvas.width = 224;
-        cropCanvas.height = 224;
-        let cropCtx = cropCanvas.getContext('2d');
-        var img = new Image();
-        img.src = image;
-        img.onload = () => {
-            cropCtx.drawImage(img, 0, 0, 224, 224);
-            cropCtx.save();
-            let croppedImage = cropCanvas.toDataURL();
-            this.setState({
-                imageMap: {
-                    ...this.state.imageMap,
-                    [currentLabel]: [...this.state.imageMap[currentLabel], croppedImage]
-                }
-            });
-        };
+        this.setState({
+            imageMap: {
+                ...this.state.imageMap,
+                [currentLabel]: [...this.state.imageMap[currentLabel], image]
+            }
+        });
     }
 
     handleRemoveLabel(labelToRemove) {

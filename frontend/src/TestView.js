@@ -254,20 +254,9 @@ class TestView extends React.Component {
     }
 
     handleTestImage(image) {
-        let cropCanvas = document.createElement('canvas');
-        cropCanvas.width = 224;
-        cropCanvas.height = 224;
-        let cropCtx = cropCanvas.getContext('2d');
-        var img = new Image();
-        img.src = image;
-        img.onload = () => {
-            cropCtx.drawImage(img, 0, 0, 224, 224);
-            cropCtx.save();
-            let croppedImage = cropCanvas.toDataURL();
-            this.setState({
-                testImage: croppedImage,
-            }, async () => await this.test())
-        };
+        this.setState({
+            testImage: image,
+        }, async () => await this.test());
     }
 
     handleDragOver(e) {
@@ -443,7 +432,7 @@ class TestView extends React.Component {
                                                 const confidence = r[1]
                                                 return (
                                                     <div className="results-cell" key={r}>
-                                                        <img src={imgUrl} alt="result" width={100} className="results-cell-pic"></img>
+                                                        <img src={imgUrl} alt="result" width={100} height={100} className="results-cell-pic"></img>
                                                         <ProgressBar now={Math.round(confidence*100)} label={Math.round(confidence*100) + "%"}/>
                                                     </div>
                                                 )
