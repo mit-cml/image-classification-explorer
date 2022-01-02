@@ -19,33 +19,35 @@ class Cam extends React.Component {
   }
 
   componentDidMount() {
-    new Promise((resolve, reject) => { 
+    new Promise((resolve, reject) => {
       const navigatorAny = navigator;
       navigator.getUserMedia = navigator.getUserMedia ||
-          navigatorAny.webkitGetUserMedia || navigatorAny.mozGetUserMedia ||
-          navigatorAny.msGetUserMedia;
+        navigatorAny.webkitGetUserMedia || navigatorAny.mozGetUserMedia ||
+        navigatorAny.msGetUserMedia;
       if (navigator.getUserMedia) {
         navigator.mediaDevices.getUserMedia(
-            {video: true}).then(stream => {
-              this.webcam.current.srcObject = stream;
-              this.setState({working: true, videoWidth: stream.getVideoTracks()[0].getSettings()['width'],
-                videoHeight: stream.getVideoTracks()[0].getSettings()['height']});
-            }).catch(error => {this.setState({working: false}); });
+          { video: true }).then(stream => {
+            this.webcam.current.srcObject = stream;
+            this.setState({
+              working: true, videoWidth: stream.getVideoTracks()[0].getSettings()['width'],
+              videoHeight: stream.getVideoTracks()[0].getSettings()['height']
+            });
+          }).catch(error => { this.setState({ working: false }); });
       } else {
-        reject(this.setState({working: false}));
+        reject(this.setState({ working: false }));
       }
     });
   }
 
   static getDerivedStateFromProps(props, state) {
-    if(props.currentLabel !== state.currentLabel && props.currentLabel !== state.homeLabel) {
-      return {currentLabel: props.currentLabel, homeLabel: props.currentLabel};
+    if (props.currentLabel !== state.currentLabel && props.currentLabel !== state.homeLabel) {
+      return { currentLabel: props.currentLabel, homeLabel: props.currentLabel };
     }
     return null;
   }
-    
+
   handleDropdownSelect(selectedLabel) {
-    this.setState({currentLabel: selectedLabel})
+    this.setState({ currentLabel: selectedLabel })
   }
 
   loadedData() {
@@ -57,7 +59,7 @@ class Cam extends React.Component {
    * Returns a batched image (1-element batch) of shape [1, w, h, c].
    */
   async capture() {
-    const result = tf.tidy((video=this.webcam) => {
+    const result = tf.tidy((video = this.webcam) => {
       //console.log("Inside Webcam")
       // Reads the image as a Tensor from the webcam <video> element.      
       const webcamImage = tf.browser.fromPixels(video.current);
@@ -94,7 +96,7 @@ class Cam extends React.Component {
     const beginWidth = centerWidth - (size / 2);
     return img.slice([beginHeight, beginWidth, 0], [size, size, 3]);
   }
-  
+
   /**
    * Adjusts the video size so we can make a centered square crop without
    * including whitespace.
@@ -110,30 +112,30 @@ class Cam extends React.Component {
     }
   }
 
-  render () {
+  render() {
     return (
       <div className="record-box">
-        {!this.props.testing? <div className="recording-for-dropdown-wrapper">
+        {!this.props.testing ? <div className="recording-for-dropdown-wrapper">
           <p className="record-p">CAPTURING FOR: &nbsp;</p>
-          <DropdownButton 
+          <DropdownButton
             disabled={this.props.allLabels.length === 0}
-            title={this.props.allLabels.length === 0 ? "No Labels" : this.state.currentLabel} 
-            size="sm" 
+            title={this.props.allLabels.length === 0 ? "No Labels" : this.state.currentLabel}
+            size="sm"
             variant="outline-light">
-              {this.props.allLabels.map(l => {
-                return (
-                  <Dropdown.Item key={l} onClick={() => this.handleDropdownSelect(l)}>{l}</Dropdown.Item>
-                )
+            {this.props.allLabels.map(l => {
+              return (
+                <Dropdown.Item key={l} onClick={() => this.handleDropdownSelect(l)}>{l}</Dropdown.Item>
+              )
             })}
           </DropdownButton>
-        </div> : <div/>}
-        <video hidden={this.state && this.state.working ? '' : 'hidden'} autoPlay playsInline muted id="webcam" width="100" height="100" onLoadedData={this.loadedData} ref={this.webcam}></video>
+        </div> : <div />}
+        <video className='videoflip' hidden={this.state && this.state.working ? '' : 'hidden'} autoPlay playsInline muted id="webcam" width="100" height="100" onLoadedData={this.loadedData} ref={this.webcam}></video>
         <div id="no-webcam" hidden={this.state && this.state.working ? 'hidden' : ''}>
-          No webcam found. <br/>
+          No webcam found. <br />
           To use this interface, use a device with a webcam.
         </div>
         <div className="record-and-countdown">
-          <Button onClick={this.capture} disabled={this.props.allLabels.length === 0} variant= "outline-light" className="record-button">
+          <Button onClick={this.capture} disabled={this.props.allLabels.length === 0} variant="outline-light" className="record-button">
             {"Capture"}
           </Button>
         </div>
